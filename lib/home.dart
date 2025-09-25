@@ -1,5 +1,5 @@
-import 'package:employee_wellness/header.dart';
-import 'package:employee_wellness/homepage_indicator.dart';
+import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/homepage_indicator.dart';
 import 'package:employee_wellness/main.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';

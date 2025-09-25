@@ -1,4 +1,4 @@
-import 'package:employee_wellness/header.dart';
+import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/home.dart';
 import 'package:employee_wellness/main.dart';
 import 'package:flutter/material.dart';
