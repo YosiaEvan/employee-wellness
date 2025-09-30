@@ -1,6 +1,8 @@
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/main_feature.dart';
 import 'package:employee_wellness/home.dart';
 import 'package:employee_wellness/main.dart';
+import 'package:employee_wellness/pages/sehat_homepage.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -204,83 +206,12 @@ class _IndicatorState extends State<Indicator> {
                             ),
                             const SizedBox(height: 8),
                             Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      "AR Fitness Experience",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    )
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      "Monitoring Kesehatan Real-time",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    )
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      "Virtual Health Coach",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    )
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      "Interatctive Nutrition Guide",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    )
-                                  ],
-                                ),
+                                MainFeature(color: Colors.red, text: "AR Fitness Experience"),
+                                MainFeature(color: Colors.red, text: "Monitoring Kesehatan Real-time"),
+                                MainFeature(color: Colors.red, text: "Virtual Health Coach"),
+                                MainFeature(color: Colors.red, text: "Interatctive Nutrition Guide"),
                               ],
                             )
                           ],
@@ -336,7 +267,7 @@ class _IndicatorState extends State<Indicator> {
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => const HomePage()),
+                                  MaterialPageRoute(builder: (context) => const SehatHomepage()),
                                 );
                               },
                               style: ElevatedButton.styleFrom(
@@ -500,83 +431,12 @@ class _IndicatorState extends State<Indicator> {
                             ),
                             const SizedBox(height: 8),
                             Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue,
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      "Meditasi terpandu harian",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    )
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue,
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      "Konseling online 24/7",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    )
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue,
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      "Teknik manajemen stres",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    )
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue,
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      "Mood tracking & insights",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    )
-                                  ],
-                                ),
+                                MainFeature(color: Colors.blue, text: "Meditasi terpandu harian"),
+                                MainFeature(color: Colors.blue, text: "Konseling online 24/7"),
+                                MainFeature(color: Colors.blue, text: "Teknik manajemen stres"),
+                                MainFeature(color: Colors.blue, text: "Mood tracking & insights"),
                               ],
                             )
                           ],
@@ -632,7 +492,7 @@ class _IndicatorState extends State<Indicator> {
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => const HomePage()),
+                                  MaterialPageRoute(builder: (context) => const SehatHomepage()),
                                 );
                               },
                               style: ElevatedButton.styleFrom(
@@ -659,299 +519,228 @@ class _IndicatorState extends State<Indicator> {
               ),
               // Hijau
               Container(
-                  decoration: BoxDecoration(
-                    color: Color(0xFFf0fdf4),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Container(
-                    padding: EdgeInsets.all(16),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          children: [
-                            SizedBox.square(
-                              dimension: 60,
-                              child: Container(
-                                padding: EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.green,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(
-                                  FontAwesomeIcons.leaf,
-                                  size: 36,
-                                  color: Colors.white,
-                                ),
+                decoration: BoxDecoration(
+                  color: Color(0xFFf0fdf4),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Container(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          SizedBox.square(
+                            dimension: 60,
+                            child: Container(
+                              padding: EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.green,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                FontAwesomeIcons.leaf,
+                                size: 36,
+                                color: Colors.white,
                               ),
                             ),
-                            const SizedBox(width: 20),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "HIJAU 360\u00B0",
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                Text(
-                                  "Lingkungan Berkelanjutan",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        Column(
-                          children: [
-                            Text(
-                              "Selamat Datang di HIJAU 360\u00B0",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "Inisiatif lingkungan berkelanjutan untuk workplace yang eco-friendly dan ramah lingkungan.",
-                              style: TextStyle(
-                                fontSize: 16,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Color(0xFF00ca52),
-                                Color(0xFF00eda2),
-                              ],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
-                            borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Column(
-                            children: [
-                              Text(
-                                "🌿",
-                                style: TextStyle(
-                                  fontSize: 36,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                "H.I.J.A.U 360\u00B0 Experience",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                "Zona kendali emosi virtual",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        Container(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          width: double.infinity,
-                          child: Column(
+                          const SizedBox(width: 20),
+                          Column(
                             mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Fitur Utama:",
+                                "HIJAU 360\u00B0",
                                 style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                textAlign: TextAlign.left,
-                              ),
-                              const SizedBox(height: 8),
-                              Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: BoxDecoration(
-                                          color: Colors.green,
-                                          borderRadius: BorderRadius.circular(20),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        "Carbon footprint tracker",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: BoxDecoration(
-                                          color: Colors.green,
-                                          borderRadius: BorderRadius.circular(20),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        "Green workplace tips",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: BoxDecoration(
-                                          color: Colors.green,
-                                          borderRadius: BorderRadius.circular(20),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        "Eco-friendly challenges",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: BoxDecoration(
-                                          color: Colors.green,
-                                          borderRadius: BorderRadius.circular(20),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        "Sustainability rewards",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                ],
-                              )
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            color: Colors.white,
-                          ),
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: Column(
-                            children: [
-                              Text(
-                                "68%",
-                                style: TextStyle(
-                                  color: Colors.green,
-                                  fontSize: 30,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
                               Text(
-                                "Progress Hijau",
+                                "Lingkungan Berkelanjutan",
                                 style: TextStyle(
                                   fontSize: 16,
-                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey,
                                 ),
                               ),
                             ],
                           ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      Column(
+                        children: [
+                          Text(
+                            "Selamat Datang di HIJAU 360\u00B0",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "Inisiatif lingkungan berkelanjutan untuk workplace yang eco-friendly dan ramah lingkungan.",
+                            style: TextStyle(
+                              fontSize: 16,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Color(0xFF00ca52),
+                              Color(0xFF00eda2),
+                            ],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.circular(20),
                         ),
-
-                        const SizedBox(height: 20),
-
-                        SizedBox(
-                            width: double.infinity,
-                            height: 52,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFF00c84f),
-                                    Color(0xFF00be7e),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(16),
+                        child: Column(
+                          children: [
+                            Text(
+                              "🌿",
+                              style: TextStyle(
+                                fontSize: 36,
                               ),
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const HomePage()),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 15),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  backgroundColor: Colors.transparent,
-                                ),
-                                child: const Text(
-                                  "Jelajahi HIJAU 360\u00B0",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white,
-                                  ),
-                                ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "H.I.J.A.U 360\u00B0 Experience",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
                               ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Zona kendali emosi virtual",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      Container(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        width: double.infinity,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Fitur Utama:",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              textAlign: TextAlign.left,
+                            ),
+                            const SizedBox(height: 8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                MainFeature(color: Colors.green, text: "Carbon footprint tracker"),
+                                MainFeature(color: Colors.green, text: "Green workplace tips"),
+                                MainFeature(color: Colors.green, text: "Eco-friendly challenges"),
+                                MainFeature(color: Colors.green, text: "Sustainability rewards"),
+                              ],
                             )
+                          ],
                         ),
-                      ],
-                    ),
-                  )
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: Colors.white,
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Column(
+                          children: [
+                            Text(
+                              "68%",
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontSize: 30,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              "Progress Hijau",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFF00c84f),
+                                Color(0xFF00be7e),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const SehatHomepage()),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              backgroundColor: Colors.transparent,
+                            ),
+                            child: const Text(
+                              "Jelajahi HIJAU 360\u00B0",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
               ),
             ],
           ),

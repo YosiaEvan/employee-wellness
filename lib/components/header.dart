@@ -112,6 +112,7 @@ class Header extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
+                offset: const Offset(0, 50),
                 onSelected: (value) {
                   if (value == 'logout') {
                     logout(context);
@@ -119,30 +120,25 @@ class Header extends StatelessWidget {
                 },
                 itemBuilder: (BuildContext context) => [
                   const PopupMenuItem(
-                      value: 'logout',
-                      child: SizedBox(
-                        child: Row(
-                          children: const [
-                            Icon(Icons.logout, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text("Keluar"),
-                          ],
-                        ),
-                      )
+                    value: 'logout',
+                    child: SizedBox(
+                      width: 191,
+                      child: Row(
+                        children: const [
+                          Icon(Icons.logout, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text("Keluar"),
+                        ],
+                      ),
+                    )
                   ),
                 ],
-                child: const CircleAvatar(
+                child: CircleAvatar(
                   radius: 20,
-                  backgroundColor: Colors.grey,
+                  backgroundColor: Colors.grey.withOpacity(0.80),
                   child: Icon(Icons.person, color: Colors.white),
                 ),
               ),
-
-              // const CircleAvatar(
-              //   radius: 20,
-              //   backgroundColor: Colors.grey,
-              //   child: Icon(Icons.person, color: Colors.white),
-              // ),
             ],
           ),
         ],

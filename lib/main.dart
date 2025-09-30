@@ -1,5 +1,6 @@
 import 'package:employee_wellness/home.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -53,6 +54,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
+  bool _obscurePassword = true;
 
   Future<void> login() async {
     setState(() {
@@ -120,7 +122,7 @@ class _LoginPageState extends State<LoginPage> {
                 CircleAvatar(
                   radius: 40,
                   backgroundColor: const Color(0xFF00C97A),
-                  child: Icon(Icons.apartment, size: 40, color: Colors.white),
+                  child: Icon(FontAwesomeIcons.building, size: 40, color: Colors.white),
                 ),
 
                 const SizedBox(height: 20),
@@ -190,10 +192,17 @@ class _LoginPageState extends State<LoginPage> {
 
                         TextField(
                           controller: passwordController,
-                          obscureText: true,
+                          obscureText: _obscurePassword,
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.lock_outline),
-                            suffixIcon: const Icon(Icons.visibility_outlined),
+                            suffixIcon: IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                              icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                            ),
                             hintText: "Masukan kata sandi",
                             labelText: "Kata Sandi",
                             isDense: true,
