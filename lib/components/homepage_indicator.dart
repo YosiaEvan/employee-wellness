@@ -2,6 +2,7 @@ import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/main_feature.dart';
 import 'package:employee_wellness/home.dart';
 import 'package:employee_wellness/main.dart';
+import 'package:employee_wellness/pages/hijau_homepage.dart';
 import 'package:employee_wellness/pages/sehat_homepage.dart';
 import 'package:employee_wellness/pages/tenang_homepage.dart';
 import 'package:flutter/material.dart';
@@ -718,7 +719,7 @@ class _IndicatorState extends State<Indicator> {
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => const SehatHomepage()),
+                                MaterialPageRoute(builder: (context) => const HijauHomepage()),
                               );
                             },
                             style: ElevatedButton.styleFrom(
