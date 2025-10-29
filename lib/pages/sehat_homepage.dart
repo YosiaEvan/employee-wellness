@@ -49,7 +49,7 @@ class _SehatHomepageState extends State<SehatHomepage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white.withOpacity(0.98),
+      backgroundColor: Colors.white.withValues(alpha: 0.98),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,6 +141,7 @@ class _SehatHomepageState extends State<SehatHomepage> {
                                     ),
                                   ),
                                   const SizedBox(height: 4),
+
                                   Row(
                                     children: [
                                       Row(

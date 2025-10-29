@@ -8,7 +8,7 @@ class TenangHomepage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white.withOpacity(0.98),
+      backgroundColor: Colors.white.withValues(alpha: 0.98),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

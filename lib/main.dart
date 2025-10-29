@@ -1,3 +1,4 @@
+import 'package:device_preview/device_preview.dart';
 import 'package:employee_wellness/home.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -7,6 +8,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
+  // runApp(
+  //   DevicePreview(
+  //     builder: (context) => MyApp(),
+  //     // builder: (context) => HomePage(),
+  //   )
+  // );
 }
 
 class MyApp extends StatelessWidget {
@@ -34,7 +41,7 @@ class MyApp extends StatelessWidget {
             if (snapshot.data == true) {
               return const HomePage();
             } else {
-              return const LoginPage();
+              return const HomePage();
             }
           }
         }
