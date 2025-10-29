@@ -13,49 +13,182 @@ class SehatHomepage extends StatefulWidget {
 }
 
 class _SehatHomepageState extends State<SehatHomepage> {
-  String? selectedOption = "A";
-  String? selectedSkinColor;
-  final TextEditingController _dateController = TextEditingController();
-  final TextEditingController _heightController = TextEditingController();
-  List<Map<String, dynamic>> options = [
-    {"label": "Hipertensi", "checked": false},
-    {"label": "Diabetes", "checked": false},
-    {"label": "Obesitas", "checked": false},
-    {"label": "Berat Badan diatas ideal", "checked": false},
-    {"label": "Jantung", "checked": false},
-    {"label": "Asam Urat", "checked": false},
-    {"label": "Kolesterol Tinggi", "checked": false},
-    {"label": "Penyakit Ginjal", "checked": false},
-    {"label": "Penyakit Autoimun", "checked": false},
-    {"label": "Lainnya", "checked": false},
-  ];
-
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1945),
-      lastDate: DateTime(2100),
-    );
-
-    if (pickedDate != null) {
-      setState(() {
-        _dateController.text = DateFormat('dd/MM/yyyy').format(pickedDate);
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white.withValues(alpha: 0.98),
+      backgroundColor: Color(0xfffdf2f5).withValues(alpha: 0.98),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
             Header(),
+            Container(
+              padding: EdgeInsets.all(20),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Color(0xfff44336),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                )
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: SizedBox.square(
+                          dimension: 40,
+                          child: Container(
+                            padding: EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(40),
+                            ),
+                            child: const Icon(
+                              FontAwesomeIcons.arrowLeft,
+                              size: 20,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "SEHAT 360\u00B0",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            "Zona Vitalitas Menyeluruh",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          )
+                        ],
+                      ),
+                      SizedBox.square(
+                        dimension: 40,
+                        child: Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(40),
+                          ),
+                          child: const Icon(
+                            FontAwesomeIcons.heart,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16,),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                "6",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 18,
+                                ),
+                              ),
+                              Text(
+                                "Modul",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      ),
+                      SizedBox(width: 12,),
+                      Expanded(
+                        child: Container(
+                          padding: EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                "85%",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 18,
+                                ),
+                              ),
+                              Text(
+                                "Progress",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      ),
+                      SizedBox(width: 12,),
+                      Expanded(
+                        child: Container(
+                          padding: EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                "24",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 18,
+                                ),
+                              ),
+                              Text(
+                                "Sesi",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ),
 
             // Main Content
             Expanded(
@@ -63,497 +196,675 @@ class _SehatHomepageState extends State<SehatHomepage> {
                 padding: EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    // Informasi Pribadi
+                    // Sinar Matahari
                     Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Container(
-                          padding: EdgeInsets.all(20),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                      padding: EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Color(0xfffff7ed),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
                             children: [
-                              Row(
-                                children: [
-                                  SizedBox.square(
-                                    dimension: 40,
-                                    child: Container(
-                                      padding: EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Icon(
-                                        FontAwesomeIcons.person,
-                                        size: 20,
-                                        color: Colors.white,
-                                      ),
-                                    ),
+                              SizedBox.square(
+                                dimension: 60,
+                                child: Container(
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Color(0xfffb8f00),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                  const SizedBox(width: 20),
-                                  Text(
-                                    "Informasi Pribadi",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                  child: const Icon(
+                                    FontAwesomeIcons.cloudSun,
+                                    size: 36,
+                                    color: Colors.white,
                                   ),
-                                ],
+                                ),
                               ),
-                              const SizedBox(height: 20),
+                              SizedBox(width: 20,),
                               Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    "Nama Lengkap",
+                                    "Sinar Matahari",
                                     style: TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 20,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  TextField(
-                                    decoration: InputDecoration(
-                                      hintText: "Masukan nama lengkap",
-                                      isDense: true,
-                                      border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(10)
-                                      ),
-                                    ),
-                                  )
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
                                   Text(
-                                    "Jenis Kelamin",
+                                    "Energi Alami",
                                     style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
+                                      fontSize: 12,
                                     ),
-                                  ),
-                                  const SizedBox(height: 4),
-
-                                  Row(
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Radio<String>(
-                                            value: "L",
-                                            groupValue: selectedOption,
-                                            onChanged: (value) {
-                                              setState(() {
-                                                selectedOption = value;
-                                              });
-                                            },
-                                          ),
-                                          const Text("Laki-Laki")
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Radio<String>(
-                                            value: "P",
-                                            groupValue: selectedOption,
-                                            onChanged: (value) {
-                                              setState(() {
-                                                selectedOption = value;
-                                              });
-                                            },
-                                          ),
-                                          const Text("Perempuan")
-                                        ],
-                                      )
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Taggal Lahir",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  TextField(
-                                    controller: _dateController,
-                                    readOnly: true,
-                                    decoration: InputDecoration(
-                                      hintText: "hh/bb/tttt",
-                                      isDense: true,
-                                      suffixIcon: const Icon(FontAwesomeIcons.calendar),
-                                      border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(10)
-                                      ),
-                                    ),
-                                    onTap: () => _selectDate(context),
-                                  )
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Warna Kulit",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  DropdownButtonFormField<String>(
-                                    value: selectedSkinColor,
-                                    hint: const Text("Pilih Warna Kulit"),
-                                    decoration: InputDecoration(
-                                      contentPadding: EdgeInsets.all(10),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: const BorderSide(color: Colors.grey),
-                                      ),
-                                    ),
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: "Sangat Terang",
-                                        child: Text("Sangat Terang"),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: "Terang",
-                                        child: Text("Terang"),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: "Sedang",
-                                        child: Text("Sedang"),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: "Gelap",
-                                        child: Text("Gelap"),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: "Sangat Gelap",
-                                        child: Text("Sangat Gelap"),
-                                      ),
-                                    ],
-                                    onChanged: (value) {
-                                      setState(() {
-                                        selectedSkinColor = value;
-                                      });
-                                    },
                                   ),
                                 ],
                               ),
                             ],
                           ),
-                        )
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Informasi Fisik
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Container(
-                        padding: EdgeInsets.all(20),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                SizedBox.square(
-                                  dimension: 40,
-                                  child: Container(
-                                    padding: EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.green,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Icon(
-                                      FontAwesomeIcons.ruler,
-                                      size: 20,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 20),
-                                Text(
-                                  "Informasi Fisik",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                )
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Tinggi Badan (cm)",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      SizedBox(height: 4),
-                                      TextField(
-                                        controller: _heightController,
-                                        decoration: InputDecoration(
-                                          hintText: "170",
-                                          isDense: true,
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                          )
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Berat Badan (kg)",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      SizedBox(height: 4),
-                                      TextField(
-                                        controller: _heightController,
-                                        decoration: InputDecoration(
-                                            hintText: "65",
-                                            isDense: true,
-                                            border: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                            )
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Informasi Pekerjaan
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Container(
-                        padding: EdgeInsets.all(20),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                SizedBox.square(
-                                  dimension: 40,
-                                  child: Container(
-                                    padding: EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Icon(
-                                      FontAwesomeIcons.building,
-                                      size: 20,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 20),
-                                Text(
-                                  "Informasi Pekerjaan",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Divisi",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                TextField(
-                                  decoration: InputDecoration(
-                                    hintText: "Masukan divisi",
-                                    isDense: true,
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10)
-                                    ),
-                                  ),
-                                )
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Jabatan",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                TextField(
-                                  decoration: InputDecoration(
-                                    hintText: "Masukan jabatan",
-                                    isDense: true,
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10)
-                                    ),
-                                  ),
-                                )
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Kondisi Kesehatan Dasar
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Container(
-                        padding: EdgeInsets.all(20),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                SizedBox.square(
-                                  dimension: 40,
-                                  child: Container(
-                                    padding: EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Color(0xFFb749f6),
-                                          Color(0xFFec3ca9),
-                                        ],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Icon(
-                                      FontAwesomeIcons.heart,
-                                      size: 20,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 20),
-                                Text(
-                                  "Kondisi Kesehatan Dasar",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                )
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            Column(
-                              children: options.map((item) {
-                                return CheckboxListTile(
-                                  title: Text(item["label"]),
-                                  value: item["checked"],
-                                  onChanged: (value) {
-                                    setState(() {
-                                      item["checked"] = value ?? false;
-                                    });
-                                  },
-                                );
-                              }).toList(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Save Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                          SizedBox(height: 12,),
+                          Text(
+                            "Berjemur untuk vitamin D dan kesehatan tulang",
                           ),
-                          backgroundColor: Colors.blue,
-                        ),
-                        child: Text(
-                          "Simpan Data Pribadi",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
+                          SizedBox(height: 12,),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    SizedBox.square(
+                                      dimension: 10,
+                                      child: Container(
+                                        padding: EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xfffb8f00),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Text(""),
+                                      ),
+                                    ),
+                                    SizedBox(width: 8,),
+                                    Text("Target")
+                                  ],
+                                ),
+                                Text(
+                                  "15 menit/hari",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                )
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: 20,),
+
+                    // Jalan 10.000 Langkah
+                    Container(
+                      padding: EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Color(0xffecfeff),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              SizedBox.square(
+                                dimension: 60,
+                                child: Container(
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Color(0xff1b8cfd),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    FontAwesomeIcons.shoePrints,
+                                    size: 36,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 20,),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Jalan 10.000 Langkah",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Aktivitas Fisik",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                        ),
+                          SizedBox(height: 12,),
+                          Text(
+                            "Mencapai target langkah harian untuk kesehatan optimal",
+                          ),
+                          SizedBox(height: 12,),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    SizedBox.square(
+                                      dimension: 10,
+                                      child: Container(
+                                        padding: EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xff1b8cfd),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Text(""),
+                                      ),
+                                    ),
+                                    SizedBox(width: 8,),
+                                    Text("Target")
+                                  ],
+                                ),
+                                Text(
+                                  "10.000 langkah",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                )
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: 20,),
+
+                    // Pola Makan Sehat
+                    Container(
+                      padding: EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Color(0xffeefdf5),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              SizedBox.square(
+                                dimension: 60,
+                                child: Container(
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Color(0xff00c368),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    FontAwesomeIcons.appleWhole,
+                                    size: 36,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 20,),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Pola Makan Sehat",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Nutrisi Seimbang",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 12,),
+                          Text(
+                            "Tracking nutrisi harian dengan target tanpa minyak & gula",
+                          ),
+                          SizedBox(height: 12,),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    SizedBox.square(
+                                      dimension: 10,
+                                      child: Container(
+                                        padding: EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xff00c368),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Text(""),
+                                      ),
+                                    ),
+                                    SizedBox(width: 8,),
+                                    Text("Target")
+                                  ],
+                                ),
+                                Text(
+                                  "2000 kkal/hari",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                )
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: 20,),
+
+                    // Udara Segar
+                    Container(
+                      padding: EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Color(0xffeefaff),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              SizedBox.square(
+                                dimension: 60,
+                                child: Container(
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Color(0xff009bf4),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    FontAwesomeIcons.wind,
+                                    size: 36,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 20,),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Udara Segar",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Teknik Pernapasan",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 12,),
+                          Text(
+                            "Pernapasan 4-7-8 dengan AR untuk relaksasi & fokus",
+                          ),
+                          SizedBox(height: 12,),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    SizedBox.square(
+                                      dimension: 10,
+                                      child: Container(
+                                        padding: EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xff009bf4),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Text(""),
+                                      ),
+                                    ),
+                                    SizedBox(width: 8,),
+                                    Text("Target")
+                                  ],
+                                ),
+                                Text(
+                                  "5x seminggu",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                )
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: 20,),
+
+                    // Minum Air 8 Gelas
+                    Container(
+                      padding: EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Color(0xffedfaff),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              SizedBox.square(
+                                dimension: 60,
+                                child: Container(
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Color(0xff00cbf6),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    FontAwesomeIcons.glassWater,
+                                    size: 36,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 20,),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Minum Air 8 Gelas",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Hidrasi Optimal",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 12,),
+                          Text(
+                            "Tracking konsumsi air harian untuk tubuh terhidrasi",
+                          ),
+                          SizedBox(height: 12,),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    SizedBox.square(
+                                      dimension: 10,
+                                      child: Container(
+                                        padding: EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xff00cbf6),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Text(""),
+                                      ),
+                                    ),
+                                    SizedBox(width: 8,),
+                                    Text("Target")
+                                  ],
+                                ),
+                                Text(
+                                  "8 gelas/hari",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                )
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: 20,),
+
+                    // Tidur Cukup
+                    Container(
+                      padding: EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Color(0xfff4f4ff),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              SizedBox.square(
+                                dimension: 60,
+                                child: Container(
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Color(0xff715cff),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    FontAwesomeIcons.moon,
+                                    size: 36,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 20,),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Tidur Cukup",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Istirahat Berkualitas",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 12,),
+                          Text(
+                            "Tidur 7-8 jam mulai jam 9 malam untuk pemulihan optimal",
+                          ),
+                          SizedBox(height: 12,),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    SizedBox.square(
+                                      dimension: 10,
+                                      child: Container(
+                                        padding: EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xff715cff),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Text(""),
+                                      ),
+                                    ),
+                                    SizedBox(width: 8,),
+                                    Text("Target")
+                                  ],
+                                ),
+                                Text(
+                                  "7-8 jam/hari",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                )
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: 20,),
+
+                    // Information
+                    Container(
+                      padding: EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              SizedBox.square(
+                                dimension: 60,
+                                child: Container(
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Color(0xff00c170),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    FontAwesomeIcons.circleInfo,
+                                    size: 36,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 20,),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Tentang SEHAT 360\u00B0",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 12,),
+                          Text(
+                            "Program kesehatan komprehensif yang dirancang khusus untuk meningkatkan kualitas hidup karyawan melalui aktivitas yang mudah dan menyenangkan.",
+                          ),
+                          SizedBox(height: 12,),
+                          Padding(
+                            padding: EdgeInsets.only(left: 20),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    SizedBox.square(
+                                      dimension: 8,
+                                      child: Container(
+                                        padding: EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xff00c170),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Text(""),
+                                      ),
+                                    ),
+                                    SizedBox(width: 8,),
+                                    Text("Pantau progress kesehatan Anda")
+                                  ],
+                                ),
+                                Row(
+                                  children: [
+                                    SizedBox.square(
+                                      dimension: 8,
+                                      child: Container(
+                                        padding: EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xff00c170),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Text(""),
+                                      ),
+                                    ),
+                                    SizedBox(width: 8,),
+                                    Text("Dapatkan tips personal setiap hari")
+                                  ],
+                                ),
+                                Row(
+                                  children: [
+                                    SizedBox.square(
+                                      dimension: 8,
+                                      child: Container(
+                                        padding: EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xff00c170),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Text(""),
+                                      ),
+                                    ),
+                                    SizedBox(width: 8,),
+                                    Text("Raih pencapaian dan rewards")
+                                  ],
+                                )
+                              ],
+                            ),
+                          )
+                        ],
                       ),
                     ),
                   ],
