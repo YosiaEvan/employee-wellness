@@ -1,4 +1,5 @@
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/pages/sehat/jalan_10000_langkah.dart';
 import 'package:employee_wellness/pages/sehat/sinar_matahari.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -300,94 +301,102 @@ class _SehatHomepageState extends State<SehatHomepage> {
                     SizedBox(height: 20,),
 
                     // Jalan 10.000 Langkah
-                    Container(
-                      padding: EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Color(0xffecfeff),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              SizedBox.square(
-                                dimension: 60,
-                                child: Container(
-                                  padding: EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Color(0xff1b8cfd),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Icon(
-                                    FontAwesomeIcons.shoePrints,
-                                    size: 36,
-                                    color: Colors.white,
+                    GestureDetector(
+                      onTap: () => {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const Jalan10000Langkah()),
+                        ),
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Color(0xffecfeff),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                SizedBox.square(
+                                  dimension: 60,
+                                  child: Container(
+                                    padding: EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Color(0xff1b8cfd),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(
+                                      FontAwesomeIcons.shoePrints,
+                                      size: 36,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              SizedBox(width: 20,),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Jalan 10.000 Langkah",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    "Aktivitas Fisik",
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 12,),
-                          Text(
-                            "Mencapai target langkah harian untuk kesehatan optimal",
-                          ),
-                          SizedBox(height: 12,),
-                          Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
+                                SizedBox(width: 20,),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    SizedBox.square(
-                                      dimension: 10,
-                                      child: Container(
-                                        padding: EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: Color(0xff1b8cfd),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Text(""),
+                                    Text(
+                                      "Jalan 10.000 Langkah",
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                    SizedBox(width: 8,),
-                                    Text("Target")
+                                    Text(
+                                      "Aktivitas Fisik",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                      ),
+                                    ),
                                   ],
                                 ),
-                                Text(
-                                  "10.000 langkah",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                )
                               ],
                             ),
-                          )
-                        ],
+                            SizedBox(height: 12,),
+                            Text(
+                              "Mencapai target langkah harian untuk kesehatan optimal",
+                            ),
+                            SizedBox(height: 12,),
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      SizedBox.square(
+                                        dimension: 10,
+                                        child: Container(
+                                          padding: EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: Color(0xff1b8cfd),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Text(""),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8,),
+                                      Text("Target")
+                                    ],
+                                  ),
+                                  Text(
+                                    "10.000 langkah",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  )
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
                       ),
                     ),
 
