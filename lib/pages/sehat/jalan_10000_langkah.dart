@@ -1,9 +1,9 @@
 import 'dart:async';
-
 import 'package:employee_wellness/components/header.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:pedometer/pedometer.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class Jalan10000Langkah extends StatefulWidget {
   const Jalan10000Langkah({super.key});
@@ -17,13 +17,16 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
   Stream<StepCount>? _stepCountStream;
   late Pedometer _pedometer;
   StreamSubscription<StepCount>? _subscription;
-  double progressValue = 0.6;
+  double progressValue = 0;
+  int _remainingSteps = 10000;
+  int _initialSteps = 0;
   bool _isStart = false;
 
   @override
   void initState() {
     super.initState();
     _pedometer = Pedometer();
+    requestPermission();
   }
 
   void startListening() {
@@ -34,8 +37,11 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
     _subscription = _stepCountStream!.listen(
       (StepCount stepCount) {
         setState(() {
-          _totalSteps = stepCount.steps;
+          _totalSteps = stepCount.steps - _initialSteps;
+          progressValue = _totalSteps/10000;
+          _remainingSteps = 10000-_totalSteps;
         });
+        print("Langkah terdeteksi: ${stepCount.steps}");
       },
       onError: (error) {
         print('Error: $error');
@@ -50,10 +56,26 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
     });
   }
 
+  void resetStep() {
+    setState(() {
+      _initialSteps = _totalSteps + _initialSteps;
+      _totalSteps = 0;
+      progressValue = 0;
+      _remainingSteps = 10000;
+    });
+  }
+
   @override
   void dispose() {
     stopListening();
     super.dispose();
+  }
+
+  Future<void> requestPermission() async {
+    var status = await Permission.activityRecognition.status;
+    if (!status.isGranted) {
+      await Permission.activityRecognition.request();
+    }
   }
 
   @override
@@ -212,7 +234,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
                           ),
                           SizedBox(height: 20,),
                           Text(
-                            "$progressValue% dari target",
+                            "${(progressValue * 100).toStringAsFixed(2)}% dari target",
                             style: TextStyle(
                               fontSize: 20,
                             ),
@@ -242,7 +264,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
                                     ),
                                     SizedBox(width: 8,),
                                     Text(
-                                      "4.000 langkah lagi",
+                                      "$_remainingSteps langkah lagi",
                                       style: TextStyle(
                                         fontSize: 20,
                                         fontWeight: FontWeight.bold,
@@ -358,7 +380,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
                               color: Colors.white,
                             ),
                             child: ElevatedButton(
-                              onPressed: () {},
+                              onPressed: resetStep,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.transparent,
                                 shadowColor: Colors.transparent,
