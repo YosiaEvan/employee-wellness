@@ -1,4 +1,5 @@
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/pages/sehat/jalan_10000_langkah.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -996,7 +997,9 @@ class _SinarMatahariState extends State<SinarMatahari> {
                                     borderRadius: BorderRadius.circular(20)
                                 ),
                                 child: ElevatedButton(
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      Navigator.push(context, MaterialPageRoute(builder: (context) => const Jalan10000Langkah()));
+                                    },
                                     style: ElevatedButton.styleFrom(
                                       padding: EdgeInsets.all(16),
                                       backgroundColor: Colors.transparent,
