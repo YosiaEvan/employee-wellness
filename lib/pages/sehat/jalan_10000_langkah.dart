@@ -632,7 +632,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
 
                     SizedBox(height: 20,),
                     
-                    // Tips Keamanan
+                    // Tips Mencapai 10.000 Langkah
                     Container(
                       padding: EdgeInsets.all(20),
                       decoration: BoxDecoration(
