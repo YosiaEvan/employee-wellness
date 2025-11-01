@@ -1,6 +1,9 @@
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/pages/sehat/udara_segar.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 
 class PolaMakanSehat extends StatefulWidget {
   const PolaMakanSehat({super.key});
@@ -10,63 +13,79 @@ class PolaMakanSehat extends StatefulWidget {
 }
 
 class _PolaMakanSehatState extends State<PolaMakanSehat> {
-  int _totalSteps = 0;
-  double progressValue = 0;
-  int _remainingSteps = 10000;
-  int _initialSteps = 0;
-  bool _isStart = false;
-  List<Map<String, dynamic>> foods = [
-    // {
-    //   "name": "Nasi Goreng",
-    //   "calories": 500,
-    //   "proteins": 30,
-    //   "carbs": 100,
-    //   "fibers": 50,
-    //   "addOil": 1,
-    //   "addSugar": 0,
-    //   "time": 22.03,
-    // },
-    // {
-    //   "name": "Ayam Bakar",
-    //   "calories": 400,
-    //   "proteins": 45,
-    //   "carbs": 20,
-    //   "fibers": 10,
-    //   "addOil": 0,
-    //   "addSugar": 1,
-    //   "time": 19.45,
-    // },
-    // {
-    //   "name": "Oatmeal + Susu",
-    //   "calories": 350,
-    //   "proteins": 20,
-    //   "carbs": 60,
-    //   "fibers": 8,
-    //   "addOil": 0,
-    //   "addSugar": 1,
-    //   "time": 07.15,
-    // },
-    // {
-    //   "name": "Salad Sayur",
-    //   "calories": 200,
-    //   "proteins": 10,
-    //   "carbs": 30,
-    //   "fibers": 12,
-    //   "addOil": 0,
-    //   "addSugar": 0,
-    //   "time": 12.30,
-    // },
-    // {
-    //   "name": "Mie Goreng",
-    //   "calories": 520,
-    //   "proteins": 25,
-    //   "carbs": 90,
-    //   "fibers": 6,
-    //   "addOil": 1,
-    //   "addSugar": 0,
-    //   "time": 21.10,
-    // },
-  ];
+  double get totalCalories {
+    return foods.fold(0, (sum, item) => sum + (item['calories'] ?? 0));
+  }
+  double targetCalories = 2000;
+  double get progress {
+    if (targetCalories == 0) return 0;
+    return ((totalCalories / targetCalories) * 100).clamp(0, 100);
+  }
+  double get remainingCalories {
+    return (targetCalories - totalCalories).clamp(0, targetCalories);
+  }
+  double get totalProtein => foods.fold(0, (sum, food) => sum + (food["proteins"] ?? 0));
+  double get totalCarb => foods.fold(0, (sum, food) => sum + (food["carbs"] ?? 0));
+  double get totalFiber => foods.fold(0, (sum, food) => sum + (food["fibers"] ?? 0));
+  double get totalAll => totalProtein + totalCarb + totalFiber;
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController calorieController = TextEditingController();
+  final TextEditingController proteinController = TextEditingController();
+  final TextEditingController carbController = TextEditingController();
+  final TextEditingController fiberController = TextEditingController();
+  final TextEditingController fatController = TextEditingController();
+  bool containsSugar = false;
+  bool containsOil = false;
+  List<Map<String, dynamic>> foods = [];
+
+  void addFood() {
+    if (nameController.text.isEmpty || calorieController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Nama dan Kalori wajib diisi!")),
+      );
+      return;
+    }
+
+    setState(() {
+      foods.add({
+        "name": nameController.text,
+        "calories": double.tryParse(calorieController.text) ?? 0,
+        "proteins": double.tryParse(proteinController.text) ?? 0,
+        "carbs": double.tryParse(carbController.text) ?? 0,
+        "fibers": double.tryParse(fiberController.text) ?? 0,
+        "fat": double.tryParse(fatController.text) ?? 0,
+        "addOil": containsOil,
+        "addSugar": containsSugar,
+        "time": DateFormat('HH:mm').format(DateTime.now()),
+      });
+    });
+
+    nameController.clear();
+    calorieController.clear();
+    proteinController.clear();
+    carbController.clear();
+    fiberController.clear();
+    fatController.clear();
+    setState(() {
+      containsOil = false;
+      containsSugar = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Makanan berhasil ditambahkan!")),
+    );
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    calorieController.dispose();
+    proteinController.dispose();
+    carbController.dispose();
+    fiberController.dispose();
+    fatController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -160,7 +179,7 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
                 padding: EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    // Counter
+                    // Calorie Counter
                     Container(
                       width: double.infinity,
                       padding: EdgeInsets.all(20),
@@ -195,7 +214,7 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
                           ),
                           SizedBox(height: 20,),
                           Text(
-                            "$_totalSteps",
+                            "${totalCalories.toStringAsFixed(2)}",
                             style: TextStyle(
                               fontSize: 60,
                               fontWeight: FontWeight.bold,
@@ -212,15 +231,15 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
                           SizedBox(
                             height: 20,
                             child: LinearProgressIndicator(
-                              value: progressValue,
-                              color: Color(0xffbcf8d1),
+                              value: progress/100,
+                              color: Color(0xff00c368),
                               backgroundColor: Colors.grey[300],
                               borderRadius: BorderRadius.circular(20),
                             ),
                           ),
                           SizedBox(height: 20,),
                           Text(
-                            "${(progressValue * 100).toStringAsFixed(2)}% dari target",
+                            "${progress}% dari target",
                             style: TextStyle(
                               fontSize: 20,
                             ),
@@ -250,7 +269,7 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
                                     ),
                                     SizedBox(width: 8,),
                                     Text(
-                                      "2000 kalori lagi",
+                                      "${remainingCalories} kalori lagi",
                                       style: TextStyle(
                                         fontSize: 20,
                                         fontWeight: FontWeight.bold,
@@ -261,7 +280,7 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
                                 ),
                                 SizedBox(height: 8,),
                                 Text(
-                                  "Target: 2.000 kalori",
+                                  "Target: ${totalCalories} kalori",
                                   style: TextStyle(
                                     color: Color(0xff00c368),
                                     fontSize: 16,
@@ -326,7 +345,8 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
                             ],
                           ),
                           SizedBox(height: 20,),
-                          Container(
+                          foods.isEmpty
+                          ? Container(
                             width: double.infinity,
                             height: 200,
                             alignment: Alignment.center,
@@ -339,6 +359,39 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
                               style: TextStyle(
                                 fontSize: 16,
                               ),
+                            ),
+                          )
+                          : Container(
+                            width: double.infinity,
+                            height: 250,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                PieChart(
+                                  PieChartData(
+                                    centerSpaceRadius: 60,
+                                    sectionsSpace: 2,
+                                    startDegreeOffset: -90,
+                                    sections: [
+                                      PieChartSectionData(
+                                        color: Colors.red,
+                                        value: totalProtein,
+                                        title: '',
+                                      ),
+                                      PieChartSectionData(
+                                        color: Colors.blue,
+                                        value: totalCarb,
+                                        title: '',
+                                      ),
+                                      PieChartSectionData(
+                                        color: Colors.green,
+                                        value: totalFiber,
+                                        title: '',
+                                      )
+                                    ]
+                                  )
+                                )
+                              ],
                             ),
                           ),
 
@@ -388,7 +441,7 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
                                     SizedBox(width: 16,),
                                     Flexible(
                                       child: Text(
-                                        "0%",
+                                        "${((totalProtein/totalAll)*100).toStringAsFixed(2)}%",
                                         style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
@@ -402,7 +455,7 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      "0g",
+                                      "${totalProtein}g",
                                       style: TextStyle(
                                         fontSize: 16,
                                         color: Colors.red,
@@ -428,164 +481,164 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
 
                           // Karbohidrat
                           Container(
-                              padding: EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                color: Color(0xffeff6ff),
-                                border: Border.all(
-                                    color: Color(0xffbedbff),
-                                    width: 2,
-                                    style: BorderStyle.solid
-                                ),
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              color: Color(0xffeff6ff),
+                              border: Border.all(
+                                  color: Color(0xffbedbff),
+                                  width: 2,
+                                  style: BorderStyle.solid
                               ),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          SizedBox.square(
-                                            dimension: 10,
-                                            child: Container(
-                                              padding: EdgeInsets.all(8),
-                                              decoration: BoxDecoration(
-                                                color: Color(0xff2b7fff),
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                              child: Text(""),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        SizedBox.square(
+                                          dimension: 10,
+                                          child: Container(
+                                            padding: EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: Color(0xff2b7fff),
+                                              borderRadius: BorderRadius.circular(12),
                                             ),
-                                          ),
-                                          SizedBox(width: 8,),
-                                          Text(
-                                            "Karbohidrat",
-                                            style: TextStyle(
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.bold,
-                                                color: Color(0xff193cb8)
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(width: 16,),
-                                      Flexible(
-                                        child: Text(
-                                          "0%",
-                                          style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.blue,
+                                            child: Text(""),
                                           ),
                                         ),
-                                      )
-                                    ],
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        "0g",
+                                        SizedBox(width: 8,),
+                                        Text(
+                                          "Karbohidrat",
+                                          style: TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xff193cb8)
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(width: 16,),
+                                    Flexible(
+                                      child: Text(
+                                        "${((totalCarb/totalAll)*100).toStringAsFixed(2)}%",
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      "${totalCarb}g",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.blue,
+                                      ),
+                                    ),
+                                    SizedBox(width: 16,),
+                                    Flexible(
+                                      child: Text(
+                                        "Target: 50%",
                                         style: TextStyle(
                                           fontSize: 16,
                                           color: Colors.blue,
                                         ),
                                       ),
-                                      SizedBox(width: 16,),
-                                      Flexible(
-                                        child: Text(
-                                          "Target: 50%",
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color: Colors.blue,
-                                          ),
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                ],
-                              )
+                                    )
+                                  ],
+                                ),
+                              ],
+                            )
                           ),
 
                           SizedBox(height: 12,),
 
                           // Serat
                           Container(
-                              padding: EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                color: Color(0xfff0fdf4),
-                                border: Border.all(
-                                    color: Color(0xffb9f8cf),
-                                    width: 2,
-                                    style: BorderStyle.solid
-                                ),
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              color: Color(0xfff0fdf4),
+                              border: Border.all(
+                                  color: Color(0xffb9f8cf),
+                                  width: 2,
+                                  style: BorderStyle.solid
                               ),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          SizedBox.square(
-                                            dimension: 10,
-                                            child: Container(
-                                              padding: EdgeInsets.all(8),
-                                              decoration: BoxDecoration(
-                                                color: Color(0xff00c950),
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                              child: Text(""),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        SizedBox.square(
+                                          dimension: 10,
+                                          child: Container(
+                                            padding: EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: Color(0xff00c950),
+                                              borderRadius: BorderRadius.circular(12),
                                             ),
-                                          ),
-                                          SizedBox(width: 8,),
-                                          Text(
-                                            "Serat",
-                                            style: TextStyle(
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.bold,
-                                                color: Color(0xff016630)
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(width: 16,),
-                                      Flexible(
-                                        child: Text(
-                                          "0%",
-                                          style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.green,
+                                            child: Text(""),
                                           ),
                                         ),
-                                      )
-                                    ],
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        "0g",
+                                        SizedBox(width: 8,),
+                                        Text(
+                                          "Serat",
+                                          style: TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xff016630)
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(width: 16,),
+                                    Flexible(
+                                      child: Text(
+                                        "${((totalFiber/totalAll)*100).toStringAsFixed(2)}%",
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.green,
+                                        ),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      "${totalFiber}g",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.green,
+                                      ),
+                                    ),
+                                    SizedBox(width: 16,),
+                                    Flexible(
+                                      child: Text(
+                                        "Target: 20%",
                                         style: TextStyle(
                                           fontSize: 16,
                                           color: Colors.green,
                                         ),
                                       ),
-                                      SizedBox(width: 16,),
-                                      Flexible(
-                                        child: Text(
-                                          "Target: 20%",
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color: Colors.green,
-                                          ),
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                ],
-                              )
+                                    )
+                                  ],
+                                ),
+                              ],
+                            )
                           ),
                         ],
                       ),
@@ -648,187 +701,197 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
                                             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                                           ),
                                           builder: (context) {
-                                            return Padding(
-                                              padding: EdgeInsets.all(20),
-                                              child: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Text(
-                                                    "Tambah Makanan",
-                                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                                  ),
-                                                  SizedBox(height: 12),
-                                                  Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                            return StatefulBuilder(
+                                              builder: (context, setModalState) {
+                                                return Padding(
+                                                  padding: EdgeInsets.all(20),
+                                                  child: Column(
+                                                    mainAxisSize: MainAxisSize.min,
                                                     children: [
                                                       Text(
-                                                        "Nama Makanan",
-                                                        style: TextStyle(
-                                                          fontSize: 16,
-                                                          fontWeight: FontWeight.w500,
-                                                        ),
+                                                        "Tambah Makanan",
+                                                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                                       ),
-                                                      SizedBox(height: 4,),
-                                                      TextField(
-                                                        decoration: InputDecoration(
-                                                          labelText: "Nama makanan",
-                                                          border: OutlineInputBorder(),
-                                                        ),
+                                                      SizedBox(height: 12),
+                                                      Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text(
+                                                            "Nama Makanan",
+                                                            style: TextStyle(
+                                                              fontSize: 16,
+                                                              fontWeight: FontWeight.w500,
+                                                            ),
+                                                          ),
+                                                          SizedBox(height: 4,),
+                                                          TextField(
+                                                            controller: nameController,
+                                                            decoration: InputDecoration(
+                                                              labelText: "Nama makanan",
+                                                              border: OutlineInputBorder(),
+                                                            ),
+                                                          ),
+                                                        ],
                                                       ),
-                                                    ],
-                                                  ),
-                                                  SizedBox(height: 12),
-                                                  Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Text(
-                                                        "Kalori (kkal)",
-                                                        style: TextStyle(
-                                                          fontSize: 16,
-                                                          fontWeight: FontWeight.w500,
-                                                        ),
+                                                      SizedBox(height: 12),
+                                                      Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text(
+                                                            "Kalori (kkal)",
+                                                            style: TextStyle(
+                                                              fontSize: 16,
+                                                              fontWeight: FontWeight.w500,
+                                                            ),
+                                                          ),
+                                                          SizedBox(height: 4,),
+                                                          TextField(
+                                                            controller: calorieController,
+                                                            decoration: InputDecoration(
+                                                              labelText: "Jumlah Kalori",
+                                                              border: OutlineInputBorder(),
+                                                            ),
+                                                          ),
+                                                        ],
                                                       ),
-                                                      SizedBox(height: 4,),
-                                                      TextField(
-                                                        decoration: InputDecoration(
-                                                          labelText: "Jumlah Kalori",
-                                                          border: OutlineInputBorder(),
-                                                        ),
+                                                      SizedBox(height: 12),
+                                                      Row(
+                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                        children: [
+                                                          Expanded(
+                                                              child: Column(
+                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                children: [
+                                                                  Text(
+                                                                    "Protein (g)",
+                                                                    style: TextStyle(
+                                                                      fontSize: 16,
+                                                                      fontWeight: FontWeight.w500,
+                                                                    ),
+                                                                  ),
+                                                                  SizedBox(height: 4,),
+                                                                  TextField(
+                                                                    controller: proteinController,
+                                                                    decoration: InputDecoration(
+                                                                      labelText: "Jumlah Protein",
+                                                                      border: OutlineInputBorder(),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              )
+                                                          ),
+                                                          SizedBox(width: 8,),
+                                                          Expanded(
+                                                              child: Column(
+                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                children: [
+                                                                  Text(
+                                                                    "Karbohidrat (g)",
+                                                                    style: TextStyle(
+                                                                      fontSize: 16,
+                                                                      fontWeight: FontWeight.w500,
+                                                                    ),
+                                                                  ),
+                                                                  SizedBox(height: 4,),
+                                                                  TextField(
+                                                                    controller: carbController,
+                                                                    decoration: InputDecoration(
+                                                                      labelText: "Jumlah Karbohidrat",
+                                                                      border: OutlineInputBorder(),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              )
+                                                          ),
+                                                          SizedBox(width: 8,),
+                                                          Expanded(
+                                                              child: Column(
+                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                children: [
+                                                                  Text(
+                                                                    "Serat (g)",
+                                                                    style: TextStyle(
+                                                                      fontSize: 16,
+                                                                      fontWeight: FontWeight.w500,
+                                                                    ),
+                                                                  ),
+                                                                  SizedBox(height: 4,),
+                                                                  TextField(
+                                                                    controller: fiberController,
+                                                                    decoration: InputDecoration(
+                                                                      labelText: "Jumlah Serat",
+                                                                      border: OutlineInputBorder(),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              )
+                                                          )
+                                                        ],
                                                       ),
-                                                    ],
-                                                  ),
-                                                  SizedBox(height: 12),
-                                                  Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                    children: [
-                                                      Expanded(
-                                                        child: Column(
-                                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                                          children: [
-                                                            Text(
-                                                              "Protein (g)",
+                                                      SizedBox(height: 12),
+                                                      Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text(
+                                                            "Lemak (g)",
+                                                            style: TextStyle(
+                                                              fontSize: 16,
+                                                              fontWeight: FontWeight.w500,
+                                                            ),
+                                                          ),
+                                                          SizedBox(height: 4,),
+                                                          TextField(
+                                                            controller: fatController,
+                                                            decoration: InputDecoration(
+                                                              labelText: "Jumlah Lemak",
+                                                              border: OutlineInputBorder(),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      SizedBox(height: 12),
+                                                      Column(
+                                                        children: [
+                                                          CheckboxListTile(
+                                                            title: Text("Mengandung minyak goreng"),
+                                                            value: containsOil,
+                                                            onChanged: (value) => setModalState(() => containsOil = value ?? false),
+                                                          ),
+                                                          CheckboxListTile(
+                                                            title: Text("Mengandung gula tambahan"),
+                                                            value: containsSugar,
+                                                            onChanged: (value) => setModalState(() => containsSugar = value ?? false),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      SizedBox(height: 12),
+                                                      Container(
+                                                          decoration: BoxDecoration(
+                                                            color: Color(0xff00bd7b),
+                                                            borderRadius: BorderRadius.circular(8),
+                                                          ),
+                                                          child: ElevatedButton(
+                                                            onPressed: () {
+                                                              addFood();
+                                                              Navigator.pop(context);
+                                                            },
+                                                            style: ElevatedButton.styleFrom(
+                                                              backgroundColor: Colors.transparent,
+                                                              shadowColor: Colors.transparent,
+                                                            ),
+                                                            child: Text(
+                                                              "Simpan",
                                                               style: TextStyle(
+                                                                color: Colors.white,
                                                                 fontSize: 16,
-                                                                fontWeight: FontWeight.w500,
                                                               ),
                                                             ),
-                                                            SizedBox(height: 4,),
-                                                            TextField(
-                                                              decoration: InputDecoration(
-                                                                labelText: "Jumlah Protein",
-                                                                border: OutlineInputBorder(),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        )
-                                                      ),
-                                                      SizedBox(width: 8,),
-                                                      Expanded(
-                                                        child: Column(
-                                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                                          children: [
-                                                            Text(
-                                                              "Karbohidrat (g)",
-                                                              style: TextStyle(
-                                                                fontSize: 16,
-                                                                fontWeight: FontWeight.w500,
-                                                              ),
-                                                            ),
-                                                            SizedBox(height: 4,),
-                                                            TextField(
-                                                              decoration: InputDecoration(
-                                                                labelText: "Jumlah Karbohidrat",
-                                                                border: OutlineInputBorder(),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        )
-                                                      ),
-                                                      SizedBox(width: 8,),
-                                                      Expanded(
-                                                        child: Column(
-                                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                                          children: [
-                                                            Text(
-                                                              "Serat (g)",
-                                                              style: TextStyle(
-                                                                fontSize: 16,
-                                                                fontWeight: FontWeight.w500,
-                                                              ),
-                                                            ),
-                                                            SizedBox(height: 4,),
-                                                            TextField(
-                                                              decoration: InputDecoration(
-                                                                labelText: "Jumlah Serat",
-                                                                border: OutlineInputBorder(),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        )
+                                                          )
                                                       )
                                                     ],
                                                   ),
-                                                  SizedBox(height: 12),
-                                                  Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Text(
-                                                        "Lemak (g)",
-                                                        style: TextStyle(
-                                                          fontSize: 16,
-                                                          fontWeight: FontWeight.w500,
-                                                        ),
-                                                      ),
-                                                      SizedBox(height: 4,),
-                                                      TextField(
-                                                        decoration: InputDecoration(
-                                                          labelText: "Jumlah Lemak",
-                                                          border: OutlineInputBorder(),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  SizedBox(height: 12),
-                                                  Column(
-                                                    children: [
-                                                      CheckboxListTile(
-                                                        title: Text("Mengandung minyak goreng"),
-                                                        value: false,
-                                                        onChanged: (_) {}
-                                                      ),
-                                                      CheckboxListTile(
-                                                          title: Text("Mengandung gula tambahan"),
-                                                          value: false,
-                                                          onChanged: (_) {}
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  SizedBox(height: 12),
-                                                  Container(
-                                                    decoration: BoxDecoration(
-                                                      color: Color(0xff00bd7b),
-                                                      borderRadius: BorderRadius.circular(8),
-                                                    ),
-                                                    child: ElevatedButton(
-                                                      onPressed: () {
-                                                        // aksi tambah
-                                                        Navigator.pop(context);
-                                                      },
-                                                      style: ElevatedButton.styleFrom(
-                                                        backgroundColor: Colors.transparent,
-                                                        shadowColor: Colors.transparent,
-                                                      ),
-                                                      child: Text(
-                                                        "Simpan",
-                                                        style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 16,
-                                                        ),
-                                                      ),
-                                                    )
-                                                  )
-                                                ],
-                                              ),
+                                                );
+                                              }
                                             );
                                           },
                                         );
@@ -910,7 +973,7 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
                                       children: [
                                         Row(
                                           children: [
-                                            if (food["addOil"] == 1)
+                                            if (food["addOil"])
                                               Container(
                                                 padding: EdgeInsets.all(4),
                                                 decoration: BoxDecoration(
@@ -921,9 +984,9 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
                                                   "🛢️ Minyak",
                                                 ),
                                               ),
-                                            if (food["addOil"] == 1)
+                                            if (food["addOil"])
                                               SizedBox(width: 4,),
-                                            if (food["addSugar"] == 1)
+                                            if (food["addSugar"])
                                               Container(
                                                 padding: EdgeInsets.all(4),
                                                 decoration: BoxDecoration(
@@ -1156,6 +1219,35 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
                     ),
 
                     SizedBox(height: 20,),
+
+                    // Navigation to Udara Segar
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Color(0xff00c755),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: ElevatedButton(
+                          onPressed: () => {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const UdaraSegar()),
+                            )
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                          ),
+                          child: Text(
+                            "Lanjut ke Udara Segar",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                      ),
+                    ),
                   ],
                 ),
               ),

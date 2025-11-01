@@ -2,6 +2,7 @@ import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/sehat/jalan_10000_langkah.dart';
 import 'package:employee_wellness/pages/sehat/pola_makan_sehat.dart';
 import 'package:employee_wellness/pages/sehat/sinar_matahari.dart';
+import 'package:employee_wellness/pages/sehat/udara_segar.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -506,94 +507,102 @@ class _SehatHomepageState extends State<SehatHomepage> {
                     SizedBox(height: 20,),
 
                     // Udara Segar
-                    Container(
-                      padding: EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Color(0xffeefaff),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              SizedBox.square(
-                                dimension: 60,
-                                child: Container(
-                                  padding: EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Color(0xff009bf4),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Icon(
-                                    FontAwesomeIcons.wind,
-                                    size: 36,
-                                    color: Colors.white,
+                    GestureDetector(
+                      onTap: () => {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const UdaraSegar()),
+                        ),
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Color(0xffeefaff),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                SizedBox.square(
+                                  dimension: 60,
+                                  child: Container(
+                                    padding: EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Color(0xff009bf4),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(
+                                      FontAwesomeIcons.wind,
+                                      size: 36,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              SizedBox(width: 20,),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Udara Segar",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    "Teknik Pernapasan",
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 12,),
-                          Text(
-                            "Pernapasan 4-7-8 dengan AR untuk relaksasi & fokus",
-                          ),
-                          SizedBox(height: 12,),
-                          Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
+                                SizedBox(width: 20,),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    SizedBox.square(
-                                      dimension: 10,
-                                      child: Container(
-                                        padding: EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: Color(0xff009bf4),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Text(""),
+                                    Text(
+                                      "Udara Segar",
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                    SizedBox(width: 8,),
-                                    Text("Target")
+                                    Text(
+                                      "Teknik Pernapasan",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                      ),
+                                    ),
                                   ],
                                 ),
-                                Text(
-                                  "5x seminggu",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                )
                               ],
                             ),
-                          )
-                        ],
+                            SizedBox(height: 12,),
+                            Text(
+                              "Pernapasan 4-7-8 dengan AR untuk relaksasi & fokus",
+                            ),
+                            SizedBox(height: 12,),
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      SizedBox.square(
+                                        dimension: 10,
+                                        child: Container(
+                                          padding: EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: Color(0xff009bf4),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Text(""),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8,),
+                                      Text("Target")
+                                    ],
+                                  ),
+                                  Text(
+                                    "5x seminggu",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  )
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
                       ),
                     ),
 
