@@ -1,5 +1,6 @@
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/sehat/jalan_10000_langkah.dart';
+import 'package:employee_wellness/pages/sehat/minum_air_8_gelas.dart';
 import 'package:employee_wellness/pages/sehat/pola_makan_sehat.dart';
 import 'package:employee_wellness/pages/sehat/sinar_matahari.dart';
 import 'package:employee_wellness/pages/sehat/udara_segar.dart';
@@ -215,6 +216,7 @@ class _SehatHomepageState extends State<SehatHomepage> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
@@ -257,6 +259,7 @@ class _SehatHomepageState extends State<SehatHomepage> {
                             SizedBox(height: 12,),
                             Text(
                               "Berjemur untuk vitamin D dan kesehatan tulang",
+                              textAlign: TextAlign.left,
                             ),
                             SizedBox(height: 12,),
                             Container(
@@ -317,6 +320,7 @@ class _SehatHomepageState extends State<SehatHomepage> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
@@ -359,6 +363,7 @@ class _SehatHomepageState extends State<SehatHomepage> {
                             SizedBox(height: 12,),
                             Text(
                               "Mencapai target langkah harian untuk kesehatan optimal",
+                              textAlign: TextAlign.left,
                             ),
                             SizedBox(height: 12,),
                             Container(
@@ -419,6 +424,7 @@ class _SehatHomepageState extends State<SehatHomepage> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
@@ -461,6 +467,7 @@ class _SehatHomepageState extends State<SehatHomepage> {
                             SizedBox(height: 12,),
                             Text(
                               "Tracking nutrisi harian dengan target tanpa minyak & gula",
+                              textAlign: TextAlign.left,
                             ),
                             SizedBox(height: 12,),
                             Container(
@@ -521,6 +528,7 @@ class _SehatHomepageState extends State<SehatHomepage> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
@@ -563,6 +571,7 @@ class _SehatHomepageState extends State<SehatHomepage> {
                             SizedBox(height: 12,),
                             Text(
                               "Pernapasan 4-7-8 dengan AR untuk relaksasi & fokus",
+                              textAlign: TextAlign.left,
                             ),
                             SizedBox(height: 12,),
                             Container(
@@ -609,94 +618,104 @@ class _SehatHomepageState extends State<SehatHomepage> {
                     SizedBox(height: 20,),
 
                     // Minum Air 8 Gelas
-                    Container(
-                      padding: EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Color(0xffedfaff),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              SizedBox.square(
-                                dimension: 60,
-                                child: Container(
-                                  padding: EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Color(0xff00cbf6),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Icon(
-                                    FontAwesomeIcons.glassWater,
-                                    size: 36,
-                                    color: Colors.white,
+                    GestureDetector(
+                      onTap: () => {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const MinumAir8Gelas()),
+                        ),
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Color(0xffedfaff),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                SizedBox.square(
+                                  dimension: 60,
+                                  child: Container(
+                                    padding: EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Color(0xff00cbf6),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(
+                                      FontAwesomeIcons.glassWater,
+                                      size: 36,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              SizedBox(width: 20,),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Minum Air 8 Gelas",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    "Hidrasi Optimal",
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 12,),
-                          Text(
-                            "Tracking konsumsi air harian untuk tubuh terhidrasi",
-                          ),
-                          SizedBox(height: 12,),
-                          Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
+                                SizedBox(width: 20,),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    SizedBox.square(
-                                      dimension: 10,
-                                      child: Container(
-                                        padding: EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: Color(0xff00cbf6),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Text(""),
+                                    Text(
+                                      "Minum Air 8 Gelas",
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                    SizedBox(width: 8,),
-                                    Text("Target")
+                                    Text(
+                                      "Hidrasi Optimal",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                      ),
+                                    ),
                                   ],
                                 ),
-                                Text(
-                                  "8 gelas/hari",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                )
                               ],
                             ),
-                          )
-                        ],
+                            SizedBox(height: 12,),
+                            Text(
+                              "Tracking konsumsi air harian untuk tubuh terhidrasi",
+                              textAlign: TextAlign.left,
+                            ),
+                            SizedBox(height: 12,),
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      SizedBox.square(
+                                        dimension: 10,
+                                        child: Container(
+                                          padding: EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: Color(0xff00cbf6),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Text(""),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8,),
+                                      Text("Target")
+                                    ],
+                                  ),
+                                  Text(
+                                    "8 gelas/hari",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  )
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
                       ),
                     ),
 
@@ -710,6 +729,7 @@ class _SehatHomepageState extends State<SehatHomepage> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
@@ -752,6 +772,7 @@ class _SehatHomepageState extends State<SehatHomepage> {
                           SizedBox(height: 12,),
                           Text(
                             "Tidur 7-8 jam mulai jam 9 malam untuk pemulihan optimal",
+                            textAlign: TextAlign.left,
                           ),
                           SizedBox(height: 12,),
                           Container(

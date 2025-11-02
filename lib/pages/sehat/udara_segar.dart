@@ -542,7 +542,7 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                                       child: Text(
                                         "1",
                                         style: TextStyle(
-                                          fontSize: 12,
+                                          fontSize: 16,
                                         ),
                                       ),
                                     ),
@@ -564,7 +564,7 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                                       child: Text(
                                         "2",
                                         style: TextStyle(
-                                          fontSize: 12,
+                                          fontSize: 16,
                                         ),
                                       ),
                                     ),
@@ -586,7 +586,7 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                                       child: Text(
                                         "3",
                                         style: TextStyle(
-                                          fontSize: 12,
+                                          fontSize: 16,
                                         ),
                                       ),
                                     ),
@@ -608,7 +608,7 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                                       child: Text(
                                         "4",
                                         style: TextStyle(
-                                          fontSize: 12,
+                                          fontSize: 16,
                                         ),
                                       ),
                                     ),
@@ -630,7 +630,7 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                                       child: Text(
                                         "5",
                                         style: TextStyle(
-                                          fontSize: 12,
+                                          fontSize: 16,
                                         ),
                                       ),
                                     ),
