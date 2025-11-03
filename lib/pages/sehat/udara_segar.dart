@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/pages/sehat/tidur_cukup.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -1094,14 +1095,14 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: Color(0xff00c755),
+                        color: Color(0xff715cff),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: ElevatedButton(
                           onPressed: () => {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const UdaraSegar()),
+                              MaterialPageRoute(builder: (context) => const TidurCukup()),
                             )
                           },
                           style: ElevatedButton.styleFrom(
@@ -1109,7 +1110,7 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                             shadowColor: Colors.transparent,
                           ),
                           child: Text(
-                            "Lanjut ke Udara Segar",
+                            "Lanjut ke Tidur Cukup",
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 20,
