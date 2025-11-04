@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/pages/sehat_homepage.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:pedometer/pedometer.dart';
@@ -89,7 +90,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
           children: [
             // Header
             Header(),
-            BottomHeader(color: Color(0xff1b8cfd), heading: "Jalan 10.000 Langkah", subHeading: "Aktivitas Fisik",),
+            BottomHeader(color: Color(0xff1b8cfd), heading: "Jalan 10.000 Langkah", subHeading: "Aktivitas Fisik", destination: SehatHomepage(),),
 
             // Main Content
             Expanded(

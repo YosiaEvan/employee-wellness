@@ -1,6 +1,7 @@
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/sehat/jalan_10000_langkah.dart';
+import 'package:employee_wellness/pages/sehat_homepage.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -30,7 +31,7 @@ class _SinarMatahariState extends State<SinarMatahari> {
           children: [
             // Header
             Header(),
-            BottomHeader(color: Color(0xfffb8f00), heading: "Sinar Matahari", subHeading: "Energi Alami",),
+            BottomHeader(color: Color(0xfffb8f00), heading: "Sinar Matahari", subHeading: "Energi Alami", destination: SehatHomepage(),),
 
             // Main Content
             Expanded(

@@ -1,6 +1,7 @@
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/sehat/udara_segar.dart';
+import 'package:employee_wellness/pages/sehat_homepage.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -98,7 +99,7 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
           children: [
             // Header
             Header(),
-            BottomHeader(color: Color(0xff00c368), heading: "Pola Makan Sehat", subHeading: "Nutrisi Seimbang",),
+            BottomHeader(color: Color(0xff00c368), heading: "Pola Makan Sehat", subHeading: "Nutrisi Seimbang", destination: SehatHomepage(),),
 
             // Main Content
             Expanded(

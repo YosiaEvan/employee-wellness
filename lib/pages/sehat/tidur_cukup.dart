@@ -104,7 +104,7 @@ class _TidurCukupState extends State<TidurCukup> {
           children: [
             // Header
             Header(),
-            BottomHeader(color: Color(0xff715cff), heading: "Tidur Cukup", subHeading: "Istirahat Berkualitas"),
+            BottomHeader(color: Color(0xff715cff), heading: "Tidur Cukup", subHeading: "Istirahat Berkualitas", destination: SehatHomepage(),),
 
             // Main Content
             Expanded(

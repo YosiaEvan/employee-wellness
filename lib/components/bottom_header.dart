@@ -5,12 +5,14 @@ class BottomHeader extends StatelessWidget {
   final Color color;
   final String heading;
   final String subHeading;
+  final Widget? destination;
 
   const BottomHeader({
     super.key,
     required this.color,
     required this.heading,
     required this.subHeading,
+    this.destination,
   });
 
   @override
@@ -70,18 +72,28 @@ class BottomHeader extends StatelessWidget {
                   )
                 ],
               ),
-              SizedBox.square(
-                dimension: 40,
-                child: Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-                  child: const Icon(
-                    FontAwesomeIcons.house,
-                    size: 20,
-                    color: Colors.white,
+              GestureDetector(
+                onTap: () {
+                  if (destination != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => destination!),
+                    );
+                  }
+                },
+                child: SizedBox.square(
+                  dimension: 40,
+                  child: Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(40),
+                    ),
+                    child: const Icon(
+                      FontAwesomeIcons.house,
+                      size: 20,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),

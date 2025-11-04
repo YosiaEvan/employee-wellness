@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/sehat/tidur_cukup.dart';
+import 'package:employee_wellness/pages/sehat_homepage.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -116,7 +117,7 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
           children: [
             // Header
             Header(),
-            BottomHeader(color: Color(0xff009bf4), heading: "Udara Segar", subHeading: "Teknik Pernapasan"),
+            BottomHeader(color: Color(0xff009bf4), heading: "Udara Segar", subHeading: "Teknik Pernapasan", destination: SehatHomepage(),),
 
             // Main Content
             Expanded(
