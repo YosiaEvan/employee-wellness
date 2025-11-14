@@ -1,4 +1,5 @@
 import 'package:employee_wellness/home.dart';
+import 'package:employee_wellness/register.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:convert';
@@ -38,9 +39,9 @@ class MyApp extends StatelessWidget {
             );
           } else {
             if (snapshot.data == true) {
-              return const HomePage();
+              return const LoginPage();
             } else {
-              return const HomePage();
+              return const LoginPage();
             }
           }
         }
@@ -136,17 +137,17 @@ class _LoginPageState extends State<LoginPage> {
                 const Text(
                   "Employee Wellness",
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
 
                 const Text(
                   "Kesehatan & Kebahagiaan Karyawan",
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 16,
                     color: Color(0xFF4A5565),
                   ),
                 ),
@@ -169,14 +170,15 @@ class _LoginPageState extends State<LoginPage> {
                       ]
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const Text(
                           "Masuk ke Akun Anda",
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 24,
                             fontWeight: FontWeight.w600,
                           ),
+                          textAlign: TextAlign.center,
                         ),
 
                         const SizedBox(height: 20),
@@ -218,7 +220,21 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
 
-                        const SizedBox(height: 16),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                              onPressed: () {},
+                              child: const Text(
+                                "Lupa kata sandi?",
+                                style: TextStyle(
+                                  color: Color(0xFF30B762),
+                                  fontSize: 16,
+                                ),
+                              )
+                          ),
+                        ),
+
+                        SizedBox(height: 8,),
 
                         SizedBox(
                           width: double.infinity,
@@ -245,17 +261,35 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
 
-                        const SizedBox(height: 10),
+                        SizedBox(height: 24,),
 
-                        TextButton(
-                          onPressed: () {},
-                          child: const Text(
-                            "Lupa kata sandi?",
-                            style: TextStyle(
-                              color: Color(0xFF30B762)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Belum punya akun? ",
+                              style: TextStyle(
+                                fontSize: 16,
+                              ),
                             ),
-                          )
-                        ),
+                            GestureDetector(
+                              onTap: () => {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const Register()),
+                                )
+                              },
+                              child: Text(
+                                "Registrasi",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.green,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
                       ],
                     ),
                   ),
