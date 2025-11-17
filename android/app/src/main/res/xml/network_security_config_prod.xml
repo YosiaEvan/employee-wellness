@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    PRODUCTION Network Security Config
+
+    File ini untuk production release.
+    Rename file ini menjadi "network_security_config.xml" sebelum build release.
+
+    Atau copy isi file ini ke network_security_config.xml untuk production build.
+-->
+<network-security-config>
+    <!-- Production: Only HTTPS, NO cleartext traffic -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Production domains - enforce HTTPS -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">wellness.netlify.app</domain>
+        <!-- Add more production domains here -->
+    </domain-config>
+</network-security-config>
+
