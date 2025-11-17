@@ -1,20 +1,49 @@
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/homepage_indicator.dart';
-import 'package:employee_wellness/main.dart';
 import 'package:employee_wellness/pages/health_profile.dart';
+import 'package:employee_wellness/services/profile_check_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  bool isProfileComplete = false;
+  bool isLoadingProfile = true;
+
+  @override
+  void initState() {
+    super.initState();
+    print("🏠 HomePage initState() called");
+    _checkProfileCompletion();
+  }
+
+  Future<void> _checkProfileCompletion() async {
+    setState(() {
+      isLoadingProfile = true;
+    });
+
+    final isComplete = await ProfileCheckService.checkProfileComplete();
+
+    setState(() {
+      isProfileComplete = isComplete;
+      isLoadingProfile = false;
+    });
+
+    print("📊 Profile status - Complete: $isComplete");
+  }
+
+  @override
   Widget build(BuildContext context) {
+    print("🏠 HomePage build() called");
+
     return Scaffold(
-      backgroundColor: Colors.white.withOpacity(0.98),
+      backgroundColor: Colors.white.withValues(alpha: 0.98),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,100 +126,117 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
 
-                    // Complete Profile
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const HealthProfile()),
-                        );
-                      },
-                      child: Container(
-                        padding: EdgeInsets.all(20),
-                        margin: EdgeInsets.symmetric(horizontal: 20),
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: Color(0xfffff8ed),
-                        ),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                SizedBox.square(
-                                  dimension: 60,
-                                  child: Container(
-                                    padding: EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Color(0xfff67200),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Icon(
-                                      Icons.person,
-                                      size: 36,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 20,),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Profil Kesehatan",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 16,
-                                        ),
+                    // Complete Profile - Only show if profile is NOT complete
+                    if (!isLoadingProfile && !isProfileComplete)
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const HealthProfile()),
+                          ).then((_) {
+                            // Refresh profile status after returning from Health Profile
+                            _checkProfileCompletion();
+                          });
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(20),
+                          margin: EdgeInsets.symmetric(horizontal: 20),
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: Color(0xfffff8ed),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  SizedBox.square(
+                                    dimension: 60,
+                                    child: Container(
+                                      padding: EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Color(0xfff67200),
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
-                                      Text(
-                                        "Lengkapi biodata kesehatan Anda",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                      child: const Icon(
+                                        Icons.person,
+                                        size: 36,
+                                        color: Colors.white,
                                       ),
-                                      Text(
-                                        "Untuk rekomendasi program yang personal",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(width: 20,),
-                                Icon(
-                                  FontAwesomeIcons.chevronRight,
-                                  size: 12,
-                                  color: Color(0xfff67200),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 12,),
-                            Row(
-                              children: [
-                                Icon(
-                                  FontAwesomeIcons.circleInfo,
-                                  size: 12,
-                                  color: Color(0xfff67200),
-                                ),
-                                SizedBox(width: 8,),
-                                Expanded(
-                                  child: Text(
-                                    "Segera lengkapi untuk mendapatkan rekomendasi terbaik",
-                                    style: TextStyle(
-                                      fontSize: 12,
                                     ),
                                   ),
-                                )
-                              ],
-                            ),
-                          ],
+                                  SizedBox(width: 20,),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Profil Kesehatan",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        Text(
+                                          "Lengkapi biodata kesehatan Anda",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        Text(
+                                          "Untuk rekomendasi program yang personal",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(width: 20,),
+                                  Icon(
+                                    FontAwesomeIcons.chevronRight,
+                                    size: 12,
+                                    color: Color(0xfff67200),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 12,),
+                              Row(
+                                children: [
+                                  Icon(
+                                    FontAwesomeIcons.circleInfo,
+                                    size: 12,
+                                    color: Color(0xfff67200),
+                                  ),
+                                  SizedBox(width: 8,),
+                                  Expanded(
+                                    child: Text(
+                                      "Segera lengkapi untuk mendapatkan rekomendasi terbaik",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+
+                    // Loading indicator while checking profile
+                    if (isLoadingProfile)
+                      Container(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xfff67200),
+                          ),
+                        ),
+                      ),
+
+
 
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),

@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb, Uint8List;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
+import 'dart:convert';
+import 'dart:io';
+import '../services/profile_health_service.dart';
+import '../services/auth_storage.dart';
+import '../main.dart';
 
 class HealthProfile extends StatefulWidget {
   const HealthProfile({super.key});
@@ -12,28 +18,315 @@ class HealthProfile extends StatefulWidget {
 }
 
 class _HealthProfileState extends State<HealthProfile> {
-  String? selectedOption = "A";
-  String? selectedDietType;
+  bool isLoading = false;
+  bool isLoadingData = true; // Loading state for fetching data
+
+  // Photo
+  File? _imageFile;
+  String? _photoBase64;
+  final ImagePicker _picker = ImagePicker();
+
+  // Form Controllers
+  final TextEditingController _namaController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  String? selectedOption = "L";
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
+  final TextEditingController _weightController = TextEditingController();
+  final TextEditingController _targetWeightController = TextEditingController();
+  final TextEditingController _targetCalorieController = TextEditingController();
+  String? selectedDietType;
+  String? selectedActivityLevel;
+
+  // Alergi, Kondisi Medis, Obat
   final TextEditingController _allergyController = TextEditingController();
   final TextEditingController _medicalConditionController = TextEditingController();
   final TextEditingController _drugController = TextEditingController();
-  // List<Map<String, dynamic>> options = [
-  //   {"label": "Hipertensi", "checked": false},
-  //   {"label": "Diabetes", "checked": false},
-  //   {"label": "Obesitas", "checked": false},
-  //   {"label": "Berat Badan diatas ideal", "checked": false},
-  //   {"label": "Jantung", "checked": false},
-  //   {"label": "Asam Urat", "checked": false},
-  //   {"label": "Kolesterol Tinggi", "checked": false},
-  //   {"label": "Penyakit Ginjal", "checked": false},
-  //   {"label": "Penyakit Autoimun", "checked": false},
-  //   {"label": "Lainnya", "checked": false},
-  // ];
   final List<String> _allergyList = [];
   final List<String> _medicalConditionList = [];
   final List<String> _drugList = [];
+
+  // Kontak Darurat
+  final TextEditingController _emergencyNameController = TextEditingController();
+  final TextEditingController _emergencyPhoneController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingProfile();
+  }
+
+  Future<void> _loadExistingProfile() async {
+    setState(() {
+      isLoadingData = true;
+    });
+
+    print("📥 Loading existing health profile...");
+
+    // Check if user has valid token/credentials
+    final hasCredentials = await _checkCredentials();
+    if (!hasCredentials) {
+      print("❌ No credentials found - redirecting to login");
+      setState(() {
+        isLoadingData = false;
+      });
+
+      if (mounted) {
+        _showSnackBar("Sesi Anda telah berakhir. Silakan login kembali.", Colors.red);
+
+        // Redirect to login after 2 seconds
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const MyApp()),
+              (route) => false,
+            );
+          }
+        });
+      }
+      return;
+    }
+
+    final result = await ProfileHealthService.getProfile();
+
+    setState(() {
+      isLoadingData = false;
+    });
+
+    // Check if needs login (401 or no credentials)
+    if (result["needsLogin"] == true) {
+      print("❌ Unauthorized - redirecting to login");
+
+      if (mounted) {
+        _showSnackBar("Sesi Anda telah berakhir. Silakan login kembali.", Colors.red);
+
+        // Redirect to login
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const MyApp()),
+              (route) => false,
+            );
+          }
+        });
+      }
+      return;
+    }
+
+    if (result["success"] && result["data"] != null) {
+      final data = result["data"];
+
+      print("✅ Profile data loaded successfully!");
+      print("Data: ${data['nama_lengkap']}, ${data['email']}");
+
+      // Populate form fields with existing data
+      setState(() {
+        _namaController.text = data['nama_lengkap'] ?? '';
+        _emailController.text = data['email'] ?? '';
+        selectedOption = data['jenis_kelamin'] ?? 'L';
+
+        // Load existing photo if available
+        if (data['foto'] != null && data['foto'].toString().isNotEmpty) {
+          print("📷 Existing photo found in profile");
+          print("📷 Photo length: ${data['foto'].toString().length}");
+          _photoBase64 = data['foto'];
+        }
+
+        // Format date from yyyy-MM-dd to dd/MM/yyyy for display
+        if (data['tanggal_lahir'] != null) {
+          try {
+            final date = DateTime.parse(data['tanggal_lahir']);
+            _dateController.text = DateFormat('dd/MM/yyyy').format(date);
+          } catch (e) {
+            _dateController.text = data['tanggal_lahir'];
+          }
+        }
+
+        _heightController.text = data['tinggi_badan']?.toString() ?? '';
+        _weightController.text = data['berat_badan']?.toString() ?? '';
+        _targetWeightController.text = data['target_berat']?.toString() ?? '';
+        _targetCalorieController.text = data['target_kalori']?.toString() ?? '';
+
+        selectedDietType = data['tipe_diet'];
+        selectedActivityLevel = data['level_aktivitas'];
+
+        // Populate lists
+        if (data['alergi'] != null && data['alergi'] is List) {
+          _allergyList.clear();
+          _allergyList.addAll(List<String>.from(data['alergi']));
+        }
+
+        if (data['kondisi_medis'] != null && data['kondisi_medis'] is List) {
+          _medicalConditionList.clear();
+          _medicalConditionList.addAll(List<String>.from(data['kondisi_medis']));
+        }
+
+        if (data['obat_dikonsumsi'] != null && data['obat_dikonsumsi'] is List) {
+          _drugList.clear();
+          _drugList.addAll(List<String>.from(data['obat_dikonsumsi']));
+        }
+
+        _emergencyNameController.text = data['nama_kontak_darurat'] ?? '';
+        _emergencyPhoneController.text = data['nomor_kontak_darurat'] ?? '';
+      });
+
+      _showSnackBar("Data profil berhasil dimuat", const Color(0xFF00C368));
+    } else {
+      print("ℹ️ No existing profile found or failed to load");
+      // No existing profile - this is fine for new users
+    }
+  }
+
+  Future<bool> _checkCredentials() async {
+    try {
+      final token = await AuthStorage.getToken();
+      final credentials = await AuthStorage.getCredentials();
+
+      // Check if token exists
+      if (token == null) {
+        print("⚠️ No token found");
+        return false;
+      }
+
+      // Check if credentials exist and have email/password
+      if (credentials == null ||
+          (credentials['email'] == null && credentials['password'] == null)) {
+        print("⚠️ No valid credentials found");
+        return false;
+      }
+
+      return true;
+    } catch (e) {
+      print("❌ Error checking credentials: $e");
+      return false;
+    }
+  }
+
+  /// Compress and encode image to base64
+  Future<String> _compressAndEncode(List<int> bytes) async {
+    try {
+      print("🗜️ Starting image compression...");
+      print("📦 Original size: ${bytes.length} bytes");
+
+      // Convert to Uint8List if needed
+      final uint8bytes = bytes is Uint8List ? bytes : Uint8List.fromList(bytes);
+
+      // Decode image
+      final image = img.decodeImage(uint8bytes);
+
+      if (image == null) {
+        print("❌ Failed to decode image");
+        throw Exception("Failed to decode image");
+      }
+
+      print("📏 Original dimensions: ${image.width}x${image.height}");
+
+      // Resize (max 512px for profile photo)
+      final resized = img.copyResize(image, width: 512);
+      print("📏 Resized dimensions: ${resized.width}x${resized.height}");
+
+      // Compress to JPEG quality 85
+      final compressed = img.encodeJpg(resized, quality: 85);
+      print("📦 Compressed size: ${compressed.length} bytes");
+      print("📊 Compression ratio: ${((1 - compressed.length / bytes.length) * 100).toStringAsFixed(1)}% reduction");
+
+      // Convert to base64
+      final base64String = base64Encode(compressed);
+      print("🔐 Base64 length: ${base64String.length} chars");
+
+      return base64String;
+    } catch (e) {
+      print("❌ Compression error: $e");
+      // Fallback: return original base64 if compression fails
+      return base64Encode(bytes);
+    }
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      print("📸 Starting image picker...");
+      print("Source: ${source == ImageSource.camera ? 'Camera' : 'Gallery'}");
+      print("Platform: ${kIsWeb ? 'Web' : 'Mobile'}");
+
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      print("📋 PickedFile result: ${pickedFile != null ? 'NOT NULL' : 'NULL'}");
+
+      if (pickedFile != null) {
+        print("✅ Image picked: ${pickedFile.path}");
+        print("📁 File name: ${pickedFile.name}");
+        print("📏 File path length: ${pickedFile.path.length}");
+
+        // Use XFile.readAsBytes() which works on both web and mobile
+        final bytes = await pickedFile.readAsBytes();
+        print("📦 Bytes read: ${bytes.length} bytes");
+
+        // Compress and encode image
+        final base64String = await _compressAndEncode(bytes);
+
+        setState(() {
+          // For mobile only, store File object for preview
+          if (!kIsWeb) {
+            _imageFile = File(pickedFile.path);
+            print("📱 Mobile: _imageFile set");
+          } else {
+            print("🌐 Web: _imageFile NOT set (as expected)");
+          }
+          _photoBase64 = base64String;
+          print("✅ _photoBase64 SET in state");
+        });
+
+        print("📊 Current state:");
+        print("   - _photoBase64: ${_photoBase64 != null ? 'NOT NULL (${_photoBase64!.length} chars)' : 'NULL'}");
+        print("   - _imageFile: ${_imageFile != null ? 'NOT NULL' : 'NULL'}");
+
+        _showSnackBar("Foto berhasil dipilih dan dikompres!", const Color(0xFF00C368));
+      } else {
+        print("ℹ️ Image selection cancelled by user");
+      }
+    } catch (e, stackTrace) {
+      print("❌ Error picking image: $e");
+      print("Stack trace: $stackTrace");
+      _showSnackBar("Gagal memilih foto.", Colors.red);
+    }
+  }
+
+  void _showImageSourceDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Pilih Sumber Foto"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: Colors.blue),
+                title: const Text("Kamera"),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: Colors.blue),
+                title: const Text("Galeri"),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
 
   Future<void> _selectDate(BuildContext context) async {
@@ -99,6 +392,130 @@ class _HealthProfileState extends State<HealthProfile> {
     });
   }
 
+  Future<void> _saveProfile() async {
+    // Validation
+    if (_namaController.text.trim().isEmpty) {
+      _showSnackBar("Nama lengkap harus diisi", Colors.red);
+      return;
+    }
+
+    if (_emailController.text.trim().isEmpty) {
+      _showSnackBar("Email harus diisi", Colors.red);
+      return;
+    }
+
+    if (_dateController.text.trim().isEmpty) {
+      _showSnackBar("Tanggal lahir harus diisi", Colors.red);
+      return;
+    }
+
+    if (_heightController.text.trim().isEmpty || _weightController.text.trim().isEmpty) {
+      _showSnackBar("Tinggi dan berat badan harus diisi", Colors.red);
+      return;
+    }
+
+    if (_targetWeightController.text.trim().isEmpty || _targetCalorieController.text.trim().isEmpty) {
+      _showSnackBar("Target berat dan kalori harus diisi", Colors.red);
+      return;
+    }
+
+    if (selectedDietType == null || (selectedDietType?.isEmpty ?? true)) {
+      _showSnackBar("Tipe diet harus dipilih", Colors.red);
+      return;
+    }
+
+    if (selectedActivityLevel == null || (selectedActivityLevel?.isEmpty ?? true)) {
+      _showSnackBar("Level aktivitas harus dipilih", Colors.red);
+      return;
+    }
+
+    if (_emergencyNameController.text.trim().isEmpty || _emergencyPhoneController.text.trim().isEmpty) {
+      _showSnackBar("Kontak darurat harus diisi", Colors.red);
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    print("💾 Preparing to save profile...");
+    print("📸 Photo state before save:");
+    print("   - _photoBase64: ${_photoBase64 != null ? 'NOT NULL (${_photoBase64!.length} chars)' : 'NULL'}");
+    print("   - Will send photo: ${_photoBase64 != null ? 'YES' : 'NO'}");
+
+    // Convert date format from dd/MM/yyyy to yyyy-MM-dd
+    String tanggalLahir = _dateController.text;
+    try {
+      final date = DateFormat('dd/MM/yyyy').parse(_dateController.text);
+      tanggalLahir = DateFormat('yyyy-MM-dd').format(date);
+    } catch (e) {
+      print("Date parse error: $e");
+    }
+
+    final result = await ProfileHealthService.saveProfile(
+      namaLengkap: _namaController.text.trim(),
+      email: _emailController.text.trim(),
+      jenisKelamin: selectedOption ?? "L",
+      tanggalLahir: tanggalLahir,
+      tinggiBadan: double.parse(_heightController.text.trim()),
+      beratBadan: double.parse(_weightController.text.trim()),
+      targetBerat: double.parse(_targetWeightController.text.trim()),
+      targetKalori: int.parse(_targetCalorieController.text.trim()),
+      tipeDiet: selectedDietType ?? '',
+      levelAktivitas: selectedActivityLevel ?? '',
+      alergi: _allergyList,
+      kondisiMedis: _medicalConditionList,
+      obatDikonsumsi: _drugList,
+      namaKontakDarurat: _emergencyNameController.text.trim(),
+      nomorKontakDarurat: _emergencyPhoneController.text.trim(),
+      fotoBase64: _photoBase64, // Send photo if available
+    );
+
+    setState(() {
+      isLoading = false;
+    });
+
+    if (result["success"]) {
+      _showSnackBar("Profil kesehatan berhasil disimpan!", const Color(0xFF00C368));
+
+      // Navigate back after 1 second
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      });
+    } else {
+      _showSnackBar(result["message"] ?? "Gagal menyimpan profil", Colors.red);
+    }
+  }
+
+  void _showSnackBar(String message, Color backgroundColor) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: backgroundColor,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _namaController.dispose();
+    _emailController.dispose();
+    _dateController.dispose();
+    _heightController.dispose();
+    _weightController.dispose();
+    _targetWeightController.dispose();
+    _targetCalorieController.dispose();
+    _allergyController.dispose();
+    _medicalConditionController.dispose();
+    _drugController.dispose();
+    _emergencyNameController.dispose();
+    _emergencyPhoneController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -142,8 +559,32 @@ class _HealthProfileState extends State<HealthProfile> {
               ),
             ),
 
+            // Loading Indicator
+            if (isLoadingData)
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      CircularProgressIndicator(
+                        color: Color(0xFF00C368),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        "Memuat data profil...",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
             // Main Content
-            Expanded(
+            if (!isLoadingData)
+              Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(20),
                 child: Column(
@@ -250,6 +691,7 @@ class _HealthProfileState extends State<HealthProfile> {
                                 ),
                                 const SizedBox(height: 4),
                                 TextField(
+                                  controller: _namaController,
                                   decoration: InputDecoration(
                                     hintText: "Masukan nama lengkap",
                                     isDense: true,
@@ -274,6 +716,8 @@ class _HealthProfileState extends State<HealthProfile> {
                                 ),
                                 const SizedBox(height: 4),
                                 TextField(
+                                  controller: _emailController,
+                                  keyboardType: TextInputType.emailAddress,
                                   decoration: InputDecoration(
                                     hintText: "email@example.com",
                                     isDense: true,
@@ -282,6 +726,122 @@ class _HealthProfileState extends State<HealthProfile> {
                                     ),
                                   ),
                                 )
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Foto Profil",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                GestureDetector(
+                                  onTap: _showImageSourceDialog,
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.all(20),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: Colors.grey.shade300,
+                                        width: 2,
+                                      ),
+                                      borderRadius: BorderRadius.circular(10),
+                                      color: Colors.grey.shade50,
+                                    ),
+                                    child: _photoBase64 == null && _imageFile == null
+                                        ? Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.cloud_upload_outlined,
+                                                size: 48,
+                                                color: Colors.grey.shade400,
+                                              ),
+                                              SizedBox(height: 8),
+                                              Text(
+                                                "Klik untuk upload foto",
+                                                style: TextStyle(
+                                                  color: Colors.grey.shade600,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              Text(
+                                                "JPG, PNG (Max 1MB)",
+                                                style: TextStyle(
+                                                  color: Colors.grey.shade500,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        : Stack(
+                                            children: [
+                                              Center(
+                                                child: ClipRRect(
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  child: _photoBase64 != null
+                                                      ? (kIsWeb
+                                                          ? Image.memory(
+                                                              base64Decode(_photoBase64!),
+                                                              height: 200,
+                                                              fit: BoxFit.cover,
+                                                            )
+                                                          : Image.memory(
+                                                              base64Decode(_photoBase64!),
+                                                              height: 200,
+                                                              fit: BoxFit.cover,
+                                                            ))
+                                                      : (_imageFile != null
+                                                          ? Image.file(
+                                                              _imageFile!,
+                                                              height: 200,
+                                                              fit: BoxFit.cover,
+                                                            )
+                                                          : Container(
+                                                              height: 200,
+                                                              color: Colors.grey.shade200,
+                                                              child: Icon(
+                                                                Icons.person,
+                                                                size: 80,
+                                                                color: Colors.grey.shade400,
+                                                              ),
+                                                            )),
+                                                ),
+                                              ),
+                                              Positioned(
+                                                top: 8,
+                                                right: 8,
+                                                child: GestureDetector(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      _imageFile = null;
+                                                      _photoBase64 = null;
+                                                    });
+                                                  },
+                                                  child: Container(
+                                                    padding: EdgeInsets.all(8),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.red,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: Icon(
+                                                      Icons.close,
+                                                      color: Colors.white,
+                                                      size: 20,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                  ),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 20),
@@ -450,7 +1010,8 @@ class _HealthProfileState extends State<HealthProfile> {
                                       ),
                                       SizedBox(height: 4),
                                       TextField(
-                                        controller: _heightController,
+                                        controller: _weightController,
+                                        keyboardType: TextInputType.number,
                                         decoration: InputDecoration(
                                             hintText: "65",
                                             isDense: true,
@@ -528,9 +1089,10 @@ class _HealthProfileState extends State<HealthProfile> {
                                       ),
                                       SizedBox(height: 4),
                                       TextField(
-                                        controller: _heightController,
+                                        controller: _targetWeightController,
+                                        keyboardType: TextInputType.number,
                                         decoration: InputDecoration(
-                                            hintText: "170",
+                                            hintText: "60",
                                             isDense: true,
                                             border: OutlineInputBorder(
                                               borderRadius: BorderRadius.circular(10),
@@ -554,9 +1116,10 @@ class _HealthProfileState extends State<HealthProfile> {
                                       ),
                                       SizedBox(height: 4),
                                       TextField(
-                                        controller: _heightController,
+                                        controller: _targetCalorieController,
+                                        keyboardType: TextInputType.number,
                                         decoration: InputDecoration(
-                                            hintText: "65",
+                                            hintText: "2000",
                                             isDense: true,
                                             border: OutlineInputBorder(
                                               borderRadius: BorderRadius.circular(10),
@@ -639,7 +1202,7 @@ class _HealthProfileState extends State<HealthProfile> {
                                       ),
                                       SizedBox(height: 4),
                                       DropdownButtonFormField<String>(
-                                        value: selectedDietType,
+                                        value: selectedActivityLevel,
                                         hint: const Text("Pilih"),
                                         isExpanded: true,
                                         decoration: InputDecoration(
@@ -677,7 +1240,7 @@ class _HealthProfileState extends State<HealthProfile> {
                                         ],
                                         onChanged: (value) {
                                           setState(() {
-                                            selectedDietType = value;
+                                            selectedActivityLevel = value;
                                           });
                                         },
                                       )
@@ -1131,6 +1694,7 @@ class _HealthProfileState extends State<HealthProfile> {
                                 ),
                                 const SizedBox(height: 4),
                                 TextField(
+                                  controller: _emergencyNameController,
                                   decoration: InputDecoration(
                                     hintText: "Nama keluarga/teman",
                                     isDense: true,
@@ -1155,6 +1719,8 @@ class _HealthProfileState extends State<HealthProfile> {
                                 ),
                                 const SizedBox(height: 4),
                                 TextField(
+                                  controller: _emergencyPhoneController,
+                                  keyboardType: TextInputType.phone,
                                   decoration: InputDecoration(
                                     hintText: "+62 812 3456 7890",
                                     isDense: true,
@@ -1224,7 +1790,7 @@ class _HealthProfileState extends State<HealthProfile> {
                       width: double.infinity,
                       height: 52,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: isLoading ? null : _saveProfile,
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
@@ -1232,7 +1798,9 @@ class _HealthProfileState extends State<HealthProfile> {
                           ),
                           backgroundColor: Colors.blue,
                         ),
-                        child: Text(
+                        child: isLoading
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : const Text(
                           "Simpan Profil Kesehatan",
                           style: TextStyle(
                             fontSize: 16,

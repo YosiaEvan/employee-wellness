@@ -3,7 +3,12 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:pinput/pinput.dart';
 
 class VerifyEmail extends StatefulWidget {
-  const VerifyEmail({super.key});
+  final String email;
+
+  const VerifyEmail({
+    super.key,
+    required this.email,
+  });
 
   @override
   State<VerifyEmail> createState() => _VerifyEmailState();
@@ -11,7 +16,7 @@ class VerifyEmail extends StatefulWidget {
 
 class _VerifyEmailState extends State<VerifyEmail> {
   bool isLoading = false;
-  int token = 0;
+  final TextEditingController otpController = TextEditingController();
 
   Future<void> verify() async {
     setState(() {
@@ -53,7 +58,7 @@ class _VerifyEmailState extends State<VerifyEmail> {
         border: Border.all(color: Colors.greenAccent),
         boxShadow: [
           BoxShadow(
-            color: Colors.blueAccent.withOpacity(0.15),
+            color: Colors.blueAccent.withValues(alpha: 0.15),
             offset: const Offset(2, 2),
             blurRadius: 4,
           ),
@@ -113,7 +118,7 @@ class _VerifyEmailState extends State<VerifyEmail> {
                            borderRadius: BorderRadius.circular(16),
                            boxShadow: [
                              BoxShadow(
-                               color: Colors.black.withOpacity(0.05),
+                               color: Colors.black.withValues(alpha: 0.05),
                                blurRadius: 10,
                                offset: const Offset(0, 5),
                              )
@@ -131,6 +136,7 @@ class _VerifyEmailState extends State<VerifyEmail> {
                            ),
                            const SizedBox(height: 20),
                            Pinput(
+                             controller: otpController,
                              length: 4,
                              defaultPinTheme: defaultPinTheme,
                              focusedPinTheme: defaultPinTheme.copyWith(
@@ -138,18 +144,13 @@ class _VerifyEmailState extends State<VerifyEmail> {
                                  border: Border.all(color: Colors.green, width: 2),
                                  boxShadow: [
                                    BoxShadow(
-                                     color: Colors.blue.withOpacity(0.25),
+                                     color: Colors.blue.withValues(alpha: 0.25),
                                      offset: const Offset(2, 2),
                                      blurRadius: 6,
                                    ),
                                  ],
                                ),
                              ),
-                             onCompleted: (pin) {
-                               setState(() {
-                                 token = int.parse(pin);
-                               });
-                             },
                            ),
                            const SizedBox(height: 20),
                            Row(

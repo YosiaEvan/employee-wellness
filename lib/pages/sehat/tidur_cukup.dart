@@ -1,6 +1,7 @@
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/sehat_homepage.dart';
+import 'package:employee_wellness/services/tidur_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -19,10 +20,92 @@ class _TidurCukupState extends State<TidurCukup> {
   final List<Map<String, dynamic>> sleepReports = [];
   final List<String> days = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
+  // API Status
+  bool isLoading = true;
+  bool sudahLapor = false;
+  Map<String, dynamic> todayData = {};
+
+  // Weekly Statistics from API
+  int jumlahHariDicatat = 0;
+  double rataRataDurasiJam = 0.0;
+  List<Map<String, dynamic>> kalenderMinggu = [];
+
   @override
   void initState() {
     super.initState();
     initializeDateFormatting('id_ID', null);
+    _cekStatusTidur();
+  }
+
+  Future<void> _cekStatusTidur() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final result = await TidurService.cekTidurHariIni();
+
+    setState(() {
+      sudahLapor = result['sudah_lapor'] ?? false;
+
+      if (result['data'] != null) {
+        final data = result['data'];
+
+        // Parse waktu_tidur and waktu_bangun timestamps to extract time only
+        String jamTidur = '21:00';
+        String jamBangun = '05:00';
+
+        if (data['waktu_tidur'] != null) {
+          final tidurTime = DateTime.parse(data['waktu_tidur']);
+          jamTidur = '${tidurTime.hour.toString().padLeft(2, '0')}:${tidurTime.minute.toString().padLeft(2, '0')}';
+        }
+
+        if (data['waktu_bangun'] != null) {
+          final bangunTime = DateTime.parse(data['waktu_bangun']);
+          jamBangun = '${bangunTime.hour.toString().padLeft(2, '0')}:${bangunTime.minute.toString().padLeft(2, '0')}';
+        }
+
+        // Calculate durasi_jam from durasi_menit
+        double durasiJam = 0;
+        if (data['durasi_menit'] != null) {
+          durasiJam = data['durasi_menit'] / 60.0;
+        }
+
+        todayData = {
+          'jam_tidur': jamTidur,
+          'jam_bangun': jamBangun,
+          'durasi_jam': durasiJam,
+          'durasi_menit': data['durasi_menit'],
+        };
+      }
+
+      // Parse minggu_ini data for statistics
+      if (result['minggu_ini'] != null) {
+        final mingguIni = result['minggu_ini'];
+
+        jumlahHariDicatat = mingguIni['jumlah_hari_dicatat'] ?? 0;
+
+        // Parse rata_rata_durasi_jam (could be string or double)
+        if (mingguIni['rata_rata_durasi_jam'] != null) {
+          if (mingguIni['rata_rata_durasi_jam'] is String) {
+            rataRataDurasiJam = double.tryParse(mingguIni['rata_rata_durasi_jam']) ?? 0.0;
+          } else {
+            rataRataDurasiJam = (mingguIni['rata_rata_durasi_jam'] as num).toDouble();
+          }
+        }
+
+        // Parse kalender array
+        if (mingguIni['kalender'] != null) {
+          kalenderMinggu = List<Map<String, dynamic>>.from(mingguIni['kalender']);
+        }
+      }
+
+      isLoading = false;
+    });
+
+    print("📊 Status tidur: ${sudahLapor ? 'SUDAH LAPOR' : 'BELUM LAPOR'}");
+    print("📊 Today data: $todayData");
+    print("📊 Jumlah hari dicatat: $jumlahHariDicatat / 7");
+    print("📊 Rata-rata durasi: $rataRataDurasiJam jam");
   }
 
   Duration get totalSleep {
@@ -72,29 +155,56 @@ class _TidurCukupState extends State<TidurCukup> {
   }
 
   Future<void> addSleepReport() async {
-    final dayName = await getShortDayName();
-    setState(() {
-      final duration = totalSleep;
-      final totalHours =
-          duration.inHours + (duration.inMinutes % 60) / 60.0;
+    // Gunakan waktu saat ini (waktu klik button)
+    final now = DateTime.now();
 
-      sleepReports.add({
-        "day": dayName,
-        "sleep": sleepController.text,
-        "wake": wakeController.text,
-        "duration": totalHours,
-      });
-    });
-    Navigator.pop(context);
+    // Format jam tidur dari waktu sekarang (contoh: 20:44)
+    final jamTidur = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
+    // Jam bangun default: 05:00
+    final jamBangun = '05:00';
+
+    print("🛏️ Auto-submitting sleep report:");
+    print("   Waktu klik: ${now.hour}:${now.minute}");
+    print("   Jam tidur: $jamTidur (waktu klik sekarang)");
+    print("   Jam bangun: $jamBangun (default 05:00)");
+
+
+    // POST to API
+    final result = await TidurService.laporTidur(
+      jamTidur: jamTidur,
+      jamBangun: jamBangun,
+    );
+
+    if (result['success']) {
+      // Reload data from API
+      await _cekStatusTidur();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ ${result['message']}'),
+            backgroundColor: Color(0xFF715cff),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Gagal menyimpan data'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final today = DateFormat('EEE', 'id_ID').format(DateTime.now());
-    final todayReport = sleepReports.firstWhere(
-        (r) => r['day'] == today,
-      orElse: () => {}
-    );
+    // Use data from API instead of local sleepReports
+    final hasTodayReport = sudahLapor && todayData.isNotEmpty;
 
     return Scaffold(
       backgroundColor: Color(0xffe4f0e4).withValues(alpha: 0.98),
@@ -141,7 +251,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                     borderRadius: BorderRadius.circular(40),
                                   ),
                                   child: Icon(
-                                    todayReport.isNotEmpty ? FontAwesomeIcons.circleCheck : FontAwesomeIcons.moon,
+                                    hasTodayReport ? FontAwesomeIcons.circleCheck : FontAwesomeIcons.moon,
                                     size: 36,
                                     color: Colors.white,
                                   ),
@@ -149,7 +259,7 @@ class _TidurCukupState extends State<TidurCukup> {
                               ),
                               SizedBox(height: 20,),
                               Text(
-                                todayReport.isNotEmpty ? "Tidur Hari Ini Tercatat" : "Belum Melaporkan Tidur",
+                                hasTodayReport ? "Tidur Hari Ini Tercatat" : "Belum Melaporkan Tidur",
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -157,13 +267,15 @@ class _TidurCukupState extends State<TidurCukup> {
                               ),
                               SizedBox(height: 8,),
                               Text(
-                                todayReport.isNotEmpty ? "${todayReport['duration']} jam tidur" : "Laporkan tidur kamu hari ini",
+                                hasTodayReport
+                                  ? "${(todayData['durasi_jam'] ?? 0).round()} jam tidur"
+                                  : "Laporkan tidur kamu hari ini",
                                 style: TextStyle(
                                   fontSize: 16,
                                 ),
                               ),
                               SizedBox(height: 20,),
-                              todayReport.isNotEmpty ? Row(
+                              hasTodayReport ? Row(
                                 spacing: 12,
                                 children: [
                                   Expanded(
@@ -200,7 +312,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                           ),
                                           SizedBox(height: 12,),
                                           Text(
-                                            todayReport['sleep'],
+                                            todayData['jam_tidur'] ?? '21:00',
                                             style: TextStyle(
                                               fontSize: 28,
                                               fontWeight: FontWeight.bold,
@@ -244,7 +356,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                           ),
                                           SizedBox(height: 12,),
                                           Text(
-                                            todayReport['wake'],
+                                            todayData['jam_bangun'] ?? '05:00',
                                             style: TextStyle(
                                               fontSize: 28,
                                               fontWeight: FontWeight.bold,
@@ -255,11 +367,9 @@ class _TidurCukupState extends State<TidurCukup> {
                                     )
                                   )
                                 ],
-                              ) : Row(
-                                children: [],
-                              ),
+                              ) : Row(children: [],),
                               SizedBox(height: 12,),
-                              todayReport.isNotEmpty ? Row(
+                              hasTodayReport ? Row(
                                 children: [
                                   Expanded(
                                       child: Container(
@@ -288,7 +398,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                                 ),
                                                 SizedBox(height: 12,),
                                                 Text(
-                                                  "${todayReport['duration'].toString()} jam",
+                                                  "${(todayData['durasi_jam'] ?? 0).round()} jam",
                                                   style: TextStyle(
                                                     fontSize: 28,
                                                     fontWeight: FontWeight.bold,
@@ -299,15 +409,31 @@ class _TidurCukupState extends State<TidurCukup> {
                                             Row(
                                               children: [
                                                 Icon(
-                                                  todayReport['duration'] > 8 ? FontAwesomeIcons.circleInfo : todayReport['duration'] < 7 ? FontAwesomeIcons.circleInfo : FontAwesomeIcons.circleCheck,
+                                                  (todayData['durasi_jam'] ?? 0) > 8
+                                                    ? FontAwesomeIcons.circleInfo
+                                                    : (todayData['durasi_jam'] ?? 0) < 7
+                                                      ? FontAwesomeIcons.circleInfo
+                                                      : FontAwesomeIcons.circleCheck,
                                                   size: 20,
-                                                  color: todayReport['duration'] > 8 ? Colors.green : todayReport['duration'] < 7 ? Colors.orange : Color(0xff00a63e),
+                                                  color: (todayData['durasi_jam'] ?? 0) > 8
+                                                    ? Colors.blue
+                                                    : (todayData['durasi_jam'] ?? 0) < 7
+                                                      ? Colors.orange
+                                                      : Color(0xff00a63e),
                                                 ),
                                                 SizedBox(width: 12,),
                                                 Text(
-                                                  todayReport['duration'] > 8 ? "Lebih" : todayReport['duration'] < 7 ? "Kurang" : "Ideal",
+                                                  (todayData['durasi_jam'] ?? 0) > 8
+                                                    ? "Lebih"
+                                                    : (todayData['durasi_jam'] ?? 0) < 7
+                                                      ? "Kurang"
+                                                      : "Ideal",
                                                   style: TextStyle(
-                                                    color: todayReport['duration'] > 8 ? Colors.green : todayReport['duration'] < 7 ? Colors.orange : Color(0xff00a63e),
+                                                    color: (todayData['durasi_jam'] ?? 0) > 8
+                                                      ? Colors.blue
+                                                      : (todayData['durasi_jam'] ?? 0) < 7
+                                                        ? Colors.orange
+                                                        : Color(0xff00a63e),
                                                     fontSize: 20,
                                                     fontWeight: FontWeight.w500,
                                                   ),
@@ -319,14 +445,12 @@ class _TidurCukupState extends State<TidurCukup> {
                                       )
                                   ),
                                 ],
-                              ) : Row(
-                                children: [],
-                              )
+                              ) : Row(children: [],)
                             ],
                           ),
-                          if (todayReport.isNotEmpty)
+                          if (hasTodayReport)
                           SizedBox(height: 20,),
-                          todayReport.isEmpty ? Container(
+                          !hasTodayReport ? Container(
                             padding: EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
@@ -337,181 +461,7 @@ class _TidurCukupState extends State<TidurCukup> {
                               borderRadius: BorderRadius.circular(20)
                             ),
                             child: ElevatedButton(
-                              onPressed: () {
-                                showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                                  ),
-                                  builder: (context) {
-                                    return StatefulBuilder(
-                                      builder: (context, setModalState) {
-                                        Duration calculateTotalSleep() {
-                                          try {
-                                            final sleepTime = DateFormat("HH:mm").parse(sleepController.text);
-                                            final wakeTime = DateFormat("HH:mm").parse(wakeController.text);
-
-                                            if (wakeTime.isBefore(sleepTime)) {
-                                              return wakeTime.add(Duration(hours: 24)).difference(sleepTime);
-                                            } else {
-                                              return wakeTime.difference(sleepTime);
-                                            }
-                                          } catch (_) {
-                                            return Duration.zero;
-                                          }
-                                        }
-
-                                        final total = calculateTotalSleep();
-                                        final totalHours = total.inHours;
-                                        final totalMinutes = total.inMinutes % 60;
-
-                                        return Padding(
-                                          padding: EdgeInsets.all(20),
-                                          child: Wrap(
-                                            runSpacing: 16,
-                                            children: [
-                                              Center(
-                                                child: Container(
-                                                  width: 60,
-                                                  height: 6,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.grey[300],
-                                                    borderRadius: BorderRadius.circular(3),
-                                                  ),
-                                                ),
-                                              ),
-                                              Text(
-                                                "Laporkan Tidur",
-                                                style: TextStyle(
-                                                  fontSize: 20,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                spacing: 4,
-                                                children: [
-                                                  TextField(
-                                                    controller: sleepController,
-                                                    readOnly: true,
-                                                    decoration: InputDecoration(
-                                                      labelText: "Jam Tidur",
-                                                      border: OutlineInputBorder(),
-                                                    ),
-                                                    onTap: () async {
-                                                      await _pickTime(sleepController);
-                                                      setModalState(() {});
-                                                    },
-                                                  ),
-                                                  Text(
-                                                    "Rekomendasi: 21:00 (9 malam)",
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      color: Color(0xff8a909c),
-                                                    ),
-                                                  )
-                                                ],
-                                              ),
-                                              Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                spacing: 4,
-                                                children: [
-                                                  TextField(
-                                                    controller: wakeController,
-                                                    readOnly: true,
-                                                    decoration: InputDecoration(
-                                                      labelText: "Jam Bangun",
-                                                      border: OutlineInputBorder(),
-                                                    ),
-                                                    onTap: () async {
-                                                      await _pickTime(wakeController);
-                                                      setModalState(() {});
-                                                    },
-                                                  ),
-                                                  Text(
-                                                    "Untuk tidur 8 jam: 05:00",
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      color: Color(0xff8a909c),
-                                                    ),
-                                                  )
-                                                ],
-                                              ),
-                                              Container(
-                                                width: double.infinity,
-                                                padding: EdgeInsets.all(16),
-                                                decoration: BoxDecoration(
-                                                  color: Color(0xfff2f3ff),
-                                                  border: Border.all(
-                                                    color: Color(0xffe9d4ff),
-                                                    width: 2,
-                                                    style: BorderStyle.solid
-                                                  ),
-                                                  borderRadius: BorderRadius.circular(20)
-                                                ),
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  spacing: 12,
-                                                  children: [
-                                                    Text(
-                                                      "Durasi Tidur",
-                                                      style: TextStyle(
-                                                        fontSize: 16,
-                                                        color: Color(0xff4a5565)
-                                                      ),
-                                                    ),
-                                                    Text(
-                                                      "$totalHours jam $totalMinutes menit",
-                                                      style: TextStyle(
-                                                          fontSize: 24,
-                                                          fontWeight: FontWeight.bold,
-                                                          color: Color(0xff6e11b0)
-                                                      ),
-                                                    ),
-                                                    Text(
-                                                      totalHours > 8 ? "ℹ️ Lebih dari 8 jam" : totalHours < 7 ? "⚠️ Kurang dari 7 jam" : "✓ Durasi ideal!",
-                                                      style: TextStyle(
-                                                        fontSize: 16,
-                                                        color: totalHours > 8 ? Colors.blue : totalHours < 7 ? Colors.orange : Colors.green,
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                              ),
-                                              Container(
-                                                width: double.infinity,
-                                                decoration: BoxDecoration(
-                                                  gradient: LinearGradient(
-                                                    colors: [Color(0xff5039f6), Color(0xff9811fb)],
-                                                    begin: Alignment.centerLeft,
-                                                    end: Alignment.centerRight,
-                                                  ),
-                                                  borderRadius: BorderRadius.circular(20)
-                                                ),
-                                                child: ElevatedButton(
-                                                  onPressed: addSleepReport,
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: Colors.transparent,
-                                                    shadowColor: Colors.transparent,
-                                                  ),
-                                                  child: Text(
-                                                    "Simpan",
-                                                    style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 16,
-                                                    ),
-                                                  )
-                                                ),
-                                              )
-                                            ],
-                                          ),
-                                        );
-                                      }
-                                    );
-                                  }
-                                );
-                              },
+                              onPressed: addSleepReport,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.transparent,
                                 shadowColor: Colors.transparent,
@@ -520,7 +470,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
-                                    FontAwesomeIcons.clock,
+                                    FontAwesomeIcons.moon,
                                     size: 16,
                                     color: Colors.white,
                                   ),
@@ -617,7 +567,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                   child: Column(
                                     children: [
                                       Text(
-                                        "$totalDays",
+                                        "$jumlahHariDicatat",
                                         style: TextStyle(
                                           color: Color(0xff4f39f6),
                                           fontWeight: FontWeight.bold,
@@ -649,7 +599,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                   child: Column(
                                     children: [
                                       Text(
-                                        "$targetReached",
+                                        "${kalenderMinggu.where((k) => k['sudah_dicatat'] == true && (k['durasi_menit'] ?? 0) >= 420).length}",
                                         style: TextStyle(
                                           color: Color(0xff00a63e),
                                           fontWeight: FontWeight.bold,
@@ -686,7 +636,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                   child: Column(
                                     children: [
                                       Text(
-                                        "$averageHours",
+                                        "${rataRataDurasiJam.toStringAsFixed(1)}",
                                         style: TextStyle(
                                           color: Color(0xff155dfc),
                                           fontWeight: FontWeight.bold,
@@ -717,7 +667,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                 )
                               ),
                               Text(
-                                "${sleepReports.length}/7 hari",
+                                "$jumlahHariDicatat/7 hari",
                                 style: TextStyle(
                                   color: Colors.grey,
                                   fontSize: 16,
@@ -729,7 +679,7 @@ class _TidurCukupState extends State<TidurCukup> {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: LinearProgressIndicator(
-                              value: sleepReports.length / 7,
+                              value: jumlahHariDicatat / 7,
                               color: Colors.purple,
                               backgroundColor: Colors.grey[300],
                               minHeight: 10,
@@ -741,13 +691,25 @@ class _TidurCukupState extends State<TidurCukup> {
                               ListView.builder(
                                 shrinkWrap: true,
                                 physics: NeverScrollableScrollPhysics(),
-                                itemCount: days.length,
+                                itemCount: kalenderMinggu.length,
                                 itemBuilder: (context, index) {
-                                  final day = days[index];
-                                  final report = sleepReports.firstWhere(
-                                    (r) => r['day'] == day,
-                                    orElse: () => {},
-                                  );
+                                  final hari = kalenderMinggu[index];
+                                  final sudahDicatat = hari['sudah_dicatat'] ?? false;
+                                  final durasiMenit = hari['durasi_menit'] ?? 0;
+                                  final durasiJam = durasiMenit / 60.0;
+
+                                  String waktuTidur = '-';
+                                  String waktuBangun = '-';
+
+                                  if (sudahDicatat && hari['waktu_tidur'] != null) {
+                                    final tidurTime = DateTime.parse(hari['waktu_tidur']);
+                                    waktuTidur = '${tidurTime.hour.toString().padLeft(2, '0')}:${tidurTime.minute.toString().padLeft(2, '0')}';
+                                  }
+
+                                  if (sudahDicatat && hari['waktu_bangun'] != null) {
+                                    final bangunTime = DateTime.parse(hari['waktu_bangun']);
+                                    waktuBangun = '${bangunTime.hour.toString().padLeft(2, '0')}:${bangunTime.minute.toString().padLeft(2, '0')}';
+                                  }
 
                                   return Container(
                                     margin: const EdgeInsets.symmetric(vertical: 4),
@@ -760,16 +722,20 @@ class _TidurCukupState extends State<TidurCukup> {
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(day,
-                                            style: const TextStyle(
-                                                fontSize: 16, fontWeight: FontWeight.w600)),
-                                        report.isEmpty
+                                        Text(
+                                          hari['hari'] ?? 'Hari',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600
+                                          )
+                                        ),
+                                        !sudahDicatat
                                             ? const Text("Belum dilaporkan",
                                             style: TextStyle(
                                                 color: Colors.grey,
                                                 fontStyle: FontStyle.italic))
                                             : Text(
-                                          "${report['sleep']} - ${report['wake']} (${report['duration']}h)",
+                                          "$waktuTidur - $waktuBangun (${durasiJam.round()}h)",
                                           style: const TextStyle(
                                               color: Color(0xff6e11b0),
                                               fontWeight: FontWeight.w500

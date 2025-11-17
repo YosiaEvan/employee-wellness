@@ -6,6 +6,7 @@ import 'package:employee_wellness/pages/sehat/pola_makan_sehat.dart';
 import 'package:employee_wellness/pages/sehat/sinar_matahari.dart';
 import 'package:employee_wellness/pages/sehat/tidur_cukup.dart';
 import 'package:employee_wellness/pages/sehat/udara_segar.dart';
+import 'package:employee_wellness/pages/sehat/sehat_kpi_dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -85,18 +86,26 @@ class _SehatHomepageState extends State<SehatHomepage> {
                           )
                         ],
                       ),
-                      SizedBox.square(
-                        dimension: 40,
-                        child: Container(
-                          padding: EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(40),
-                          ),
-                          child: const Icon(
-                            FontAwesomeIcons.heart,
-                            size: 20,
-                            color: Colors.white,
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const SehatKPIDashboard()),
+                          );
+                        },
+                        child: SizedBox.square(
+                          dimension: 40,
+                          child: Container(
+                            padding: EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(40),
+                            ),
+                            child: const Icon(
+                              FontAwesomeIcons.chartLine,
+                              size: 20,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),

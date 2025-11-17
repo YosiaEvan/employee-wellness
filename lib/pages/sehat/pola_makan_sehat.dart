@@ -1,11 +1,12 @@
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/smart_food_search.dart';
 import 'package:employee_wellness/pages/sehat/udara_segar.dart';
 import 'package:employee_wellness/pages/sehat_homepage.dart';
+import 'package:employee_wellness/services/tracking_kalori_service.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
 
 class PolaMakanSehat extends StatefulWidget {
   const PolaMakanSehat({super.key});
@@ -15,78 +16,202 @@ class PolaMakanSehat extends StatefulWidget {
 }
 
 class _PolaMakanSehatState extends State<PolaMakanSehat> {
-  double get totalCalories {
-    return foods.fold(0, (sum, item) => sum + (item['calories'] ?? 0));
-  }
-  double targetCalories = 2000;
-  double get progress {
-    if (targetCalories == 0) return 0;
-    return ((totalCalories / targetCalories) * 100).clamp(0, 100);
-  }
-  double get remainingCalories {
-    return (targetCalories - totalCalories).clamp(0, targetCalories);
-  }
-  double get totalProtein => foods.fold(0, (sum, food) => sum + (food["proteins"] ?? 0));
-  double get totalCarb => foods.fold(0, (sum, food) => sum + (food["carbs"] ?? 0));
-  double get totalFiber => foods.fold(0, (sum, food) => sum + (food["fibers"] ?? 0));
-  double get totalAll => totalProtein + totalCarb + totalFiber;
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController calorieController = TextEditingController();
-  final TextEditingController proteinController = TextEditingController();
-  final TextEditingController carbController = TextEditingController();
-  final TextEditingController fiberController = TextEditingController();
-  final TextEditingController fatController = TextEditingController();
-  bool containsSugar = false;
-  bool containsOil = false;
+  bool isLoading = true;
+
+  // New API structure
+  Map<String, dynamic> trackingData = {};
+  Map<String, dynamic> targetData = {};
+  Map<String, dynamic> konsumsiData = {};
+  Map<String, dynamic> progressData = {};
+  Map<String, dynamic> sisaData = {};
+  Map<String, dynamic> daftarMakanan = {
+    'sarapan': [],
+    'makan_siang': [],
+    'makan_malam': [],
+    'snack': [],
+  };
+  int totalItem = 0;
+
+  // Legacy - for backward compatibility
   List<Map<String, dynamic>> foods = [];
 
-  void addFood() {
-    if (nameController.text.isEmpty || calorieController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Nama dan Kalori wajib diisi!")),
-      );
-      return;
-    }
+  // Health Challenge
+  int hariMakanBerminyak = 0;
+  int hariMakanBergula = 0;
+  int hariTanpaMinyak = 0;
+  int hariTanpaGula = 0;
+  bool isChallengeAchieved = false;
 
-    setState(() {
-      foods.add({
-        "name": nameController.text,
-        "calories": double.tryParse(calorieController.text) ?? 0,
-        "proteins": double.tryParse(proteinController.text) ?? 0,
-        "carbs": double.tryParse(carbController.text) ?? 0,
-        "fibers": double.tryParse(fiberController.text) ?? 0,
-        "fat": double.tryParse(fatController.text) ?? 0,
-        "addOil": containsOil,
-        "addSugar": containsSugar,
-        "time": DateFormat('HH:mm').format(DateTime.now()),
-      });
-    });
+  double get totalCalories => konsumsiData['kalori']?.toDouble() ?? 0.0;
+  double get targetCalories => targetData['kalori']?.toDouble() ?? 2000.0;
+  double get remainingCalories => sisaData['kalori']?.toDouble() ?? 0.0;
+  double get progress => progressData['kalori']?.toDouble() ?? 0.0;
 
-    nameController.clear();
-    calorieController.clear();
-    proteinController.clear();
-    carbController.clear();
-    fiberController.clear();
-    fatController.clear();
-    setState(() {
-      containsOil = false;
-      containsSugar = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Makanan berhasil ditambahkan!")),
-    );
-  }
+  // Nutrition from konsumsi
+  double get totalProtein => konsumsiData['protein']?.toDouble() ?? 0.0;
+  double get totalCarb => konsumsiData['karbohidrat']?.toDouble() ?? 0.0;
+  double get totalFiber => konsumsiData['serat']?.toDouble() ?? 0.0;
+  double get totalAll => totalProtein + totalCarb + totalFiber;
 
   @override
-  void dispose() {
-    nameController.dispose();
-    calorieController.dispose();
-    proteinController.dispose();
-    carbController.dispose();
-    fiberController.dispose();
-    fatController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    loadTodayFood();
+  }
+
+  Future<void> loadTodayFood() async {
+    setState(() => isLoading = true);
+
+    final result = await TrackingKaloriService.getTrackingHariIni();
+
+    setState(() {
+      isLoading = false;
+      if (result["success"] && result["data"] != null) {
+        trackingData = result["data"];
+        targetData = trackingData['target'] ?? {};
+        konsumsiData = trackingData['konsumsi'] ?? {};
+        progressData = trackingData['progress'] ?? {};
+        sisaData = trackingData['sisa'] ?? {};
+
+        // Parse daftar_makanan
+        final daftarMakananRaw = trackingData['daftar_makanan'] ?? {};
+        daftarMakanan = {
+          'sarapan': List<Map<String, dynamic>>.from(daftarMakananRaw['sarapan'] ?? []),
+          'makan_siang': List<Map<String, dynamic>>.from(daftarMakananRaw['makan_siang'] ?? []),
+          'makan_malam': List<Map<String, dynamic>>.from(daftarMakananRaw['makan_malam'] ?? []),
+          'snack': List<Map<String, dynamic>>.from(daftarMakananRaw['snack'] ?? []),
+        };
+
+        totalItem = trackingData['total_item'] ?? 0;
+
+        // Flatten for legacy compatibility
+        foods = [];
+        daftarMakanan.forEach((jenis, items) {
+        foods.addAll(items);
+      });
+    }
+
+    // Check health challenge
+    _checkHealthChallenge();
+  });
+}
+
+void _checkHealthChallenge() {
+  // Get riwayat_seminggu data from API
+  final riwayatSeminggu = trackingData['riwayat_seminggu'] ?? {};
+
+  hariMakanBerminyak = riwayatSeminggu['hari_makan_berminyak'] ?? 0;
+  hariMakanBergula = riwayatSeminggu['hari_makan_bergula'] ?? 0;
+
+  // Calculate days WITHOUT oil and sugar in a week (7 days)
+  hariTanpaMinyak = 7 - hariMakanBerminyak;
+  hariTanpaGula = 7 - hariMakanBergula;
+
+  // Challenge achieved if both targets met: minimal 2 days without oil AND 2 days without sugar in 7 days
+  // This means maximum 5 days with oil OR 5 days with sugar
+  if (hariTanpaMinyak >= 2 && hariTanpaGula >= 2) {
+    isChallengeAchieved = true;
+  } else {
+    isChallengeAchieved = false;
+  }
+
+  print("🎯 Health Challenge Check (Weekly Data):");
+  print("   - Hari makan berminyak: $hariMakanBerminyak / 7");
+  print("   - Hari makan bergula: $hariMakanBergula / 7");
+  print("   - Hari tanpa minyak: $hariTanpaMinyak / 7");
+  print("   - Hari tanpa gula: $hariTanpaGula / 7");
+  print("   - Challenge achieved: $isChallengeAchieved (target: 2 hari tanpa minyak & 2 hari tanpa gula)");
+}
+
+  Future<void> addFoodFromDatabase(Map<String, dynamic> result) async {
+    // Show loading indicator
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              SizedBox(width: 12),
+              Text('Menyimpan data...'),
+            ],
+          ),
+          duration: Duration(seconds: 1),
+          backgroundColor: Colors.blue,
+        ),
+      );
+    }
+
+    // Wait a moment for the snackbar to show
+    await Future.delayed(Duration(milliseconds: 500));
+
+    // Reload data immediately for real-time update
+    await loadTodayFood();
+
+    // Force rebuild UI
+    if (mounted) {
+      setState(() {
+        // This will trigger UI rebuild with new data
+      });
+    }
+
+    // Show result notification
+    if (result["success"]) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(FontAwesomeIcons.check, color: Colors.white, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(result['message'] ?? 'Berhasil menambahkan')),
+                  ],
+                ),
+                if (result['data'] != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '📊 Total: ${result['data']['total_kalori_hari_ini']} / ${result['data']['target_kalori']} kkal',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  Text(
+                    'Sisa: ${result['data']['sisa_kalori']} kkal',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
+                if (result['warning'] != null)
+                  Text('⚠️ ${result['warning']}', style: const TextStyle(fontSize: 12)),
+              ],
+            ),
+            backgroundColor: const Color(0xFF00C368),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result["message"] ?? 'Gagal menambahkan'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+
+    // Log untuk debugging
+    print("✅ Food added, UI refreshed with new data");
+    print("   Total items: $totalItem");
+    print("   Total calories: ${totalCalories.toStringAsFixed(1)}");
   }
 
   @override
@@ -622,206 +747,9 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
                                     ),
                                     ElevatedButton(
                                       onPressed: () {
-                                        showModalBottomSheet(
+                                        showDialog(
                                           context: context,
-                                          isScrollControlled: true,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                                          ),
-                                          builder: (context) {
-                                            return StatefulBuilder(
-                                              builder: (context, setModalState) {
-                                                return Padding(
-                                                  padding: EdgeInsets.all(20),
-                                                  child: Column(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      Text(
-                                                        "Tambah Makanan",
-                                                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                                      ),
-                                                      SizedBox(height: 12),
-                                                      Column(
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                        children: [
-                                                          Text(
-                                                            "Nama Makanan",
-                                                            style: TextStyle(
-                                                              fontSize: 16,
-                                                              fontWeight: FontWeight.w500,
-                                                            ),
-                                                          ),
-                                                          SizedBox(height: 4,),
-                                                          TextField(
-                                                            controller: nameController,
-                                                            decoration: InputDecoration(
-                                                              labelText: "Nama makanan",
-                                                              border: OutlineInputBorder(),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      SizedBox(height: 12),
-                                                      Column(
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                        children: [
-                                                          Text(
-                                                            "Kalori (kkal)",
-                                                            style: TextStyle(
-                                                              fontSize: 16,
-                                                              fontWeight: FontWeight.w500,
-                                                            ),
-                                                          ),
-                                                          SizedBox(height: 4,),
-                                                          TextField(
-                                                            controller: calorieController,
-                                                            decoration: InputDecoration(
-                                                              labelText: "Jumlah Kalori",
-                                                              border: OutlineInputBorder(),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      SizedBox(height: 12),
-                                                      Row(
-                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                        children: [
-                                                          Expanded(
-                                                              child: Column(
-                                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                                children: [
-                                                                  Text(
-                                                                    "Protein (g)",
-                                                                    style: TextStyle(
-                                                                      fontSize: 16,
-                                                                      fontWeight: FontWeight.w500,
-                                                                    ),
-                                                                  ),
-                                                                  SizedBox(height: 4,),
-                                                                  TextField(
-                                                                    controller: proteinController,
-                                                                    decoration: InputDecoration(
-                                                                      labelText: "Jumlah Protein",
-                                                                      border: OutlineInputBorder(),
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              )
-                                                          ),
-                                                          SizedBox(width: 8,),
-                                                          Expanded(
-                                                              child: Column(
-                                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                                children: [
-                                                                  Text(
-                                                                    "Karbohidrat (g)",
-                                                                    style: TextStyle(
-                                                                      fontSize: 16,
-                                                                      fontWeight: FontWeight.w500,
-                                                                    ),
-                                                                  ),
-                                                                  SizedBox(height: 4,),
-                                                                  TextField(
-                                                                    controller: carbController,
-                                                                    decoration: InputDecoration(
-                                                                      labelText: "Jumlah Karbohidrat",
-                                                                      border: OutlineInputBorder(),
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              )
-                                                          ),
-                                                          SizedBox(width: 8,),
-                                                          Expanded(
-                                                              child: Column(
-                                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                                children: [
-                                                                  Text(
-                                                                    "Serat (g)",
-                                                                    style: TextStyle(
-                                                                      fontSize: 16,
-                                                                      fontWeight: FontWeight.w500,
-                                                                    ),
-                                                                  ),
-                                                                  SizedBox(height: 4,),
-                                                                  TextField(
-                                                                    controller: fiberController,
-                                                                    decoration: InputDecoration(
-                                                                      labelText: "Jumlah Serat",
-                                                                      border: OutlineInputBorder(),
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              )
-                                                          )
-                                                        ],
-                                                      ),
-                                                      SizedBox(height: 12),
-                                                      Column(
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                        children: [
-                                                          Text(
-                                                            "Lemak (g)",
-                                                            style: TextStyle(
-                                                              fontSize: 16,
-                                                              fontWeight: FontWeight.w500,
-                                                            ),
-                                                          ),
-                                                          SizedBox(height: 4,),
-                                                          TextField(
-                                                            controller: fatController,
-                                                            decoration: InputDecoration(
-                                                              labelText: "Jumlah Lemak",
-                                                              border: OutlineInputBorder(),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      SizedBox(height: 12),
-                                                      Column(
-                                                        children: [
-                                                          CheckboxListTile(
-                                                            title: Text("Mengandung minyak goreng"),
-                                                            value: containsOil,
-                                                            onChanged: (value) => setModalState(() => containsOil = value ?? false),
-                                                          ),
-                                                          CheckboxListTile(
-                                                            title: Text("Mengandung gula tambahan"),
-                                                            value: containsSugar,
-                                                            onChanged: (value) => setModalState(() => containsSugar = value ?? false),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      SizedBox(height: 12),
-                                                      Container(
-                                                          decoration: BoxDecoration(
-                                                            color: Color(0xff00bd7b),
-                                                            borderRadius: BorderRadius.circular(8),
-                                                          ),
-                                                          child: ElevatedButton(
-                                                            onPressed: () {
-                                                              addFood();
-                                                              Navigator.pop(context);
-                                                            },
-                                                            style: ElevatedButton.styleFrom(
-                                                              backgroundColor: Colors.transparent,
-                                                              shadowColor: Colors.transparent,
-                                                            ),
-                                                            child: Text(
-                                                              "Simpan",
-                                                              style: TextStyle(
-                                                                color: Colors.white,
-                                                                fontSize: 16,
-                                                              ),
-                                                            ),
-                                                          )
-                                                      )
-                                                    ],
-                                                  ),
-                                                );
-                                              }
-                                            );
-                                          },
+                                          builder: (context) => _buildSmartSearchDialog(),
                                         );
                                       },
                                       style: ElevatedButton.styleFrom(
@@ -861,6 +789,12 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
                             physics: NeverScrollableScrollPhysics(),
                             itemBuilder: (context, index) {
                               final food = foods[index];
+                              final nama = food['nama_makanan'] ?? 'Unknown';
+                              final porsi = food['porsi']?.toDouble() ?? 1.0;
+                              final totalKalori = food['total_kalori']?.toDouble() ?? 0.0;
+                              final totalProtein = food['total_protein']?.toDouble() ?? 0.0;
+                              final totalKarbo = food['total_karbohidrat']?.toDouble() ?? 0.0;
+                              final totalSerat = food['total_serat']?.toDouble() ?? 0.0;
 
                               return Container(
                                 width: double.infinity,
@@ -875,105 +809,92 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
                                     )
                                 ),
                                 child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                          food["name"],
-                                          style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
+                                        Expanded(
+                                          child: Text(
+                                            nama,
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
-                                        Text(
-                                          food["time"].toString(),
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
+                                        Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Color(0xFFFFECB3),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            "${porsi}x porsi",
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.orange.shade900,
+                                            ),
                                           ),
                                         ),
                                       ],
                                     ),
-                                    SizedBox(height: 8,),
+                                    SizedBox(height: 8),
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Row(
-                                          children: [
-                                            if (food["addOil"])
-                                              Container(
-                                                padding: EdgeInsets.all(4),
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(8),
-                                                  color: Color(0xfffff085),
-                                                ),
-                                                child: Text(
-                                                  "🛢️ Minyak",
-                                                ),
-                                              ),
-                                            if (food["addOil"])
-                                              SizedBox(width: 4,),
-                                            if (food["addSugar"])
-                                              Container(
-                                                padding: EdgeInsets.all(4),
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(8),
-                                                  color: Color(0xfffccee8),
-                                                ),
-                                                child: Text(
-                                                  "🍬 Gula",
-                                                ),
-                                              )
-                                          ],
-                                        ),
+                                        Icon(FontAwesomeIcons.fire, size: 14, color: Colors.red),
+                                        SizedBox(width: 6),
                                         Text(
-                                          "${food["calories"]} kkal",
+                                          "${totalKalori.toStringAsFixed(1)} kkal",
                                           style: TextStyle(
                                             color: Colors.red,
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 16,
+                                            fontSize: 15,
                                           ),
-                                        )
+                                        ),
                                       ],
                                     ),
-                                    SizedBox(height: 8,),
+                                    SizedBox(height: 12),
                                     Row(
                                       children: [
                                         Container(
                                           padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                           decoration: BoxDecoration(
                                             color: Color(0xffffe2e2),
-                                            borderRadius: BorderRadius.circular(4),
+                                            borderRadius: BorderRadius.circular(6),
                                           ),
                                           child: Text(
-                                            "P: ${food["proteins"]}g",
+                                            "P: ${totalProtein.toStringAsFixed(1)}g",
+                                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                                           ),
                                         ),
-                                        SizedBox(width: 4,),
+                                        SizedBox(width: 6),
                                         Container(
                                           padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                           decoration: BoxDecoration(
                                             color: Color(0xffdbeafe),
-                                            borderRadius: BorderRadius.circular(4),
+                                            borderRadius: BorderRadius.circular(6),
                                           ),
                                           child: Text(
-                                            "K: ${food["carbs"]}g",
+                                            "K: ${totalKarbo.toStringAsFixed(1)}g",
+                                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                                           ),
                                         ),
-                                        SizedBox(width: 4,),
+                                        SizedBox(width: 6),
                                         Container(
                                           padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                           decoration: BoxDecoration(
                                             color: Color(0xffdbfce7),
-                                            borderRadius: BorderRadius.circular(4),
+                                            borderRadius: BorderRadius.circular(6),
                                           ),
                                           child: Text(
-                                            "S: ${food["fibers"]}g",
+                                            "S: ${totalSerat.toStringAsFixed(1)}g",
+                                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                                           ),
-                                        )
+                                        ),
                                       ],
-                                    )
+                                    ),
                                   ],
                                 )
                               );
@@ -1027,21 +948,25 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
                       padding: EdgeInsets.all(20),
                       decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [Color(0xffdbeafe), Color(0xffcffafe)],
+                            colors: isChallengeAchieved
+                              ? [Color(0xFFE8F5E9), Color(0xFFC8E6C9)] // Green when achieved
+                              : [Color(0xffdbeafe), Color(0xffcffafe)], // Blue default
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                           ),
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.grey.withOpacity(0.4),
+                              color: Colors.grey.withValues(alpha: 0.4),
                               spreadRadius: 2,
                               blurRadius: 8,
                               offset: Offset(2, 4),
                             ),
                           ],
                           border: Border.all(
-                            color: Color(0xffa2f4fd),
+                            color: isChallengeAchieved
+                              ? Color(0xFF4CAF50)
+                              : Color(0xffa2f4fd),
                             width: 2,
                             style: BorderStyle.solid,
                           )
@@ -1055,93 +980,286 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
                                 child: Container(
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: Color(0xff1e89fe),
+                                    color: isChallengeAchieved
+                                      ? Color(0xFF4CAF50)
+                                      : Color(0xff1e89fe),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
-                                    FontAwesomeIcons.lightbulb,
+                                  child: Icon(
+                                    isChallengeAchieved
+                                      ? FontAwesomeIcons.trophy
+                                      : FontAwesomeIcons.lightbulb,
                                     size: 36,
                                     color: Colors.white,
                                   ),
                                 ),
                               ),
                               SizedBox(width: 20,),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Tantangan Sehat",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      isChallengeAchieved
+                                        ? "🎉 Anda Hebat!"
+                                        : "Tantangan Sehat",
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: isChallengeAchieved
+                                          ? Color(0xFF2E7D32)
+                                          : Color(0xff193cb8),
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    if (isChallengeAchieved)
+                                      Text(
+                                        "Tanpa minyak & gula hari ini!",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Color(0xFF388E3C),
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
                           SizedBox(height: 12,),
-                          Column(
-                            children: [
-                              Container(
-                                padding: EdgeInsets.all(16),
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                    color: Color(0xffecfcff),
-                                    borderRadius: BorderRadius.circular(20)
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "🎯 Target 2 Hari Tanpa Minyak",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xff193cb8),
-                                      ),
-                                    ),
-                                    SizedBox(height: 12,),
-                                    Text(
-                                      "Kurangi gorengan dan masakan berminyak untuk kesehatan jantung",
-                                      style: TextStyle(
-                                        color: Color(0xff4772ec),
-                                      ),
-                                    ),
-                                  ],
+
+                          if (isChallengeAchieved) ...[
+                            // Success Message
+                            Container(
+                              padding: EdgeInsets.all(16),
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Color(0xFF4CAF50),
+                                  width: 2,
                                 ),
                               ),
-                              SizedBox(height: 12,),
-                              Container(
-                                padding: EdgeInsets.all(16),
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                    color: Color(0xffecfcff),
-                                    borderRadius: BorderRadius.circular(20)
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "🎯 Target 2 Hari Tanpa Gula",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xff193cb8),
-                                      ),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    FontAwesomeIcons.solidCircleCheck,
+                                    size: 48,
+                                    color: Color(0xFF4CAF50),
+                                  ),
+                                  SizedBox(height: 12),
+                                  Text(
+                                    "Luar Biasa!",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF2E7D32),
                                     ),
-                                    SizedBox(height: 12,),
-                                    Text(
-                                      "Hindari gula tambahan untuk kontrol gula darah yang lebih baik",
-                                      style: TextStyle(
-                                        color: Color(0xff4772ec),
-                                      ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    "Anda berhasil mencapai target tantangan sehat minggu ini!",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF388E3C),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                  SizedBox(height: 16),
+                                  // Progress Summary
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                    children: [
+                                      Column(
+                                        children: [
+                                          Text(
+                                            "$hariTanpaMinyak/7",
+                                            style: TextStyle(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF4CAF50),
+                                            ),
+                                          ),
+                                          Text(
+                                            "Hari Tanpa\nMinyak",
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xFF388E3C),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Column(
+                                        children: [
+                                          Text(
+                                            "$hariTanpaGula/7",
+                                            style: TextStyle(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF4CAF50),
+                                            ),
+                                          ),
+                                          Text(
+                                            "Hari Tanpa\nGula",
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xFF388E3C),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
-                            ],
-                          )
+                            ),
+                          ] else ...[
+                            // Challenge Cards
+                            Column(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(16),
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                      color: Color(0xffecfcff),
+                                      borderRadius: BorderRadius.circular(20)
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            hariTanpaMinyak >= 2
+                                              ? FontAwesomeIcons.solidCircleCheck
+                                              : FontAwesomeIcons.circle,
+                                            size: 16,
+                                            color: hariTanpaMinyak >= 2
+                                              ? Color(0xFF4CAF50)
+                                              : Color(0xff193cb8),
+                                          ),
+                                          SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              "🎯 Target 2 Hari Tanpa Minyak",
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xff193cb8),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 8,),
+                                      Text(
+                                        "Kurangi gorengan dan masakan berminyak untuk kesehatan jantung",
+                                        style: TextStyle(
+                                          color: Color(0xff4772ec),
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      SizedBox(height: 12),
+                                      // Progress indicator
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: LinearProgressIndicator(
+                                              value: hariTanpaMinyak / 7,
+                                              backgroundColor: Color(0xFFE3F2FD),
+                                              color: hariTanpaMinyak >= 2 ? Color(0xFF4CAF50) : Color(0xff1e89fe),
+                                              minHeight: 8,
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                          ),
+                                          SizedBox(width: 12),
+                                          Text(
+                                            "$hariTanpaMinyak/7 hari",
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xff193cb8),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(height: 12,),
+                                Container(
+                                  padding: EdgeInsets.all(16),
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                      color: Color(0xffecfcff),
+                                      borderRadius: BorderRadius.circular(20)
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            hariTanpaGula >= 2
+                                              ? FontAwesomeIcons.solidCircleCheck
+                                              : FontAwesomeIcons.circle,
+                                            size: 16,
+                                            color: hariTanpaGula >= 2
+                                              ? Color(0xFF4CAF50)
+                                              : Color(0xff193cb8),
+                                          ),
+                                          SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              "🎯 Target 2 Hari Tanpa Gula",
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xff193cb8),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 8,),
+                                      Text(
+                                        "Hindari minuman manis dan makanan tinggi gula untuk cegah diabetes",
+                                        style: TextStyle(
+                                          color: Color(0xff4772ec),
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      SizedBox(height: 12),
+                                      // Progress indicator
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: LinearProgressIndicator(
+                                              value: hariTanpaGula / 7,
+                                              backgroundColor: Color(0xFFE3F2FD),
+                                              color: hariTanpaGula >= 2 ? Color(0xFF4CAF50) : Color(0xff1e89fe),
+                                              minHeight: 8,
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                          ),
+                                          SizedBox(width: 12),
+                                          Text(
+                                            "$hariTanpaGula/7 hari",
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xff193cb8),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -1183,6 +1301,75 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
           ],
         ),
       ),
+    );
+  }
+
+  // Build Smart Food Search Dialog
+  Widget _buildSmartSearchDialog() {
+    return StatefulBuilder(
+      builder: (context, setDialogState) {
+        String selectedJenisMakan = 'sarapan';
+
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF00C368),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            FontAwesomeIcons.utensils,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          "Tambah Makanan",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Smart Food Search (jenis makan already handled in dialog inside SmartFoodSearch)
+                Expanded(
+                  child: SmartFoodSearch(
+                    onFoodSelected: (result) async {
+                      Navigator.pop(context); // Close dialog
+                      await addFoodFromDatabase(result);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

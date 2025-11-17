@@ -1,12 +1,8 @@
-import 'package:employee_wellness/home.dart';
 import 'package:employee_wellness/main.dart';
 import 'package:employee_wellness/verify_email.dart';
+import 'package:employee_wellness/services/auth_register_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:employee_wellness/config/api_config.dart';
 
 class Register extends StatefulWidget {
   const Register({super.key});
@@ -16,68 +12,79 @@ class Register extends StatefulWidget {
 }
 
 class _RegisterState extends State<Register> {
+  final TextEditingController namaController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
   final TextEditingController companyTokenController = TextEditingController();
   bool isLoading = false;
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   Future<void> register() async {
-    final email = emailController.text.trim();
-    final password = passwordController.text.trim();
-    final token = companyTokenController.text.trim();
+    // Validation
+    if (namaController.text.trim().isEmpty) {
+      showSnackBar("Nama lengkap harus diisi");
+      return;
+    }
+
+    if (emailController.text.trim().isEmpty) {
+      showSnackBar("Email harus diisi");
+      return;
+    }
+
+    if (passwordController.text.trim().isEmpty) {
+      showSnackBar("Password harus diisi");
+      return;
+    }
+
+    if (confirmPasswordController.text.trim().isEmpty) {
+      showSnackBar("Konfirmasi password harus diisi");
+      return;
+    }
+
+    if (passwordController.text != confirmPasswordController.text) {
+      showSnackBar("Password dan konfirmasi password tidak sama");
+      return;
+    }
+
+    if (companyTokenController.text.trim().isEmpty) {
+      showSnackBar("Token perusahaan harus diisi");
+      return;
+    }
 
     setState(() {
       isLoading = true;
     });
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const VerifyEmail()),
+    // Call register API
+    final result = await AuthRegisterService.register(
+      namaLengkap: namaController.text.trim(),
+      email: emailController.text.trim(),
+      password: passwordController.text.trim(),
+      confirmPassword: confirmPasswordController.text.trim(),
+      tokenPerusahaan: companyTokenController.text.trim(),
     );
 
-    // try {
-    //   final response = await http.post(
-    //     Uri.parse("${ApiConfig.baseUrl}/api/register"),
-    //     headers: {"Content-Type": "application/json"},
-    //     body: jsonEncode({
-    //       "email": email,
-    //       "password": password,
-    //       "token": token,
-    //     }),
-    //   );
-    //
-    //   setState(() {
-    //     isLoading = false;
-    //   });
-    //
-    //   if (response.statusCode == 200) {
-    //     final data = jsonDecode(response.body);
-    //
-    //     if (data["status"] == "success") {
-    //       Navigator.pushReplacement(
-    //         context,
-    //         MaterialPageRoute(builder: (context) => const HomePage()),
-    //       );
-    //     } else {
-    //       ScaffoldMessenger.of(context).showSnackBar(
-    //         SnackBar(content: Text("Register gagal: ${data["message"]}")),
-    //       );
-    //     }
-    //   } else {
-    //     ScaffoldMessenger.of(context).showSnackBar(
-    //       SnackBar(content: Text("Terjadi kesalahan server")),
-    //     );
-    //   }
-    // } catch (e) {
-    //   setState(() {
-    //     isLoading = false;
-    //   });
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     SnackBar(content: Text("Gagal terhubung ke server: $e")),
-    //   );
-    // }
+    setState(() {
+      isLoading = false;
+    });
+
+    if (result["success"]) {
+      showSnackBar(result["message"]);
+
+      // Navigate to verify email page
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => VerifyEmail(
+            email: emailController.text.trim(),
+          ),
+        ),
+      );
+    } else {
+      showSnackBar(result["message"]);
+    }
   }
 
   void showSnackBar(String message) {
@@ -144,7 +151,7 @@ class _RegisterState extends State<Register> {
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
+                                  color: Colors.black.withValues(alpha: 0.05),
                                   blurRadius: 10,
                                   offset: const Offset(0, 5),
                                 )
@@ -163,6 +170,29 @@ class _RegisterState extends State<Register> {
                               ),
 
                               const SizedBox(height: 20),
+
+                              // Nama Lengkap Field
+                              TextFormField(
+                                controller: namaController,
+                                decoration: InputDecoration(
+                                  prefixIcon: Icon(
+                                    FontAwesomeIcons.user,
+                                    size: 20,
+                                  ),
+                                  labelText: "Nama Lengkap",
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10)
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Nama lengkap wajib diisi';
+                                  }
+                                  return null;
+                                },
+                              ),
+
+                              const SizedBox(height: 16),
 
                               TextFormField(
                                 controller: emailController,
@@ -250,7 +280,7 @@ class _RegisterState extends State<Register> {
 
                               TextFormField(
                                 controller: confirmPasswordController,
-                                obscureText: _obscurePassword,
+                                obscureText: _obscureConfirmPassword,
                                 decoration: InputDecoration(
                                   prefixIcon: Icon(
                                     FontAwesomeIcons.lock,
@@ -259,10 +289,10 @@ class _RegisterState extends State<Register> {
                                   suffixIcon: IconButton(
                                     onPressed: () {
                                       setState(() {
-                                        _obscurePassword = !_obscurePassword;
+                                        _obscureConfirmPassword = !_obscureConfirmPassword;
                                       });
                                     },
-                                    icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                                    icon: Icon(_obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
                                   ),
                                   hintText: "Masukan kata sandi",
                                   labelText: "Konfirmasi Kata Sandi",

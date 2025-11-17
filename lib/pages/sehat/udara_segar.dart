@@ -4,6 +4,7 @@ import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/sehat/tidur_cukup.dart';
 import 'package:employee_wellness/pages/sehat_homepage.dart';
+import 'package:employee_wellness/services/tarik_napas_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -30,6 +31,16 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
   bool isRunning = false;
   int cycleCount = 0;
 
+  // Countdown
+  bool isCountdown = false;
+  int countdownSeconds = 5;
+
+  // API Status
+  bool isLoading = true;
+  bool sudahTarikNapas = false;
+  int hariTarikNapas = 0; // Jumlah hari sudah tarik napas minggu ini
+  List<int> weeklyProgress = []; // List untuk tracking hari ke berapa
+
   @override
   void initState() {
     super.initState();
@@ -40,10 +51,74 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
 
     _sizeAnimation = Tween<double>(begin: minSize, end: maxSize)
       .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
+    _cekStatusTarikNapas();
+  }
+
+  Future<void> _cekStatusTarikNapas() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final result = await TarikNapasService.cekTarikNapas();
+
+    print("🔍 DEBUG - Full result: $result");
+    print("🔍 DEBUG - result['minggu_ini']: ${result['minggu_ini']}");
+
+    setState(() {
+      sudahTarikNapas = result['sudah_tarik_napas'] ?? false;
+
+      // minggu_ini is at root level of response, not inside 'data'
+      if (result['minggu_ini'] != null) {
+        final mingguIni = result['minggu_ini'];
+
+        // Get jumlah_hari_dilakukan from minggu_ini
+        hariTarikNapas = mingguIni['jumlah_hari_dilakukan'] ?? 0;
+
+        print("✅ Found minggu_ini.jumlah_hari_dilakukan: $hariTarikNapas");
+
+        // Build weekly progress list for visual display
+        weeklyProgress = List.generate(5, (index) => index < hariTarikNapas ? 1 : 0);
+      } else {
+        print("⚠️ minggu_ini not found in response");
+        hariTarikNapas = 0;
+        weeklyProgress = [0, 0, 0, 0, 0];
+      }
+
+      isLoading = false;
+    });
+
+    print("📊 Status tarik napas: ${sudahTarikNapas ? 'SUDAH' : 'BELUM'}");
+    print("📊 Hari tarik napas minggu ini: $hariTarikNapas / 5");
+    print("📊 Weekly progress array: $weeklyProgress");
   }
 
   void startCycle() {
-    if (isRunning) return;
+    if (isRunning || sudahTarikNapas) return;
+
+    // Start countdown first
+    setState(() {
+      isCountdown = true;
+      countdownSeconds = 5;
+      phase = "Bersiap...";
+    });
+
+    timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      setState(() {
+        countdownSeconds--;
+      });
+
+      if (countdownSeconds == 0) {
+        t.cancel();
+        setState(() {
+          isCountdown = false;
+        });
+        _startBreathingCycle();
+      }
+    });
+  }
+
+  void _startBreathingCycle() {
     setState(() {
       isRunning = true;
       phase = "Tarik napas";
@@ -75,13 +150,47 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
           Future.delayed(const Duration(milliseconds: 500), () {
             setState(() {
               isRunning = false;
-              stopCycle();
               cycleCount++;
+
+              // After first cycle complete, post to API
+              if (cycleCount == 1) {
+                _catatTarikNapas();
+              }
+
+              stopCycle();
             });
           });
         }
       }
     });
+  }
+
+  Future<void> _catatTarikNapas() async {
+    final result = await TarikNapasService.catatTarikNapas();
+
+    if (result['success']) {
+      // Reload status to get updated weekly count
+      await _cekStatusTarikNapas();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ ${result['message']}'),
+            backgroundColor: Color(0xFF00C368),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Gagal mencatat aktivitas'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void stopCycle() {
@@ -146,21 +255,45 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                           Column(
                             children: [
                               Text(
-                                phase == "Tarik napas" ? "🌬️" : phase == "Tahan napas" ? "⏸️" : "🧘‍♂️",
+                                isCountdown
+                                  ? "⏰"
+                                  : phase == "Tarik napas"
+                                    ? "🌬️"
+                                    : phase == "Tahan napas"
+                                      ? "⏸️"
+                                      : sudahTarikNapas
+                                        ? "✅"
+                                        : "🧘‍♂️",
                                 style: TextStyle(
                                   fontSize: 52,
                                 ),
                               ),
                               SizedBox(height: 8,),
                               Text(
-                                phase == "Tarik napas" ? "Tarik napas" : phase == "Tahan napas" ? "Tahan napas" : "Siap Memulai",
+                                isCountdown
+                                  ? "Bersiap..."
+                                  : sudahTarikNapas
+                                    ? "Selesai Hari Ini"
+                                    : phase == "Tarik napas"
+                                      ? "Tarik napas"
+                                      : phase == "Tahan napas"
+                                        ? "Tahan napas"
+                                        : "Siap Memulai",
                                 style: TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
-                                phase == "Tarik napas" ? "Hirup udara melalui hidung" : phase == "Tahan napas" ? "Tahan napas Anda" : "Tekan tombol mulai",
+                                isCountdown
+                                  ? "Mulai dalam $countdownSeconds detik"
+                                  : sudahTarikNapas
+                                    ? "Anda sudah melakukan aktivitas ini"
+                                    : phase == "Tarik napas"
+                                      ? "Hirup udara melalui hidung"
+                                      : phase == "Tahan napas"
+                                        ? "Tahan napas Anda"
+                                        : "Tekan tombol mulai",
                                 style: TextStyle(
                                   fontSize: 16,
                                 ),
@@ -172,22 +305,30 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                             animation: _sizeAnimation,
                             builder: (context, child) {
                               return Container(
-                                width: _sizeAnimation.value,
-                                height: _sizeAnimation.value,
+                                width: isCountdown ? minSize : _sizeAnimation.value,
+                                height: isCountdown ? minSize : _sizeAnimation.value,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: phase == "Tarik napas"
-                                      ? Colors.blue
-                                      : phase == "Tahan napas"
-                                        ? Colors.orange
-                                        : Colors.green,
+                                  color: isCountdown
+                                      ? Colors.orange
+                                      : sudahTarikNapas
+                                        ? Colors.green
+                                        : phase == "Tarik napas"
+                                          ? Colors.blue
+                                          : phase == "Tahan napas"
+                                            ? Colors.orange
+                                            : Colors.green,
                                 ),
                                 alignment: Alignment.center,
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      seconds > 0 ? "$seconds" : "4",
+                                      isCountdown
+                                        ? "$countdownSeconds"
+                                        : seconds > 0
+                                          ? "$seconds"
+                                          : "4",
                                       style: TextStyle(
                                         fontSize: 32,
                                         color: Colors.white,
@@ -195,7 +336,7 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                                       ),
                                     ),
                                     Text(
-                                      "detik",
+                                      isCountdown ? "detik" : "detik",
                                       style: TextStyle(
                                         fontSize: 16,
                                         color: Colors.white,
@@ -291,33 +432,48 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                                 child: Container(
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(20),
-                                    gradient: LinearGradient(
-                                      colors: [Color(0xff135ffa), Color(0xff00b7db)],
-                                      begin: Alignment.centerLeft,
-                                      end: Alignment.centerRight,
-                                    ),
+                                    gradient: sudahTarikNapas
+                                      ? LinearGradient(
+                                          colors: [Colors.grey.shade400, Colors.grey.shade500],
+                                          begin: Alignment.centerLeft,
+                                          end: Alignment.centerRight,
+                                        )
+                                      : LinearGradient(
+                                          colors: [Color(0xff135ffa), Color(0xff00b7db)],
+                                          begin: Alignment.centerLeft,
+                                          end: Alignment.centerRight,
+                                        ),
                                   ),
                                   child: ElevatedButton(
-                                      onPressed: startCycle,
+                                      onPressed: sudahTarikNapas ? null : startCycle,
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.transparent,
                                         shadowColor: Colors.transparent,
+                                        disabledBackgroundColor: Colors.transparent,
                                       ),
                                       child: Row(
                                         mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Icon(
-                                            FontAwesomeIcons.play,
-                                            size: 16,
+                                            sudahTarikNapas
+                                              ? FontAwesomeIcons.check
+                                              : FontAwesomeIcons.play,
+                                            size: 14,
                                             color: Colors.white,
                                           ),
-                                          SizedBox(width: 8,),
-                                          Text(
-                                            "Mulai",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w500,
+                                          SizedBox(width: 6,),
+                                          Flexible(
+                                            child: Text(
+                                              sudahTarikNapas
+                                                ? "Selesai Hari Ini"
+                                                : "Mulai",
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           )
                                         ],
@@ -395,28 +551,47 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                                 child: Container(
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: Color(0xff009bf4),
+                                    color: hariTarikNapas >= 5
+                                      ? Color(0xFF4CAF50)
+                                      : Color(0xff009bf4),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
-                                    FontAwesomeIcons.calendar,
+                                  child: Icon(
+                                    hariTarikNapas >= 5
+                                      ? FontAwesomeIcons.trophy
+                                      : FontAwesomeIcons.calendar,
                                     size: 36,
                                     color: Colors.white,
                                   ),
                                 ),
                               ),
                               SizedBox(width: 20,),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Target Mingguan",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      hariTarikNapas >= 5
+                                        ? "Target Tercapai!"
+                                        : "Target Mingguan",
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                        color: hariTarikNapas >= 5
+                                          ? Color(0xFF4CAF50)
+                                          : Colors.black,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    if (hariTarikNapas >= 5)
+                                      Text(
+                                        "Hebat! 🎉",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Color(0xFF388E3C),
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -427,15 +602,20 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    "0 dari 5 sesi",
+                                    "$hariTarikNapas dari 5 sesi",
                                     style: TextStyle(
                                       fontSize: 16,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   Text(
-                                    "0%",
+                                    "${((hariTarikNapas / 5) * 100).toInt()}%",
                                     style: TextStyle(
                                       fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: hariTarikNapas >= 5
+                                        ? Color(0xFF4CAF50)
+                                        : Color(0xff009bf4),
                                     ),
                                   )
                                 ],
@@ -444,8 +624,10 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                               SizedBox(
                                 height: 20,
                                 child: LinearProgressIndicator(
-                                  value: 0,
-                                  color: Color(0xff009bf4),
+                                  value: hariTarikNapas / 5,
+                                  color: hariTarikNapas >= 5
+                                    ? Color(0xFF4CAF50)
+                                    : Color(0xff009bf4),
                                   backgroundColor: Colors.grey[300],
                                   borderRadius: BorderRadius.circular(20),
                                 ),
@@ -454,116 +636,42 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  SizedBox.square(
-                                    dimension: 60,
-                                    child: Container(
-                                      padding: EdgeInsets.all(20),
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: Color(0xfff3f4f6),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: Color(0xffd1d5dc),
-                                          width: 2,
-                                          style: BorderStyle.solid,
-                                        )
-                                      ),
-                                      child: Text(
-                                        "1",
-                                        style: TextStyle(
-                                          fontSize: 16,
+                                  for (int i = 0; i < 5; i++)
+                                    Flexible(
+                                      child: Container(
+                                        width: 60,
+                                        height: 60,
+                                        margin: EdgeInsets.symmetric(horizontal: 2),
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: i < hariTarikNapas
+                                            ? Color(0xFFE8F5E9)
+                                            : Color(0xfff3f4f6),
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: i < hariTarikNapas
+                                              ? Color(0xFF4CAF50)
+                                              : Color(0xffd1d5dc),
+                                            width: 2,
+                                            style: BorderStyle.solid,
+                                          )
                                         ),
+                                        child: i < hariTarikNapas
+                                          ? Icon(
+                                              FontAwesomeIcons.check,
+                                              color: Color(0xFF4CAF50),
+                                              size: 20,
+                                            )
+                                          : Text(
+                                              "${i + 1}",
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: Colors.grey.shade600,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
                                       ),
                                     ),
-                                  ),
-                                  SizedBox.square(
-                                    dimension: 60,
-                                    child: Container(
-                                      padding: EdgeInsets.all(20),
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: Color(0xfff3f4f6),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: Color(0xffd1d5dc),
-                                          width: 2,
-                                          style: BorderStyle.solid,
-                                        )
-                                      ),
-                                      child: Text(
-                                        "2",
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox.square(
-                                    dimension: 60,
-                                    child: Container(
-                                      padding: EdgeInsets.all(20),
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: Color(0xfff3f4f6),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: Color(0xffd1d5dc),
-                                          width: 2,
-                                          style: BorderStyle.solid,
-                                        )
-                                      ),
-                                      child: Text(
-                                        "3",
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox.square(
-                                    dimension: 60,
-                                    child: Container(
-                                      padding: EdgeInsets.all(20),
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: Color(0xfff3f4f6),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: Color(0xffd1d5dc),
-                                          width: 2,
-                                          style: BorderStyle.solid,
-                                        )
-                                      ),
-                                      child: Text(
-                                        "4",
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox.square(
-                                    dimension: 60,
-                                    child: Container(
-                                      padding: EdgeInsets.all(20),
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: Color(0xfff3f4f6),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: Color(0xffd1d5dc),
-                                          width: 2,
-                                          style: BorderStyle.solid,
-                                        )
-                                      ),
-                                      child: Text(
-                                        "5",
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
                                 ],
                               )
                             ],

@@ -1,28 +1,18 @@
 import 'package:employee_wellness/home.dart';
 import 'package:employee_wellness/register.dart';
+import 'package:employee_wellness/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
-  // runApp(
-  //   DevicePreview(
-  //     builder: (context) => MyApp(),
-  //     // builder: (context) => HomePage(),
-  //   )
-  // );
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   Future<bool> checkLogin() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("token");
-    return token != null;
+    return await AuthService.isLoggedIn();
   }
 
   @override
@@ -39,9 +29,9 @@ class MyApp extends StatelessWidget {
             );
           } else {
             if (snapshot.data == true) {
-              return const LoginPage();
+              return const HomePage(); // Go to home if logged in
             } else {
-              return const LoginPage();
+              return const LoginPage(); // Go to login if not
             }
           }
         }
@@ -62,54 +52,145 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
   bool _obscurePassword = true;
+  bool _rememberMe = true; // Remember credentials for auto-refresh
 
   Future<void> login() async {
+    print("🔵 Login button pressed");
+
+    // Validation
+    if (emailController.text.trim().isEmpty) {
+      print("❌ Validation failed: Email empty");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Email harus diisi"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (passwordController.text.trim().isEmpty) {
+      print("❌ Validation failed: Password empty");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Password harus diisi"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    print("✅ Validation passed");
+    print("📧 Email: ${emailController.text.trim()}");
+
     setState(() {
       isLoading = true;
     });
 
-    try {
-      final response = await http.post(
-        Uri.parse("http://10.0.2.2:8000/api/login"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": emailController.text,
-          "password": passwordController.text,
-        }),
-      );
+    // Use new AuthService with auto-refresh capability
+    print("🔄 Calling AuthService.login()...");
+    final result = await AuthService.login(
+      email: emailController.text.trim(),
+      password: passwordController.text.trim(),
+      rememberMe: _rememberMe, // Save credentials
+    );
 
-      setState(() {
-        isLoading = false;
-      });
+    print("📨 Login result received: ${result['success']}");
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+    setState(() {
+      isLoading = false;
+    });
 
-        if (data["status"] == "success") {
-          final prefs = await SharedPreferences.getInstance();
+    if (result["success"]) {
+      // Success - Navigate to HomePage immediately
+      print("✅ Login SUCCESS! Token: ${result['token']?.substring(0, 20)}...");
+      print("🚀 Navigating to HomePage...");
 
-          await prefs.setString("token", data["token"]);
+      try {
+        // Navigate first
+        await Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) {
+            print("🏠 Building HomePage widget...");
+            return const HomePage();
+          }),
+        );
 
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomePage()),
-          );
-        } else {
+        print("✅ Navigation completed successfully!");
+
+        // Show success message after navigation
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Login gagal: ${data["message"]}")),
+            SnackBar(
+              content: Row(
+                children: const [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text("Login berhasil! Selamat datang."),
+                ],
+              ),
+              backgroundColor: const Color(0xFF00C368),
+              duration: const Duration(seconds: 2),
+            ),
           );
         }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Terjadi kesalahan server")),
-        );
+      } catch (error) {
+        // Handle navigation error
+        print("❌ Navigation error: $error");
+        print("❌ Stack trace: ${StackTrace.current}");
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Error navigasi: $error"),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
       }
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
+    } else {
+      print("❌ Login FAILED: ${result['message']}");
+
+      // Failed - Show error notification
+      String errorMessage = result["message"] ?? "Login gagal";
+      IconData errorIcon = Icons.error_outline;
+      Color errorColor = Colors.red;
+
+      // Customize message based on error
+      if (errorMessage.toLowerCase().contains("email atau password salah") ||
+          errorMessage.toLowerCase().contains("credentials")) {
+        errorMessage = "Email atau password salah!\nSilakan periksa kembali data Anda.";
+        errorIcon = Icons.lock_outline;
+      } else if (errorMessage.toLowerCase().contains("network") ||
+          errorMessage.toLowerCase().contains("connection")) {
+        errorMessage = "Tidak dapat terhubung ke server.\nPeriksa koneksi internet Anda.";
+        errorIcon = Icons.wifi_off;
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Gagal terhubung ke server: $e")),
+        SnackBar(
+          content: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(errorIcon, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  errorMessage,
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: errorColor,
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: "OK",
+            textColor: Colors.white,
+            onPressed: () {},
+          ),
+        ),
       );
     }
   }
@@ -158,17 +239,17 @@ class _LoginPageState extends State<LoginPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Container(
                     padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        )
-                      ]
-                    ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
+                  ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [

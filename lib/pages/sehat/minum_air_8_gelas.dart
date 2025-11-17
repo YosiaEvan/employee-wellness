@@ -2,6 +2,7 @@ import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/sehat/udara_segar.dart';
 import 'package:employee_wellness/pages/sehat_homepage.dart';
+import 'package:employee_wellness/services/minum_air_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -13,76 +14,119 @@ class MinumAir8Gelas extends StatefulWidget {
 }
 
 class _MinumAir8GelasState extends State<MinumAir8Gelas> {
-  int totalGlass = 8;
-  int remainingGlass = 8;
-  int actualGlass = 0;
-  int actualVolume = 0;
-  int totalVolume = 2000;
-  double progress = 0;
-  List<Map<String, dynamic>> glasses = [
-    {
-      "id": 1,
-      "status": false,
-    },
-    {
-      "id": 2,
-      "status": false,
-    },
-    {
-      "id": 3,
-      "status": false,
-    },
-    {
-      "id": 4,
-      "status": false,
-    },
+  // API Status
+  bool isLoading = true;
 
-    {
-      "id": 5,
-      "status": false,
-    },
-    {
-      "id": 6,
-      "status": false,
-    },
-    {
-      "id": 7,
-      "status": false,
-    },
-    {
-      "id": 8,
-      "status": false,
-    },
-  ];
+  // Data dari API
+  int jumlahGelas = 0;
+  int targetGelas = 8;
+  int sisaGelas = 8;
+  bool sudahSelesai = false;
+  int persentase = 0;
+  bool bisaMinumLagi = true;
+  int menitTersisa = 0;
+  List<Map<String, dynamic>> riwayatMinum = [];
 
-  void addGlass() {
+  // Weekly data
+  int hariSelesai8Gelas = 0;
+  List<Map<String, dynamic>> kalenderMinggu = [];
+
+  // Display helpers
+  int get actualVolume => (jumlahGelas * 250); // 250ml per gelas
+  int get totalVolume => (targetGelas * 250);
+  double get progress => persentase / 100.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStatusMinum();
+  }
+
+  Future<void> _loadStatusMinum() async {
     setState(() {
-      if (actualGlass < totalGlass) {
-        actualGlass += 1;
-        actualVolume += (totalVolume / totalGlass).round();
-
-        final index = glasses.indexWhere((item) => item["id"] == actualGlass);
-        if (index != -1) {
-          glasses[index]["status"] = true;
-        }
-
-        remainingGlass = totalGlass - actualGlass;
-        progress = actualVolume / totalVolume;
-      }
+      isLoading = true;
     });
+
+    final result = await MinumAirService.getStatusMinum();
+
+    if (result['success']) {
+      final hariIni = result['hari_ini'] ?? {};
+      final mingguIni = result['minggu_ini'] ?? {};
+
+      setState(() {
+        jumlahGelas = hariIni['jumlah_gelas'] ?? 0;
+        targetGelas = hariIni['target_gelas'] ?? 8;
+        sisaGelas = hariIni['sisa_gelas'] ?? 8;
+        sudahSelesai = hariIni['sudah_selesai'] ?? false;
+        persentase = hariIni['persentase'] ?? 0;
+        bisaMinumLagi = hariIni['bisa_minum_lagi'] ?? true;
+        menitTersisa = hariIni['menit_tersisa_untuk_minum_lagi'] ?? 0;
+        riwayatMinum = List<Map<String, dynamic>>.from(hariIni['riwayat_minum'] ?? []);
+
+        hariSelesai8Gelas = mingguIni['hari_selesai_8_gelas'] ?? 0;
+        kalenderMinggu = List<Map<String, dynamic>>.from(mingguIni['kalender'] ?? []);
+
+        isLoading = false;
+      });
+
+      print("📊 Status minum:");
+      print("   Jumlah gelas: $jumlahGelas / $targetGelas");
+      print("   Bisa minum lagi: $bisaMinumLagi");
+      print("   Menit tersisa: $menitTersisa");
+    }
+  }
+
+  Future<void> addGlass() async {
+    if (!bisaMinumLagi) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('⏰ Tunggu $menitTersisa menit lagi untuk minum berikutnya'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (sudahSelesai) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✅ Target harian sudah tercapai!'),
+          backgroundColor: Color(0xFF00C368),
+        ),
+      );
+      return;
+    }
+
+    final result = await MinumAirService.catatMinum();
+
+    if (result['success']) {
+      await _loadStatusMinum();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ ${result['message']}'),
+            backgroundColor: Color(0xFF00cbf6),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Gagal mencatat'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void resetGlass() {
-    setState(() {
-      actualGlass = 0;
-      actualVolume = 0;
-      remainingGlass = totalGlass;
-      progress = 0;
-
-      for (var item in glasses) {
-        item["status"] = false;
-      }
-    });
+    // Reset tidak diperlukan karena data dari API
+    // Tapi kita bisa refresh data
+    _loadStatusMinum();
   }
 
   @override
@@ -128,10 +172,10 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> {
                                 child: Container(
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: actualGlass == totalGlass ? Color(0xfff3b751) : Color(0xff00cbf6),
+                                    color: jumlahGelas == targetGelas ? Color(0xfff3b751) : Color(0xff00cbf6),
                                     borderRadius: BorderRadius.circular(40),
                                   ),
-                                  child: actualGlass == totalGlass ? Icon(
+                                  child: jumlahGelas == targetGelas ? Icon(
                                     FontAwesomeIcons.trophy,
                                     size: 36,
                                     color: Colors.white,
@@ -144,7 +188,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> {
                               ),
                               SizedBox(height: 20,),
                               Text(
-                                actualGlass == totalGlass ? "Target Tercapai!" : "Tetap Terhidrasi",
+                                jumlahGelas == targetGelas ? "Target Tercapai!" : "Tetap Terhidrasi",
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -152,7 +196,11 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> {
                               ),
                               SizedBox(height: 8,),
                               Text(
-                                actualGlass == totalGlass ? "Luar biasa! Kamu sudah minum cukup hari ini" : "$remainingGlass gelas lagi untuk target harian",
+                                jumlahGelas == targetGelas
+                                  ? "Luar biasa! Kamu sudah minum cukup hari ini"
+                                  : !bisaMinumLagi
+                                    ? "⏰ Tunggu $menitTersisa menit lagi"
+                                    : "$sisaGelas gelas lagi untuk target harian",
                                 style: TextStyle(
                                   fontSize: 16,
                                 ),
@@ -167,7 +215,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    "$actualGlass",
+                                    "$jumlahGelas",
                                     style: TextStyle(
                                       color: Color(0xff0069f0),
                                       fontSize: 60,
@@ -175,7 +223,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> {
                                     ),
                                   ),
                                   Text(
-                                    " / 8",
+                                    " / $targetGelas",
                                     style: TextStyle(
                                       fontSize: 28,
                                       color: Color(0xff6a7282),
@@ -203,7 +251,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> {
                               ),
                               SizedBox(height: 4,),
                               Text(
-                                "${progress*100}%",
+                                "$persentase%",
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: Color(0xff0069f0),
@@ -355,9 +403,9 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> {
                             physics: NeverScrollableScrollPhysics(),
                             mainAxisSpacing: 12,
                             crossAxisSpacing: 12,
-                            children: glasses.map((glass) {
-                              final isActive = glass["status"] == true;
-                              final id = glass["id"];
+                            children: List.generate(targetGelas, (index) {
+                              final id = index + 1;
+                              final isActive = index < jumlahGelas;
 
                               return SizedBox.square(
                                 dimension: 60,
@@ -383,7 +431,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> {
                                   ),
                                 ),
                               );
-                            }).toList(),
+                            }),
                           ),
                         ],
                       ),

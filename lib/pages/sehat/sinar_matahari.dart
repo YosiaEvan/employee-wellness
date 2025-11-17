@@ -2,6 +2,7 @@ import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/sehat/jalan_10000_langkah.dart';
 import 'package:employee_wellness/pages/sehat_homepage.dart';
+import 'package:employee_wellness/services/sinar_matahari_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -14,11 +15,69 @@ class SinarMatahari extends StatefulWidget {
 
 class _SinarMatahariState extends State<SinarMatahari> {
   bool isSunbathe = false;
+  bool isLoading = true;
+  bool sudahBerjemur = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cekStatusBerjemur();
+  }
+
+  Future<void> _cekStatusBerjemur() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final result = await SinarMatahariService.cekBerjemur();
+
+    setState(() {
+      sudahBerjemur = result['sudah_berjemur'] ?? false;
+      isLoading = false;
+    });
+
+    print("📊 Status berjemur: ${sudahBerjemur ? 'SUDAH' : 'BELUM'}");
+  }
+
+  Future<void> _catatBerjemur() async {
+    if (sudahBerjemur) {
+      _showSnackBar("Anda sudah berjemur hari ini!", Colors.orange);
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    final result = await SinarMatahariService.catatBerjemur();
+
+    setState(() {
+      isLoading = false;
+    });
+
+    if (result['success']) {
+      setState(() {
+        sudahBerjemur = true;
+        isSunbathe = true;
+      });
+      _showSnackBar("✅ Aktivitas berjemur berhasil dicatat!", const Color(0xFF00C368));
+    } else {
+      _showSnackBar(result['message'] ?? "Gagal mencatat aktivitas", Colors.red);
+    }
+  }
+
+  void _showSnackBar(String message, Color backgroundColor) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: backgroundColor,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
 
   void sunbathe() {
-    setState(() {
-      isSunbathe = true;
-    });
+    _catatBerjemur();
   }
 
   @override
@@ -950,14 +1009,16 @@ class _SinarMatahariState extends State<SinarMatahari> {
                           ) : Container(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [Color(0xfff0b000), Color(0xffff6a00)],
+                                colors: sudahBerjemur
+                                  ? [Colors.grey.shade400, Colors.grey.shade500]  // Grey when done
+                                  : [Color(0xfff0b000), Color(0xffff6a00)],       // Orange when active
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
                               ),
                               borderRadius: BorderRadius.circular(20)
                             ),
                             child: ElevatedButton(
-                              onPressed: sunbathe,
+                              onPressed: sudahBerjemur ? null : sunbathe,  // Disable if already done
                               style: ElevatedButton.styleFrom(
                                 padding: EdgeInsets.all(16),
                                 backgroundColor: Colors.transparent,
@@ -965,15 +1026,20 @@ class _SinarMatahariState extends State<SinarMatahari> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
                                 ),
+                                disabledBackgroundColor: Colors.transparent,  // Keep gradient visible
                               ),
-                              child: Text(
-                                "☀️ Saya Sudah Berjemur",
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              )
+                              child: isLoading
+                                ? const CircularProgressIndicator(color: Colors.white)
+                                : Text(
+                                    sudahBerjemur
+                                      ? "✅ Kamu Sudah Berjemur Hari Ini"  // Done text
+                                      : "☀️ Saya Sudah Berjemur",          // Active text
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  )
                             ),
                           )
                         ],

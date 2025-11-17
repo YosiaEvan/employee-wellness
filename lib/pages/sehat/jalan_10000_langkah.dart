@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/sehat_homepage.dart';
+import 'package:employee_wellness/services/langkah_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:pedometer/pedometer.dart';
@@ -17,67 +18,229 @@ class Jalan10000Langkah extends StatefulWidget {
 class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
   int _totalSteps = 0;
   Stream<StepCount>? _stepCountStream;
-  late Pedometer _pedometer;
   StreamSubscription<StepCount>? _subscription;
   double progressValue = 0;
   int _remainingSteps = 10000;
   int _initialSteps = 0;
-  bool _isStart = false;
+
+  // Timer untuk sync periodik ke API
+  Timer? _syncTimer;
+  DateTime? _lastSyncTime;
 
   @override
   void initState() {
     super.initState();
-    _pedometer = Pedometer();
-    requestPermission();
+    _initializeSteps();
+    // Auto-start tracking di background
+    _autoStartTracking();
+  }
+
+  /// Auto-start pedometer tracking
+  Future<void> _autoStartTracking() async {
+    // Request permission dulu
+    final status = await Permission.activityRecognition.request();
+
+    if (status.isGranted) {
+      print("✅ Permission granted, starting pedometer...");
+      startListening();
+    } else {
+      print("⚠️ Permission denied");
+      // Tetap coba request ulang
+      await Permission.activityRecognition.request();
+      if (await Permission.activityRecognition.isGranted) {
+        startListening();
+      }
+    }
+  }
+
+  /// Initialize steps dengan cek apakah hari sudah berganti
+  Future<void> _initializeSteps() async {
+    // Cek apakah hari sudah berganti
+    final shouldReset = await LangkahService.shouldResetToday();
+
+    if (shouldReset) {
+      print("🔄 Hari baru terdeteksi! Reset data...");
+
+      // PENTING: Simpan data kemarin ke queue sebelum reset
+      final yesterdaySteps = await LangkahService.getTodaySteps();
+      if (yesterdaySteps > 0) {
+        final yesterday = DateTime.now().subtract(Duration(days: 1));
+        final yesterdayDate = yesterday.toIso8601String().split('T')[0];
+
+        print("📦 Saving yesterday's data to queue: $yesterdayDate -> $yesterdaySteps langkah");
+        await LangkahService.saveDailyRecordToQueue(
+          tanggal: yesterdayDate,
+          jumlahLangkah: yesterdaySteps,
+        );
+      }
+
+      // Reset local data untuk hari baru
+      await LangkahService.resetLocalData();
+      await LangkahService.saveLastSyncDate();
+
+      setState(() {
+        _totalSteps = 0;
+        _initialSteps = 0;
+        progressValue = 0;
+        _remainingSteps = 10000;
+      });
+    } else {
+      // Load data dari local storage
+      final savedSteps = await LangkahService.getTodaySteps();
+      final savedInitial = await LangkahService.getInitialSteps();
+
+      print("📥 Loaded from storage:");
+      print("   Today steps: $savedSteps");
+      print("   Initial steps: $savedInitial");
+
+      setState(() {
+        _totalSteps = savedSteps;
+        _initialSteps = savedInitial;
+        progressValue = _totalSteps / 10000;
+        _remainingSteps = 10000 - _totalSteps;
+      });
+    }
+
+    // Load data dari API untuk sinkronisasi
+    _loadFromAPI();
+
+    // Coba sync pending records (background)
+    _attemptBackgroundSync();
+  }
+
+  /// Load data dari API
+  Future<void> _loadFromAPI() async {
+    final result = await LangkahService.getStatusLangkah();
+
+    if (result['success'] && result['hari_ini'] != null) {
+      final hariIni = result['hari_ini'];
+      final apiSteps = hariIni['jumlah_langkah'] ?? 0;
+
+      // Gunakan data dari API jika lebih besar
+      if (apiSteps > _totalSteps) {
+        setState(() {
+          _totalSteps = apiSteps;
+          progressValue = _totalSteps / 10000;
+          _remainingSteps = 10000 - _totalSteps;
+        });
+
+        await LangkahService.saveTodaySteps(_totalSteps);
+      }
+    }
+  }
+
+  /// Attempt to sync pending records in background (silent)
+  Future<void> _attemptBackgroundSync() async {
+    try {
+      final result = await LangkahService.syncPendingRecords();
+
+      if (result['synced'] > 0) {
+        print("✅ Background sync: ${result['synced']} records synced");
+      }
+
+      if (result['failed'] > 0) {
+        print("⚠️ Background sync: ${result['failed']} records failed (will retry later)");
+      }
+    } catch (e) {
+      print("⚠️ Background sync failed: $e (will retry later)");
+      // Silent fail, tidak ganggu user
+    }
   }
 
   void startListening() {
-    setState(() {
-      _isStart = true;
-    });
+    print("🚶 Starting pedometer listener...");
+
     _stepCountStream = Pedometer.stepCountStream;
     _subscription = _stepCountStream!.listen(
-      (StepCount stepCount) {
+      (StepCount stepCount) async {
+        // Jika ini pertama kali, simpan sebagai initial steps
+        if (_initialSteps == 0) {
+          _initialSteps = stepCount.steps;
+          await LangkahService.saveInitialSteps(_initialSteps);
+          print("💾 Saved initial steps: $_initialSteps");
+        }
+
+        // Calculate steps hari ini
+        final todaySteps = stepCount.steps - _initialSteps;
+
         setState(() {
-          _totalSteps = stepCount.steps - _initialSteps;
-          progressValue = _totalSteps/10000;
-          _remainingSteps = 10000-_totalSteps;
+          _totalSteps = todaySteps;
+          progressValue = _totalSteps / 10000;
+          _remainingSteps = 10000 - _totalSteps;
         });
-        print("Langkah terdeteksi: ${stepCount.steps}");
+
+        // Save to local storage
+        await LangkahService.saveTodaySteps(_totalSteps);
+
+        // Auto-sync ke API setiap 30 detik
+        _autoSyncToAPI();
+
+        print("🚶 Steps updated: $_totalSteps");
       },
       onError: (error) {
         print('Error: $error');
       }
     );
+
+    // Start timer untuk periodic sync (setiap 30 detik)
+    _syncTimer = Timer.periodic(Duration(seconds: 30), (timer) {
+      _syncToAPI();
+    });
   }
 
-  void stopListening() {
+  /// Auto-sync dengan debounce
+  void _autoSyncToAPI() {
+    final now = DateTime.now();
+
+    // Sync hanya jika sudah 30 detik sejak last sync
+    if (_lastSyncTime == null ||
+        now.difference(_lastSyncTime!).inSeconds >= 30) {
+      _syncToAPI();
+      _lastSyncTime = now;
+    }
+  }
+
+  /// Sync ke API (sekarang save ke queue untuk background sync)
+  Future<void> _syncToAPI() async {
+    if (_totalSteps > 0) {
+      print("💾 Saving to queue: $_totalSteps steps");
+      // Menggunakan updateLangkahLocal yang akan save ke queue
+      // dan coba sync di background
+      await LangkahService.updateLangkahLocal(jumlahLangkah: _totalSteps);
+    }
+  }
+
+  void stopListening() async {
     _subscription?.cancel();
-    setState(() {
-      _isStart = false;
-    });
-  }
+    _syncTimer?.cancel();
 
-  void resetStep() {
-    setState(() {
-      _initialSteps = _totalSteps + _initialSteps;
-      _totalSteps = 0;
-      progressValue = 0;
-      _remainingSteps = 10000;
-    });
+    // Sync terakhir sebelum stop
+    await _syncToAPI();
+
+    print("⏸️ Pedometer listener stopped");
   }
 
   @override
   void dispose() {
     stopListening();
+    _syncTimer?.cancel();
+
+    // Save data hari ini ke queue sebelum dispose
+    if (_totalSteps > 0) {
+      _saveCurrentDayToQueue();
+    }
+
     super.dispose();
   }
 
-  Future<void> requestPermission() async {
-    var status = await Permission.activityRecognition.status;
-    if (!status.isGranted) {
-      await Permission.activityRecognition.request();
-    }
+  /// Save current day data to queue
+  Future<void> _saveCurrentDayToQueue() async {
+    final today = DateTime.now().toIso8601String().split('T')[0];
+    await LangkahService.saveDailyRecordToQueue(
+      tanggal: today,
+      jumlahLangkah: _totalSteps,
+    );
+    print("💾 Saved today's data to queue on dispose");
   }
 
   @override
@@ -218,126 +381,38 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
 
                     SizedBox(height: 20,),
 
-                    // Buttons
-                    _isStart ? Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              gradient: LinearGradient(
-                                colors: [Color(0xfff54900), Color(0xffe7000a)],
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                              ),
-                            ),
-                            child: ElevatedButton(
-                                onPressed: stopListening,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
-                                  shadowColor: Colors.transparent,
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      FontAwesomeIcons.pause,
-                                      size: 16,
-                                      color: Colors.white,
-                                    ),
-                                    SizedBox(width: 8,),
-                                    Text(
-                                      "Jeda",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    )
-                                  ],
-                                )
-                            )
-                          )
+                    // Status Info - Auto Tracking
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Color(0xffe0e0e0),
+                          width: 1,
                         ),
-                      ],
-                    ) : Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              gradient: LinearGradient(
-                                colors: [Color(0xff135ffa), Color(0xff00b7db)],
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                              ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            FontAwesomeIcons.circleCheck,
+                            size: 20,
+                            color: Colors.green,
+                          ),
+                          SizedBox(width: 8,),
+                          Text(
+                            "Tracking berjalan otomatis di background",
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.green,
+                              fontWeight: FontWeight.w500,
                             ),
-                            child: ElevatedButton(
-                              onPressed: startListening,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    FontAwesomeIcons.play,
-                                    size: 16,
-                                    color: Colors.white,
-                                  ),
-                                  SizedBox(width: 8,),
-                                  Text(
-                                    "Mulai Berjalan",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  )
-                                ],
-                              )
-                            )
-                          )
-                        ),
-                        SizedBox(width: 12,),
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              color: Colors.white,
-                            ),
-                            child: ElevatedButton(
-                              onPressed: resetStep,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    FontAwesomeIcons.rotateRight,
-                                    size: 16,
-                                    color: Colors.black,
-                                  ),
-                                  SizedBox(width: 8,),
-                                  Text(
-                                    "Reset",
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  )
-                                ],
-                              ),
-                            )
-                          )
-                        )
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
-                    
+
                     SizedBox(height: 20,),
 
                     // Manfaat Jalan 10.000 Langkah
