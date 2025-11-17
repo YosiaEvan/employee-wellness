@@ -75,7 +75,7 @@ class _HeaderState extends State<Header> {
     final token = prefs.getString("token");
     try {
       final response = await http.post(
-          Uri.parse("http://10.0.2.2:8000/api/logout"),
+          Uri.parse("https://employee-wellness.netlify.app/api/logout"),
           headers: {
             "Content-Type": "application/json",
             "Authorization": "Bearer ${token}",
