@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../services/sehat_kpi_service.dart';
 import '../../components/header.dart';
+import 'sehat_kpi_detail.dart';
 
 /// Halaman KPI Dashboard Sehat
 /// Menampilkan tabel poin dan progress bulanan
@@ -14,9 +15,9 @@ class SehatKPIDashboard extends StatefulWidget {
 
 class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
   bool isLoading = true;
+  Map<String, dynamic>? dailyKPI;
   Map<String, dynamic>? weeklyKPI;
   Map<String, dynamic>? monthlyKPI;
-  Map<String, dynamic>? todayActivities;
 
   @override
   void initState() {
@@ -27,14 +28,27 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
   Future<void> loadKPIData() async {
     setState(() => isLoading = true);
 
+    final dailyResult = await SehatKPIService.getDailyKPI();
     final weeklyResult = await SehatKPIService.getWeeklyKPI();
     final monthlyResult = await SehatKPIService.getMonthlyKPI();
-    final todayResult = await SehatKPIService.getTodayActivities();
+
 
     setState(() {
-      if (weeklyResult['success']) weeklyKPI = weeklyResult['data'];
-      if (monthlyResult['success']) monthlyKPI = monthlyResult['data'];
-      if (todayResult['success']) todayActivities = todayResult['data'];
+      if (dailyResult['success'] == true) {
+        dailyKPI = dailyResult['data'];
+      } else {
+      }
+
+      if (weeklyResult['success'] == true) {
+        weeklyKPI = weeklyResult['data'];
+      } else {
+      }
+
+      if (monthlyResult['success'] == true) {
+        monthlyKPI = monthlyResult['data'];
+      } else {
+      }
+
       isLoading = false;
     });
   }
@@ -43,32 +57,106 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFEDFDF4),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SehatKPIDetail()),
+          );
+        },
+        backgroundColor: const Color(0xFFC90028),
+        icon: const Icon(FontAwesomeIcons.chartLine, color: Colors.white),
+        label: const Text(
+          'Lihat Detail',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [
             const Header(),
+            // Back Button
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(FontAwesomeIcons.arrowLeft),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFFC90028),
+                      padding: const EdgeInsets.all(12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'KPI Dashboard',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFC90028),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Expanded(
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : RefreshIndicator(
-                      onRefresh: loadKPIData,
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildMonthlyCard(),
-                            const SizedBox(height: 16),
-                            _buildWeeklyCard(),
-                            const SizedBox(height: 16),
-                            _buildTodayCard(),
-                            const SizedBox(height: 16),
-                            _buildKPITable(),
-                            const SizedBox(height: 100),
-                          ],
+                  : (dailyKPI == null && weeklyKPI == null && monthlyKPI == null)
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.error_outline, size: 64, color: Colors.grey),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Data KPI tidak tersedia',
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Pastikan Anda sudah login dan memiliki akses ke API',
+                                style: TextStyle(color: Colors.grey),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: loadKPIData,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Coba Lagi'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFC90028),
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: loadKPIData,
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildMonthlyCard(),
+                                const SizedBox(height: 16),
+                                _buildWeeklyCard(),
+                                const SizedBox(height: 16),
+                                _buildTodayCard(),
+                                const SizedBox(height: 16),
+                                _buildKPITable(),
+                                const SizedBox(height: 100),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
             ),
           ],
         ),
@@ -80,23 +168,27 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
   Widget _buildMonthlyCard() {
     if (monthlyKPI == null) return const SizedBox();
 
-    final totalPoin = monthlyKPI!['total_poin'] ?? 0;
-    final maxPoin = monthlyKPI!['max_poin'] ?? 1;
-    final persentase = monthlyKPI!['persentase_pencapaian'] ?? 0;
-    final bulan = _getBulanIndonesia(monthlyKPI!['bulan']);
+    final periode = monthlyKPI!['periode'];
+    final ringkasan = monthlyKPI!['ringkasan'];
+
+    final targetTotal = ringkasan['target_total_hari'] ?? 152;
+    final tercapaiTotal = ringkasan['tercapai_total_hari'] ?? 0;
+    final progressPersen = ringkasan['progress_persen'] ?? 0;
+    final bulan = _getBulanIndonesia(periode['bulan']);
+    final tahun = periode['tahun'];
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF00C97A), Color(0xFF00A86B)],
+          colors: [Color(0xFFC9001E), Color(0xFFA80032)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF00C97A).withValues(alpha: 0.3),
+            color: const Color(0xFFC90017).withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -110,7 +202,7 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
               const Icon(FontAwesomeIcons.trophy, color: Colors.white, size: 24),
               const SizedBox(width: 12),
               Text(
-                'KPI Sehat - $bulan ${monthlyKPI!['tahun']}',
+                'KPI Sehat - $bulan $tahun',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -127,11 +219,11 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Total Poin',
+                    'Tercapai / Target',
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   Text(
-                    '$totalPoin / $maxPoin',
+                    '$tercapaiTotal / $targetTotal hari',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 32,
@@ -147,7 +239,7 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '${persentase.toStringAsFixed(1)}%',
+                  '${progressPersen.toStringAsFixed(0)}%',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,
@@ -161,7 +253,7 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
-              value: persentase / 100,
+              value: progressPersen / 100,
               minHeight: 12,
               backgroundColor: Colors.white.withValues(alpha: 0.3),
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
@@ -176,8 +268,33 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
   Widget _buildWeeklyCard() {
     if (weeklyKPI == null) return const SizedBox();
 
-    final totalPoin = weeklyKPI!['total_poin'] ?? 0;
-    final persentase = weeklyKPI!['persentase_pencapaian'] ?? 0;
+    final periode = weeklyKPI!['periode'];
+    final ringkasan = weeklyKPI!['ringkasan'];
+    final aktivitas = weeklyKPI!['aktivitas'] as List<dynamic>? ?? [];
+
+    final targetTotal = ringkasan['target_total_hari'] ?? 34;
+    final tercapaiTotal = ringkasan['tercapai_total_hari'] ?? 0;
+    final progressPersen = ringkasan['progress_persen'] ?? 0;
+    final mingguKe = periode['minggu_ke'];
+
+    // Extract individual activity data
+    Map<String, dynamic> getAktivitas(String nama) {
+      try {
+        return aktivitas.firstWhere(
+          (a) => a['nama'].toString().toLowerCase().contains(nama.toLowerCase()),
+          orElse: () => {'tercapai': 0, 'target_per_minggu': 0},
+        );
+      } catch (e) {
+        return {'tercapai': 0, 'target_per_minggu': 0};
+      }
+    }
+
+    final berjemur = getAktivitas('Berjemur');
+    final olahraga = getAktivitas('Olahraga');
+    final udara = getAktivitas('udara');
+    final minum = getAktivitas('Minum');
+    final tidur = getAktivitas('Tidur');
+    final makan = getAktivitas('makan');
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -195,9 +312,9 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Minggu Ini',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          Text(
+            'Minggu Ke-$mingguKe',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Row(
@@ -205,22 +322,22 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
             children: [
               _buildWeeklyPoinItem(
                 'Berjemur',
-                weeklyKPI!['poin_berjemur'] ?? 0,
-                20,
+                berjemur['tercapai'] ?? 0,
+                berjemur['target_per_minggu'] ?? 1,
                 FontAwesomeIcons.sun,
                 Colors.orange,
               ),
               _buildWeeklyPoinItem(
                 'Olahraga',
-                weeklyKPI!['poin_olahraga'] ?? 0,
-                20,
+                olahraga['tercapai'] ?? 0,
+                olahraga['target_per_minggu'] ?? 5,
                 FontAwesomeIcons.personRunning,
                 Colors.blue,
               ),
               _buildWeeklyPoinItem(
                 'Udara',
-                weeklyKPI!['poin_udara'] ?? 0,
-                20,
+                udara['tercapai'] ?? 0,
+                udara['target_per_minggu'] ?? 5,
                 FontAwesomeIcons.wind,
                 Colors.cyan,
               ),
@@ -232,24 +349,24 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
             children: [
               _buildWeeklyPoinItem(
                 'Minum',
-                weeklyKPI!['poin_minum'] ?? 0,
-                28,
+                minum['tercapai'] ?? 0,
+                minum['target_per_minggu'] ?? 7,
                 FontAwesomeIcons.glassWater,
                 Colors.lightBlue,
               ),
               _buildWeeklyPoinItem(
                 'Tidur',
-                weeklyKPI!['poin_tidur'] ?? 0,
-                28,
+                tidur['tercapai'] ?? 0,
+                tidur['target_per_minggu'] ?? 7,
                 FontAwesomeIcons.bed,
                 Colors.indigo,
               ),
               _buildWeeklyPoinItem(
                 'Makan',
-                weeklyKPI!['poin_makan'] ?? 0,
-                36,
+                makan['tercapai'] ?? 0,
+                makan['target_per_minggu'] ?? 9,
                 FontAwesomeIcons.utensils,
-                Colors.green,
+                Colors.red,
               ),
             ],
           ),
@@ -264,14 +381,14 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Total Poin Minggu Ini',
+                  'Total Minggu Ini',
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 Text(
-                  '$totalPoin / 152 (${persentase.toStringAsFixed(0)}%)',
+                  '$tercapaiTotal / $targetTotal (${progressPersen.toStringAsFixed(0)}%)',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF00C97A),
+                    color: Color(0xFFC9001E),
                   ),
                 ),
               ],
@@ -318,7 +435,32 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
 
   // Today's Activities Card
   Widget _buildTodayCard() {
-    if (todayActivities == null) return const SizedBox();
+    if (dailyKPI == null) return const SizedBox();
+
+    final aktivitas = dailyKPI!['aktivitas'] as List<dynamic>? ?? [];
+
+    // Helper function to get activity data
+    Map<String, dynamic> getAktivitas(String nama) {
+      try {
+        return aktivitas.firstWhere(
+          (a) => a['nama'].toString().toLowerCase().contains(nama.toLowerCase()),
+          orElse: () => {'selesai': false, 'data': {}},
+        );
+      } catch (e) {
+        return {'selesai': false, 'data': {}};
+      }
+    }
+
+    final berjemur = getAktivitas('Berjemur');
+    final olahraga = getAktivitas('Olahraga');
+    final udara = getAktivitas('udara');
+    final minum = getAktivitas('Minum');
+    final tidur = getAktivitas('Tidur');
+
+    // Extract detailed data
+    final olahragaData = olahraga['data'] ?? {};
+    final udaraData = udara['data'] ?? {};
+    final minumData = minum['data'] ?? {};
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -343,34 +485,34 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
           const SizedBox(height: 12),
           _buildTodayItem(
             'Berjemur',
-            todayActivities!['berjemur_done'] ?? false,
+            berjemur['selesai'] ?? false,
             FontAwesomeIcons.sun,
             Colors.orange,
           ),
           _buildTodayItem(
             'Jalan 10.000 Langkah',
-            todayActivities!['langkah_target_tercapai'] ?? false,
+            olahraga['selesai'] ?? false,
             FontAwesomeIcons.personRunning,
             Colors.blue,
-            subtitle: '${todayActivities!['langkah_total'] ?? 0} langkah',
+            subtitle: '${olahragaData['total_langkah'] ?? 0} langkah',
           ),
           _buildTodayItem(
             'Hirup Udara Segar',
-            todayActivities!['hirup_udara_done'] ?? false,
+            udara['selesai'] ?? false,
             FontAwesomeIcons.wind,
             Colors.cyan,
-            subtitle: '${todayActivities!['hirup_udara_count'] ?? 0}/5 kali',
+            subtitle: '${udaraData['count'] ?? 0}/5 kali',
           ),
           _buildTodayItem(
             'Minum Air 8 Gelas',
-            todayActivities!['minum_air_done'] ?? false,
+            minum['selesai'] ?? false,
             FontAwesomeIcons.glassWater,
             Colors.lightBlue,
-            subtitle: '${todayActivities!['minum_air_count'] ?? 0}/8 gelas',
+            subtitle: '${minumData['count'] ?? 0}/8 gelas',
           ),
           _buildTodayItem(
             'Tidur Cukup',
-            todayActivities!['tidur_done'] ?? false,
+            tidur['selesai'] ?? false,
             FontAwesomeIcons.bed,
             Colors.indigo,
           ),
@@ -428,7 +570,7 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
           ),
           Icon(
             done ? FontAwesomeIcons.circleCheck : FontAwesomeIcons.circle,
-            color: done ? const Color(0xFF00C97A) : Colors.grey.shade300,
+            color: done ? const Color(0xFFC90028) : Colors.grey.shade300,
             size: 20,
           ),
         ],
@@ -438,6 +580,11 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
 
   // KPI Table
   Widget _buildKPITable() {
+    if (monthlyKPI == null) return const SizedBox();
+
+    final aktivitas = monthlyKPI!['aktivitas'] as List<dynamic>? ?? [];
+    final total = monthlyKPI!['total'] ?? {};
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -457,7 +604,7 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                const Icon(FontAwesomeIcons.table, color: Color(0xFF00C97A), size: 20),
+                const Icon(FontAwesomeIcons.table, color: Color(0xFFC90028), size: 20),
                 const SizedBox(width: 8),
                 const Text(
                   'Tabel KPI Sehat 360°',
@@ -474,23 +621,39 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
                 DataColumn(label: Text('Aktivitas', style: TextStyle(fontWeight: FontWeight.bold))),
                 DataColumn(label: Text('Frekuensi', style: TextStyle(fontWeight: FontWeight.bold))),
                 DataColumn(label: Text('Target', style: TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text('Poin', style: TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text('%', style: TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text('Tercapai', style: TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text('Progress', style: TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text('Bobot', style: TextStyle(fontWeight: FontWeight.bold))),
               ],
               rows: [
-                _buildTableRow('Berjemur (07.00-09.00 / 15.00-17.00)', '1x/minggu', '1', '20', '13%'),
-                _buildTableRow('Olahraga 10.000 langkah', '5x/minggu', '5', '20', '13%'),
-                _buildTableRow('Pola makan sehat', '2 hari tanpa minyak, 2 hari tanpa gula, 5x sesuai kalori', '9', '36', '24%'),
-                _buildTableRow('Hirup udara segar (teknik 4-4-8)', '5x/minggu', '5', '20', '13%'),
-                _buildTableRow('Minum 8 gelas air', '7x/minggu', '7', '28', '18%'),
-                _buildTableRow('Tidur 7-8 jam (≤21.00 mulai)', '7x/minggu', '7', '28', '18%'),
+                // Dynamic rows from API
+                ...aktivitas.map((item) {
+                  final nama = item['nama'] ?? '';
+                  final frekuensi = item['frekuensi_per_minggu'] ?? '-';
+                  final target = item['target_per_bulan'] ?? 0;
+                  final tercapai = item['tercapai'] ?? 0;
+                  final progress = item['progress_persen'] ?? 0;
+                  final bobot = item['bobot'] ?? '-';
+
+                  return _buildTableRow(
+                    nama,
+                    frekuensi,
+                    target.toString(),
+                    tercapai.toString(),
+                    '${progress.toStringAsFixed(0)}%',
+                    bobot,
+                  );
+                }).toList(),
+                // Total row
                 DataRow(
                   cells: [
-                    const DataCell(Text('TOTAL', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataCell(Text(total['nama'] ?? 'TOTAL', style: const TextStyle(fontWeight: FontWeight.bold))),
                     const DataCell(Text('-')),
-                    const DataCell(Text('-')),
-                    const DataCell(Text('152', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF00C97A)))),
-                    const DataCell(Text('100%', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataCell(Text(total['target_per_bulan']?.toString() ?? '-', style: const TextStyle(fontWeight: FontWeight.bold))),
+                    DataCell(Text(total['tercapai']?.toString() ?? '-', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(
+                        0xFFC90028)))),
+                    DataCell(Text('${total['progress_persen']?.toStringAsFixed(0) ?? '0'}%', style: const TextStyle(fontWeight: FontWeight.bold))),
+                    DataCell(Text(total['bobot'] ?? '100%', style: const TextStyle(fontWeight: FontWeight.bold))),
                   ],
                 ),
               ],
@@ -501,7 +664,7 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
     );
   }
 
-  DataRow _buildTableRow(String aktivitas, String frekuensi, String target, String poin, String persen) {
+  DataRow _buildTableRow(String aktivitas, String frekuensi, String target, String tercapai, String progress, String bobot) {
     return DataRow(
       cells: [
         DataCell(
@@ -512,8 +675,10 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
         ),
         DataCell(Text(frekuensi, style: const TextStyle(fontSize: 12))),
         DataCell(Text(target, style: const TextStyle(fontSize: 12))),
-        DataCell(Text(poin, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
-        DataCell(Text(persen, style: const TextStyle(fontSize: 12))),
+        DataCell(Text(tercapai, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(
+            0xFFC90028)))),
+        DataCell(Text(progress, style: const TextStyle(fontSize: 12))),
+        DataCell(Text(bobot, style: const TextStyle(fontSize: 12))),
       ],
     );
   }

@@ -73,14 +73,15 @@ class _RegisterState extends State<Register> {
     if (result["success"]) {
       showSnackBar(result["message"]);
 
-      // Navigate to verify email page
-      Navigator.pushReplacement(
+      // Navigate to verify email page and remove all previous routes
+      Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
           builder: (context) => VerifyEmail(
             email: emailController.text.trim(),
           ),
         ),
+        (route) => false, // Remove all previous routes
       );
     } else {
       showSnackBar(result["message"]);

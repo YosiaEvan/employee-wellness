@@ -1,10 +1,35 @@
 import 'package:employee_wellness/home.dart';
 import 'package:employee_wellness/register.dart';
 import 'package:employee_wellness/services/auth_service.dart';
+import 'package:employee_wellness/services/background_steps_tracker.dart';
+import 'package:employee_wellness/services/background_task_service.dart';
+import 'package:employee_wellness/services/offline_steps_service.dart';
+import 'package:employee_wellness/services/steps_sync_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize background task service
+  await BackgroundTaskService.instance.initialize();
+
+  // Initialize background steps tracker if user is logged in
+  final isLoggedIn = await AuthService.isLoggedIn();
+  if (isLoggedIn) {
+    print('🚀 User is logged in, initializing background services...');
+
+    // Initialize background tracker
+    await BackgroundStepsTracker.initialize();
+
+    // Register background tasks
+    await BackgroundTaskService.instance.registerPeriodicSync();
+    await BackgroundTaskService.instance.registerCleanupTask();
+
+    // Run auto sync on app start
+    await StepsSyncService.instance.autoSync();
+  }
+
   runApp(const MyApp());
 }
 
@@ -102,12 +127,19 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     if (result["success"]) {
-      // Success - Navigate to HomePage immediately
+      // Success - Initialize background services
       print("✅ Login SUCCESS! Token: ${result['token']?.substring(0, 20)}...");
+
+      // Initialize background tracker
+      print("🚀 Initializing background services...");
+      await BackgroundStepsTracker.initialize();
+      await OfflineStepsService.autoSyncOnAppStart();
+      print("✅ Background services initialized");
+
       print("🚀 Navigating to HomePage...");
 
       try {
-        // Navigate first
+        // Navigate
         await Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) {

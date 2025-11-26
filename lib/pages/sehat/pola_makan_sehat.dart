@@ -87,14 +87,15 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
         // Flatten for legacy compatibility
         foods = [];
         daftarMakanan.forEach((jenis, items) {
-        foods.addAll(items);
-      });
-    }
+          foods.addAll(items);
+        });
+  } else {
+      }
 
-    // Check health challenge
-    _checkHealthChallenge();
-  });
-}
+      // Check health challenge
+      _checkHealthChallenge();
+    });
+  }
 
 void _checkHealthChallenge() {
   // Get riwayat_seminggu data from API
@@ -124,44 +125,45 @@ void _checkHealthChallenge() {
 }
 
   Future<void> addFoodFromDatabase(Map<String, dynamic> result) async {
-    // Show loading indicator
+    print("\n🍽️ addFoodFromDatabase() called");
+    print("   Result success: ${result["success"]}");
+
+    // Set loading state untuk visual feedback
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              ),
-              SizedBox(width: 12),
-              Text('Menyimpan data...'),
-            ],
-          ),
-          duration: Duration(seconds: 1),
-          backgroundColor: Colors.blue,
-        ),
-      );
-    }
-
-    // Wait a moment for the snackbar to show
-    await Future.delayed(Duration(milliseconds: 500));
-
-    // Reload data immediately for real-time update
-    await loadTodayFood();
-
-    // Force rebuild UI
-    if (mounted) {
+      print("   Setting isLoading = true");
       setState(() {
-        // This will trigger UI rebuild with new data
+        isLoading = true;
       });
     }
 
-    // Show result notification
+    print("   Calling loadTodayFood()...");
+    // Force reload data dari API (bypass any cache)
+    await loadTodayFood();
+
+    print("   loadTodayFood() completed, forcing UI rebuild...");
+    // Extra safety: Force rebuild UI setelah data loaded
+    if (mounted) {
+      setState(() {
+        // Trigger complete rebuild
+        print("   ✅ setState() called - UI should rebuild now");
+      });
+    }
+
+    // Hide loading snackbar
+    if (mounted) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    }
+
+    // Small delay untuk memastikan UI sudah rebuild
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    print("   Preparing success notification...");
+    print("   Current state after refresh:");
+    print("   - totalCalories: $totalCalories");
+    print("   - totalItem: $totalItem");
+    print("   - foods.length: ${foods.length}");
+
+    // Show success notification dengan data terbaru
     if (result["success"]) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -177,23 +179,19 @@ void _checkHealthChallenge() {
                     Expanded(child: Text(result['message'] ?? 'Berhasil menambahkan')),
                   ],
                 ),
-                if (result['data'] != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    '📊 Total: ${result['data']['total_kalori_hari_ini']} / ${result['data']['target_kalori']} kkal',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  Text(
-                    'Sisa: ${result['data']['sisa_kalori']} kkal',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                ],
-                if (result['warning'] != null)
-                  Text('⚠️ ${result['warning']}', style: const TextStyle(fontSize: 12)),
+                const SizedBox(height: 4),
+                Text(
+                  '📊 Total Kalori: ${totalCalories.toStringAsFixed(1)} kkal',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  '✅ Total Makanan: $totalItem item',
+                  style: const TextStyle(fontSize: 12),
+                ),
               ],
             ),
             backgroundColor: const Color(0xFF00C368),
-            duration: const Duration(seconds: 4),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -203,15 +201,14 @@ void _checkHealthChallenge() {
           SnackBar(
             content: Text(result["message"] ?? 'Gagal menambahkan'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
     }
 
-    // Log untuk debugging
-    print("✅ Food added, UI refreshed with new data");
-    print("   Total items: $totalItem");
-    print("   Total calories: ${totalCalories.toStringAsFixed(1)}");
+    print("✅ addFoodFromDatabase() completed!");
+    print("═══════════════════════════════════════\n");
   }
 
   @override
@@ -781,125 +778,42 @@ void _checkHealthChallenge() {
                             ],
                           ),
                           SizedBox(height: 20,),
-                          if (foods.isNotEmpty)
-                            ListView.separated(
-                            itemCount: foods.length,
-                            separatorBuilder: (context, index) => SizedBox(height: 12),
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemBuilder: (context, index) {
-                              final food = foods[index];
-                              final nama = food['nama_makanan'] ?? 'Unknown';
-                              final porsi = food['porsi']?.toDouble() ?? 1.0;
-                              final totalKalori = food['total_kalori']?.toDouble() ?? 0.0;
-                              final totalProtein = food['total_protein']?.toDouble() ?? 0.0;
-                              final totalKarbo = food['total_karbohidrat']?.toDouble() ?? 0.0;
-                              final totalSerat = food['total_serat']?.toDouble() ?? 0.0;
+                          if (totalItem > 0)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Sarapan
+                                if (daftarMakanan['sarapan']?.isNotEmpty ?? false) ...[
+                                  _buildMealCategoryHeader('🌅 Sarapan', daftarMakanan['sarapan']!.length),
+                                  SizedBox(height: 12),
+                                  ..._buildFoodList(daftarMakanan['sarapan']!),
+                                  SizedBox(height: 20),
+                                ],
 
-                              return Container(
-                                width: double.infinity,
-                                padding: EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(20),
-                                    color: Color(0xffedfdf5),
-                                    border: Border.all(
-                                      color: Color(0xffb9f8cf),
-                                      width: 2,
-                                      style: BorderStyle.solid,
-                                    )
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            nama,
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                        Container(
-                                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: Color(0xFFFFECB3),
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: Text(
-                                            "${porsi}x porsi",
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.orange.shade900,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(height: 8),
-                                    Row(
-                                      children: [
-                                        Icon(FontAwesomeIcons.fire, size: 14, color: Colors.red),
-                                        SizedBox(width: 6),
-                                        Text(
-                                          "${totalKalori.toStringAsFixed(1)} kkal",
-                                          style: TextStyle(
-                                            color: Colors.red,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 15,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(height: 12),
-                                    Row(
-                                      children: [
-                                        Container(
-                                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: Color(0xffffe2e2),
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: Text(
-                                            "P: ${totalProtein.toStringAsFixed(1)}g",
-                                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                                          ),
-                                        ),
-                                        SizedBox(width: 6),
-                                        Container(
-                                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: Color(0xffdbeafe),
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: Text(
-                                            "K: ${totalKarbo.toStringAsFixed(1)}g",
-                                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                                          ),
-                                        ),
-                                        SizedBox(width: 6),
-                                        Container(
-                                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: Color(0xffdbfce7),
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: Text(
-                                            "S: ${totalSerat.toStringAsFixed(1)}g",
-                                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                )
-                              );
-                            },
-                          )
+                                // Makan Siang
+                                if (daftarMakanan['makan_siang']?.isNotEmpty ?? false) ...[
+                                  _buildMealCategoryHeader('☀️ Makan Siang', daftarMakanan['makan_siang']!.length),
+                                  SizedBox(height: 12),
+                                  ..._buildFoodList(daftarMakanan['makan_siang']!),
+                                  SizedBox(height: 20),
+                                ],
+
+                                // Makan Malam
+                                if (daftarMakanan['makan_malam']?.isNotEmpty ?? false) ...[
+                                  _buildMealCategoryHeader('🌙 Makan Malam', daftarMakanan['makan_malam']!.length),
+                                  SizedBox(height: 12),
+                                  ..._buildFoodList(daftarMakanan['makan_malam']!),
+                                  SizedBox(height: 20),
+                                ],
+
+                                // Snack
+                                if (daftarMakanan['snack']?.isNotEmpty ?? false) ...[
+                                  _buildMealCategoryHeader('🍪 Snack', daftarMakanan['snack']!.length),
+                                  SizedBox(height: 12),
+                                  ..._buildFoodList(daftarMakanan['snack']!),
+                                ],
+                              ],
+                            )
                           else
                             Container(
                               width: double.infinity,
@@ -1360,8 +1274,116 @@ void _checkHealthChallenge() {
                 Expanded(
                   child: SmartFoodSearch(
                     onFoodSelected: (result) async {
-                      Navigator.pop(context); // Close dialog
-                      await addFoodFromDatabase(result);
+                      print("\n╔════════════════════════════════════════╗");
+                      print("║   🎯 CALLBACK TRIGGERED                ║");
+                      print("╚════════════════════════════════════════╝");
+                      print("Result Success: ${result["success"]}");
+                      print("Message: ${result["message"]}");
+                      print("Data: ${result["data"]}");
+
+                      // Close bottom sheet first
+                      print("\n[1/8] Closing bottom sheet...");
+                      Navigator.pop(context);
+
+                      // Wait for animation
+                      print("[2/8] Waiting 300ms for animation...");
+                      await Future.delayed(const Duration(milliseconds: 300));
+
+                      // Show loading feedback
+                      print("[3/8] Showing loading snackbar...");
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Row(
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                SizedBox(width: 12),
+                                Text('Memuat data terbaru...'),
+                              ],
+                            ),
+                            backgroundColor: Colors.blue,
+                            duration: Duration(seconds: 3),
+                          ),
+                        );
+                      }
+
+                      // Set loading state
+                      print("[4/8] Setting isLoading = true...");
+                      if (mounted) {
+                        setState(() {
+                          isLoading = true;
+                        });
+                      }
+
+                      // Wait for database commit
+                      print("[5/8] Waiting 1000ms for database commit...");
+                      await Future.delayed(const Duration(milliseconds: 1000));
+
+                      // NOW FETCH DATA - THIS IS THE CRITICAL PART
+                      print("[6/8] ⭐ CALLING loadTodayFood() NOW ⭐");
+                      print("      This should trigger GET request to API...");
+                      await loadTodayFood();
+                      print("      loadTodayFood() completed!");
+
+                      // Force rebuilds
+                      print("[7/8] Forcing UI rebuilds...");
+                      if (mounted) {
+                        setState(() {});
+                        await Future.delayed(const Duration(milliseconds: 50));
+                        setState(() {});
+                        await Future.delayed(const Duration(milliseconds: 50));
+                        setState(() {});
+                      }
+
+                      // Hide loading and show success
+                      print("[8/8] Showing success notification...");
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      }
+
+                      if (result["success"] && mounted) {
+                        print("\n✅ SUCCESS - Current State:");
+                        print("   Total Calories: $totalCalories kkal");
+                        print("   Total Items: $totalItem");
+                        print("   Foods Count: ${foods.length}");
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(FontAwesomeIcons.check, color: Colors.white, size: 16),
+                                    const SizedBox(width: 8),
+                                    Expanded(child: Text(result['message'] ?? 'Berhasil menambahkan')),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '📊 Total Kalori: ${totalCalories.toStringAsFixed(1)} kkal',
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  '✅ Total Makanan: $totalItem item',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ],
+                            ),
+                            backgroundColor: const Color(0xFF00C368),
+                            duration: const Duration(seconds: 3),
+                          ),
+                        );
+                      }
+
                     },
                   ),
                 ),
@@ -1371,5 +1393,164 @@ void _checkHealthChallenge() {
         );
       },
     );
+  }
+
+  // Helper method untuk build meal category header
+  Widget _buildMealCategoryHeader(String title, int count) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F5E9),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF4CAF50),
+          width: 2,
+        ),
+      ),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2E7D32),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF4CAF50),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '$count item',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper method untuk build food list
+  List<Widget> _buildFoodList(List<Map<String, dynamic>> foodList) {
+    return foodList.map((food) {
+      final nama = food['nama_makanan'] ?? 'Unknown';
+      final porsi = food['porsi']?.toDouble() ?? 1.0;
+      final totalKalori = food['total_kalori']?.toDouble() ?? 0.0;
+      final totalProtein = food['total_protein']?.toDouble() ?? 0.0;
+      final totalKarbo = food['total_karbohidrat']?.toDouble() ?? 0.0;
+      final totalSerat = food['total_serat']?.toDouble() ?? 0.0;
+
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: const Color(0xffedfdf5),
+          border: Border.all(
+            color: const Color(0xffb9f8cf),
+            width: 2,
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    nama,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFECB3),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    "${porsi}x porsi",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange.shade900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(FontAwesomeIcons.fire, size: 14, color: Colors.red),
+                const SizedBox(width: 6),
+                Text(
+                  "${totalKalori.toStringAsFixed(1)} kkal",
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xffffe2e2),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    "P: ${totalProtein.toStringAsFixed(1)}g",
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xffdbeafe),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    "K: ${totalKarbo.toStringAsFixed(1)}g",
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xffdbfce7),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    "S: ${totalSerat.toStringAsFixed(1)}g",
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }).toList();
   }
 }

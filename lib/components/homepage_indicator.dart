@@ -60,7 +60,7 @@ class _IndicatorState extends State<Indicator> {
         const SizedBox(height: 20),
 
         SizedBox(
-          height: 760,
+          height: 660,
           child: PageView(
             controller: _pageController,
             onPageChanged: (index) {
@@ -219,39 +219,7 @@ class _IndicatorState extends State<Indicator> {
                           ],
                         ),
                       ),
-
                       const SizedBox(height: 20),
-
-                      Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: Colors.white,
-                        ),
-                        padding: EdgeInsets.symmetric(vertical: 20),
-                        child: Column(
-                          children: [
-                            Text(
-                              "85%",
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontSize: 30,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              "Progress Aktif",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
                       SizedBox(
                           width: double.infinity,
                           height: 52,
@@ -359,7 +327,7 @@ class _IndicatorState extends State<Indicator> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            "Solus kesehatan mental dengan meditasi terpandu, konseling online, dan teknik manajemen stres.",
+                            "Solusi kesehatan mental dengan meditasi terpandu, konseling online, dan teknik manajemen stres.",
                             style: TextStyle(
                               fontSize: 16,
                             ),
@@ -444,39 +412,7 @@ class _IndicatorState extends State<Indicator> {
                           ],
                         ),
                       ),
-
                       const SizedBox(height: 20),
-
-                      Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: Colors.white,
-                        ),
-                        padding: EdgeInsets.symmetric(vertical: 20),
-                        child: Column(
-                          children: [
-                            Text(
-                              "72%",
-                              style: TextStyle(
-                                color: Colors.blue,
-                                fontSize: 30,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              "Progress Tenang",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
                       SizedBox(
                           width: double.infinity,
                           height: 52,
@@ -666,36 +602,6 @@ class _IndicatorState extends State<Indicator> {
                                 MainFeature(color: Colors.green, text: "Sustainability rewards"),
                               ],
                             )
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: Colors.white,
-                        ),
-                        padding: EdgeInsets.symmetric(vertical: 20),
-                        child: Column(
-                          children: [
-                            Text(
-                              "68%",
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontSize: 30,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              "Progress Hijau",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
                           ],
                         ),
                       ),

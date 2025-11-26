@@ -30,6 +30,31 @@ class _TidurCukupState extends State<TidurCukup> {
   double rataRataDurasiJam = 0.0;
   List<Map<String, dynamic>> kalenderMinggu = [];
 
+  // Helper method to check if current time is in sleep time range (20:00 - 05:00)
+  bool get isInSleepTimeRange {
+    final now = DateTime.now();
+    final hour = now.hour;
+
+    // Jam tidur: 20:00 (8 PM) sampai 05:00 (5 AM) keesokan hari
+    return hour >= 20 || hour < 5;
+  }
+
+  String get sleepTimeMessage {
+    final now = DateTime.now();
+    final hour = now.hour;
+
+    if (hour >= 5 && hour < 20) {
+      final waktuTidur = DateTime(now.year, now.month, now.day, 20, 0);
+      final difference = waktuTidur.difference(now);
+      final hoursLeft = difference.inHours;
+      final minutesLeft = difference.inMinutes.remainder(60);
+
+      return "Silahkan menunggu waktu tidur\n(Dapat dilaporkan mulai pukul 20:00)";
+    }
+
+    return "Waktu tidur sudah tiba!";
+  }
+
   @override
   void initState() {
     super.initState();
@@ -101,11 +126,6 @@ class _TidurCukupState extends State<TidurCukup> {
 
       isLoading = false;
     });
-
-    print("📊 Status tidur: ${sudahLapor ? 'SUDAH LAPOR' : 'BELUM LAPOR'}");
-    print("📊 Today data: $todayData");
-    print("📊 Jumlah hari dicatat: $jumlahHariDicatat / 7");
-    print("📊 Rata-rata durasi: $rataRataDurasiJam jam");
   }
 
   Duration get totalSleep {
@@ -163,12 +183,6 @@ class _TidurCukupState extends State<TidurCukup> {
 
     // Jam bangun default: 05:00
     final jamBangun = '05:00';
-
-    print("🛏️ Auto-submitting sleep report:");
-    print("   Waktu klik: ${now.hour}:${now.minute}");
-    print("   Jam tidur: $jamTidur (waktu klik sekarang)");
-    print("   Jam bangun: $jamBangun (default 05:00)");
-
 
     // POST to API
     final result = await TidurService.laporTidur(
@@ -454,29 +468,34 @@ class _TidurCukupState extends State<TidurCukup> {
                             padding: EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [Color(0xff5039f6), Color(0xff9811fb)],
+                                colors: isInSleepTimeRange
+                                  ? [Color(0xff5039f6), Color(0xff9811fb)]
+                                  : [Color(0xFFBDBDBD), Color(0xFF9E9E9E)], // Gray when disabled
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
                               ),
                               borderRadius: BorderRadius.circular(20)
                             ),
                             child: ElevatedButton(
-                              onPressed: addSleepReport,
+                              onPressed: isInSleepTimeRange ? addSleepReport : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.transparent,
                                 shadowColor: Colors.transparent,
+                                disabledBackgroundColor: Colors.transparent,
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
-                                    FontAwesomeIcons.moon,
+                                    isInSleepTimeRange ? FontAwesomeIcons.moon : FontAwesomeIcons.clock,
                                     size: 16,
                                     color: Colors.white,
                                   ),
                                   SizedBox(width: 8,),
                                   Text(
-                                    "Laporkan Tidur Hari Ini",
+                                    isInSleepTimeRange
+                                      ? "Laporkan Tidur Hari Ini"
+                                      : "Belum Waktu Tidur",
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 20,
@@ -493,6 +512,43 @@ class _TidurCukupState extends State<TidurCukup> {
                               color: Color(0xff6a7282),
                             ),
                           ),
+
+                          // Tampilkan pesan waktu tidur jika belum waktunya dan belum lapor
+                          if (!hasTodayReport && !isInSleepTimeRange) ...[
+                            SizedBox(height: 12),
+                            Container(
+                              padding: EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Color(0xFFFFF3E0),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Color(0xFFFFB74D),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    FontAwesomeIcons.circleInfo,
+                                    size: 16,
+                                    color: Color(0xFFFF9800),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      sleepTimeMessage,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Color(0xFFE65100),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),

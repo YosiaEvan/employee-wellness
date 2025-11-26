@@ -1770,7 +1770,7 @@ class _HealthProfileState extends State<HealthProfile> {
                                       ),
                                     ),
                                     Text(
-                                      "Semua data kesehatan disimpan secara lokal di perangkat Anda dan tidak dikirim ke server manapun.",
+                                      "Semua data kesehatan disimpan secara aman.",
                                       style: TextStyle(
                                         fontSize: 16,
                                       ),

@@ -21,17 +21,16 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
 
   final double minSize = 150;
   final double maxSize = 300;
-  final int inhale = 4;    // Tarik napas 4 detik
-  final int hold = 8;      // Tahan napas 8 detik
-  final int exhale = 4;    // Buang napas 4 detik
-  final int requiredCycles = 4; // 4 siklus
+  final int inhale = 4;
+  final int hold = 7;
+  final int exhale = 8;
+  final int requiredCycles = 4; // Jumlah siklus yang harus diselesaikan
 
   String phase = "Tekan tombol untuk mulai";
   int seconds = 0;
   Timer? timer;
   bool isRunning = false;
   int cycleCount = 0;
-  bool canClaim = false; // Bisa diklaim setelah 4 siklus selesai
 
   // Countdown
   bool isCountdown = false;
@@ -96,7 +95,7 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
   }
 
   void startCycle() {
-    if (isRunning || cycleCount >= requiredCycles) return;
+    if (isRunning || sudahTarikNapas || cycleCount >= requiredCycles) return;
 
     // Start countdown first
     setState(() {
@@ -156,10 +155,9 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
 
               // Check if completed all required cycles
               if (cycleCount >= requiredCycles) {
-                // Selesai 4 siklus, bisa diklaim
+                // Selesai 4 siklus, catat ke API
                 isRunning = false;
-                canClaim = true;
-                phase = "Selesai! Tekan 'Klaim' untuk mencatat";
+                _catatTarikNapas();
                 stopCycle();
               } else {
                 // Belum selesai 4 siklus, lanjut ke siklus berikutnya
@@ -187,13 +185,6 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
     final result = await TarikNapasService.catatTarikNapas();
 
     if (result['success']) {
-      // Reset state
-      setState(() {
-        canClaim = false;
-        cycleCount = 0;
-        phase = "Tekan tombol untuk mulai";
-      });
-
       // Reload status to get updated weekly count
       await _cekStatusTarikNapas();
 
@@ -223,13 +214,16 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
     _controller.stop();
     setState(() {
       isRunning = false;
-      if (!canClaim) {
-        phase = "Tekan tombol untuk mulai";
-      }
+      phase = "Tekan tombol untuk mulai";
       seconds = 0;
     });
   }
 
+  void resetCycle() {
+    setState(() {
+      cycleCount = 0;
+    });
+  }
 
   @override
   void dispose() {
@@ -471,55 +465,13 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                                 )
                               )
                             ],
-                          ) : canClaim ? Row(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(20),
-                                    gradient: LinearGradient(
-                                      colors: [Color(0xFF4CAF50), Color(0xFF45A049)],
-                                      begin: Alignment.centerLeft,
-                                      end: Alignment.centerRight,
-                                    ),
-                                  ),
-                                  child: ElevatedButton(
-                                    onPressed: _catatTarikNapas,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.transparent,
-                                      shadowColor: Colors.transparent,
-                                      padding: EdgeInsets.symmetric(vertical: 16),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          FontAwesomeIcons.check,
-                                          size: 18,
-                                          color: Colors.white,
-                                        ),
-                                        SizedBox(width: 10,),
-                                        Text(
-                                          "Klaim Aktivitas",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        )
-                                      ],
-                                    )
-                                  )
-                                )
-                              )
-                            ],
                           ) : Row(
                             children: [
                               Expanded(
                                 child: Container(
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(20),
-                                    gradient: sudahTarikNapas
+                                    gradient: (sudahTarikNapas || cycleCount >= requiredCycles)
                                       ? LinearGradient(
                                           colors: [Colors.grey.shade400, Colors.grey.shade500],
                                           begin: Alignment.centerLeft,
@@ -532,34 +484,39 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                                         ),
                                   ),
                                   child: ElevatedButton(
-                                      onPressed: sudahTarikNapas ? null : startCycle,
+                                      onPressed: (sudahTarikNapas || cycleCount >= requiredCycles) ? null : startCycle,
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.transparent,
                                         shadowColor: Colors.transparent,
                                         disabledBackgroundColor: Colors.transparent,
-                                        padding: EdgeInsets.symmetric(vertical: 16),
                                       ),
                                       child: Row(
                                         mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Icon(
-                                            sudahTarikNapas
+                                            (sudahTarikNapas || cycleCount >= requiredCycles)
                                               ? FontAwesomeIcons.check
                                               : FontAwesomeIcons.play,
-                                            size: 16,
+                                            size: 14,
                                             color: Colors.white,
                                           ),
-                                          SizedBox(width: 8,),
-                                          Text(
-                                            sudahTarikNapas
-                                              ? "Selesai Hari Ini"
-                                              : cycleCount > 0
-                                                ? "Lanjutkan (${cycleCount}/${requiredCycles})"
-                                                : "Mulai Latihan",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
+                                          SizedBox(width: 6,),
+                                          Flexible(
+                                            child: Text(
+                                              sudahTarikNapas
+                                                ? "Selesai Hari Ini"
+                                                : cycleCount >= requiredCycles
+                                                  ? "Siklus Lengkap"
+                                                  : cycleCount > 0
+                                                    ? "Lanjutkan ($cycleCount/$requiredCycles)"
+                                                    : "Mulai",
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           )
                                         ],
@@ -567,8 +524,46 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                                   )
                                 ),
                               ),
+                              SizedBox(width: 12,),
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    color: Colors.white,
+                                    border: Border.all(
+                                      color: Color(0xffd1d5dc),
+                                    )
+                                  ),
+                                  child: ElevatedButton(
+                                    onPressed: resetCycle,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.transparent,
+                                      shadowColor: Colors.transparent,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          FontAwesomeIcons.rotateRight,
+                                          size: 16,
+                                          color: Colors.black,
+                                        ),
+                                        SizedBox(width: 8,),
+                                        Text(
+                                          "Reset",
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  )
+                                )
+                              )
                             ],
-                          ),
+                          )
                         ],
                       ),
                     ),
@@ -692,7 +687,7 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                                         margin: EdgeInsets.symmetric(horizontal: 2),
                                         alignment: Alignment.center,
                                         decoration: BoxDecoration(
-                                          color: i < hariTarikNapas
+                                            color: i < hariTarikNapas
                                             ? Color(0xFFE8F5E9)
                                             : Color(0xfff3f4f6),
                                           borderRadius: BorderRadius.circular(12),
@@ -1032,7 +1027,7 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    "Manfaat Teknik 4-8-4",
+                                    "Manfaat Teknik 4-7-8",
                                     style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w500,
@@ -1182,7 +1177,7 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
 
                     SizedBox(height: 20,),
 
-                    // Navigation to Udara Segar
+                    // Navigation to Tidur Cukup
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(

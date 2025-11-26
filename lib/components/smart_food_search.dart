@@ -114,11 +114,15 @@ class _SmartFoodSearchState extends State<SmartFoodSearch> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    // Show loading indicator
-                    Navigator.of(context).pop(); // Close dialog first
-                    
+                    // Save context reference before any async operations
+                    final navigator = Navigator.of(context);
+                    final messenger = ScaffoldMessenger.of(context);
+
+                    // Close dialog first
+                    navigator.pop();
+
                     // Show loading snackbar
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       const SnackBar(
                         content: Row(
                           children: [
@@ -146,13 +150,14 @@ class _SmartFoodSearchState extends State<SmartFoodSearch> {
                       porsi: porsi,
                     );
 
-                    if (context.mounted) {
-                      // Hide loading snackbar
-                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    // IMPORTANT: Wait for database to commit transaction
+                    await Future.delayed(const Duration(milliseconds: 500));
 
-                      // Pass result to parent - this will trigger reload
-                      widget.onFoodSelected(result);
-                    }
+                    // Hide loading snackbar
+                    messenger.hideCurrentSnackBar();
+
+                    // Pass result to parent - ALWAYS call this
+                    widget.onFoodSelected(result);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF00C368),

@@ -3,6 +3,7 @@ import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/sehat_homepage.dart';
 import 'package:employee_wellness/services/langkah_service.dart';
+import 'package:employee_wellness/services/steps_sync_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:pedometer/pedometer.dart';
@@ -27,12 +28,58 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
   Timer? _syncTimer;
   DateTime? _lastSyncTime;
 
+  // Yesterday's steps notification
+  int? _yesterdaySteps;
+  bool _showYesterdayNotification = false;
+  bool _isLoadingYesterday = true;
+
   @override
   void initState() {
     super.initState();
     _initializeSteps();
+    _loadYesterdaySteps();
     // Auto-start tracking di background
     _autoStartTracking();
+  }
+
+  /// Load data langkah kemarin untuk notifikasi
+  Future<void> _loadYesterdaySteps() async {
+    try {
+      setState(() {
+        _isLoadingYesterday = true;
+      });
+
+      final syncService = StepsSyncService.instance;
+      final yesterdayData = await syncService.getYesterdaySteps();
+
+      if (yesterdayData != null && mounted) {
+        final steps = yesterdayData['total_steps'] as int?;
+        final wasSynced = yesterdayData['is_synced'] == 1;
+
+        if (steps != null && steps > 0 && wasSynced) {
+          setState(() {
+            _yesterdaySteps = steps;
+            _showYesterdayNotification = true;
+            _isLoadingYesterday = false;
+          });
+
+          print('📊 Yesterday steps loaded: $steps');
+        } else {
+          setState(() {
+            _isLoadingYesterday = false;
+          });
+        }
+      } else {
+        setState(() {
+          _isLoadingYesterday = false;
+        });
+      }
+    } catch (e) {
+      print('❌ Error loading yesterday steps: $e');
+      setState(() {
+        _isLoadingYesterday = false;
+      });
+    }
   }
 
   /// Auto-start pedometer tracking
@@ -41,10 +88,8 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
     final status = await Permission.activityRecognition.request();
 
     if (status.isGranted) {
-      print("✅ Permission granted, starting pedometer...");
       startListening();
     } else {
-      print("⚠️ Permission denied");
       // Tetap coba request ulang
       await Permission.activityRecognition.request();
       if (await Permission.activityRecognition.isGranted) {
@@ -59,7 +104,6 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
     final shouldReset = await LangkahService.shouldResetToday();
 
     if (shouldReset) {
-      print("🔄 Hari baru terdeteksi! Reset data...");
 
       // PENTING: Simpan data kemarin ke queue sebelum reset
       final yesterdaySteps = await LangkahService.getTodaySteps();
@@ -67,7 +111,6 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
         final yesterday = DateTime.now().subtract(Duration(days: 1));
         final yesterdayDate = yesterday.toIso8601String().split('T')[0];
 
-        print("📦 Saving yesterday's data to queue: $yesterdayDate -> $yesterdaySteps langkah");
         await LangkahService.saveDailyRecordToQueue(
           tanggal: yesterdayDate,
           jumlahLangkah: yesterdaySteps,
@@ -88,10 +131,6 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
       // Load data dari local storage
       final savedSteps = await LangkahService.getTodaySteps();
       final savedInitial = await LangkahService.getInitialSteps();
-
-      print("📥 Loaded from storage:");
-      print("   Today steps: $savedSteps");
-      print("   Initial steps: $savedInitial");
 
       setState(() {
         _totalSteps = savedSteps;
@@ -135,20 +174,16 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
       final result = await LangkahService.syncPendingRecords();
 
       if (result['synced'] > 0) {
-        print("✅ Background sync: ${result['synced']} records synced");
       }
 
       if (result['failed'] > 0) {
-        print("⚠️ Background sync: ${result['failed']} records failed (will retry later)");
       }
     } catch (e) {
-      print("⚠️ Background sync failed: $e (will retry later)");
       // Silent fail, tidak ganggu user
     }
   }
 
   void startListening() {
-    print("🚶 Starting pedometer listener...");
 
     _stepCountStream = Pedometer.stepCountStream;
     _subscription = _stepCountStream!.listen(
@@ -157,7 +192,6 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
         if (_initialSteps == 0) {
           _initialSteps = stepCount.steps;
           await LangkahService.saveInitialSteps(_initialSteps);
-          print("💾 Saved initial steps: $_initialSteps");
         }
 
         // Calculate steps hari ini
@@ -175,10 +209,8 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
         // Auto-sync ke API setiap 30 detik
         _autoSyncToAPI();
 
-        print("🚶 Steps updated: $_totalSteps");
       },
       onError: (error) {
-        print('Error: $error');
       }
     );
 
@@ -203,7 +235,6 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
   /// Sync ke API (sekarang save ke queue untuk background sync)
   Future<void> _syncToAPI() async {
     if (_totalSteps > 0) {
-      print("💾 Saving to queue: $_totalSteps steps");
       // Menggunakan updateLangkahLocal yang akan save ke queue
       // dan coba sync di background
       await LangkahService.updateLangkahLocal(jumlahLangkah: _totalSteps);
@@ -217,7 +248,6 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
     // Sync terakhir sebelum stop
     await _syncToAPI();
 
-    print("⏸️ Pedometer listener stopped");
   }
 
   @override
@@ -240,7 +270,124 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
       tanggal: today,
       jumlahLangkah: _totalSteps,
     );
-    print("💾 Saved today's data to queue on dispose");
+  }
+
+  /// Build widget notifikasi untuk langkah kemarin
+  Widget _buildYesterdayNotification() {
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    final yesterdayFormatted = "${yesterday.day}/${yesterday.month}/${yesterday.year}";
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF4CAF50), Color(0xFF66BB6A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.withOpacity(0.3),
+            spreadRadius: 2,
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              FontAwesomeIcons.chartLine,
+              color: Colors.white,
+              size: 32,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      FontAwesomeIcons.circleCheck,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'Data Tersinkronisasi',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Langkah Kemarin',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Text(
+                      '${_yesterdaySteps!.toStringAsFixed(0)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'langkah',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  yesterdayFormatted,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(
+              FontAwesomeIcons.xmark,
+              color: Colors.white,
+              size: 18,
+            ),
+            onPressed: () {
+              setState(() {
+                _showYesterdayNotification = false;
+              });
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -261,6 +408,13 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
                 padding: EdgeInsets.all(20),
                 child: Column(
                   children: [
+                    // Yesterday Steps Notification
+                    if (_showYesterdayNotification && _yesterdaySteps != null)
+                      _buildYesterdayNotification(),
+
+                    if (_showYesterdayNotification && _yesterdaySteps != null)
+                      SizedBox(height: 16),
+
                     // Counter
                     Container(
                       width: double.infinity,

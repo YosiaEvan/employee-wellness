@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import 'auth_storage.dart';
 import 'api_service.dart';
+import 'background_steps_tracker.dart';
+import 'offline_steps_service.dart';
 
 /// Service untuk Authentication dengan auto-refresh token
 class AuthService {
@@ -175,9 +177,44 @@ class AuthService {
     }
   }
 
-  /// Logout
-  static Future<void> logout() async {
-    await AuthStorage.clearAll();
+  /// Logout - Clear all data
+  static Future<Map<String, dynamic>> logout() async {
+    try {
+      print("🔓 Logging out...");
+
+      // Stop background steps tracker
+      try {
+        await BackgroundStepsTracker.stop();
+        print("✅ Background tracker stopped");
+      } catch (e) {
+        print("⚠️ Could not stop background tracker: $e");
+      }
+
+      // Clear offline steps data
+      try {
+        await OfflineStepsService.clearAllStepsData();
+        print("✅ Offline steps data cleared");
+      } catch (e) {
+        print("⚠️ Could not clear offline steps: $e");
+      }
+
+      // Clear all auth storage (token, credentials, etc)
+      await AuthStorage.clearAll();
+      print("✅ Auth storage cleared");
+
+      print("✅ Logout complete - all data cleared");
+      return {
+        "success": true,
+        "message": "Logout berhasil",
+      };
+    } catch (e) {
+      print("❌ Logout error: $e");
+      // Even if error, still return success to force logout
+      return {
+        "success": true,
+        "message": "Logout berhasil",
+      };
+    }
   }
 
   /// Check if user logged in

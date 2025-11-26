@@ -1,11 +1,13 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:employee_wellness/main.dart';
 import 'package:employee_wellness/pages/health_profile.dart';
-import 'package:employee_wellness/services/user_profile_service.dart';
+import 'package:employee_wellness/services/user_cache_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class Header extends StatefulWidget {
   const Header({super.key});
@@ -14,11 +16,15 @@ class Header extends StatefulWidget {
   State<Header> createState() => _HeaderState();
 }
 
-class _HeaderState extends State<Header> {
+class _HeaderState extends State<Header> with AutomaticKeepAliveClientMixin {
+  final UserCacheService _cacheService = UserCacheService();
   String namaLengkap = "Employee Wellness";
   String? fotoUrl;
-  String? fotoBase64; // Store base64 string
-  bool isLoading = true;
+  String? fotoBase64;
+  bool isLoading = false;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -27,86 +33,78 @@ class _HeaderState extends State<Header> {
   }
 
   Future<void> _loadUserData() async {
-    final result = await UserProfileService.getUserNameAndPhoto();
-
-    if (result['success'] == true) {
+    // Get cached data immediately if available
+    final cachedName = _cacheService.getCachedName();
+    if (cachedName != null) {
       setState(() {
-        namaLengkap = result['nama_lengkap'] ?? "Employee Wellness";
-
-        // Check if foto_url is a URL or base64 string
-        final foto = result['foto_url'];
-
-        if (foto != null && foto.isNotEmpty) {
-          // Check if it's a base64 string (starts with / or data:image)
-          if (foto.startsWith('/9j/') ||
-              foto.startsWith('iVBOR') ||
-              foto.startsWith('data:image')) {
-            print("📷 Photo is base64 format");
-            // Remove data:image prefix if exists
-            fotoBase64 = foto.replaceAll(RegExp(r'^data:image/[^;]+;base64,'), '');
-          } else if (foto.startsWith('http://') || foto.startsWith('https://')) {
-            print("📷 Photo is URL format");
-            fotoUrl = foto;
-          } else {
-            print("📷 Photo format unknown, treating as base64");
-            fotoBase64 = foto;
-          }
-        }
-
+        namaLengkap = cachedName;
+        fotoUrl = _cacheService.getCachedPhotoUrl();
+        fotoBase64 = _cacheService.getCachedPhotoBase64();
         isLoading = false;
       });
-
-      print("✅ User data loaded:");
-      print("   - Name: $namaLengkap");
-      print("   - Has URL: ${fotoUrl != null}");
-      print("   - Has Base64: ${fotoBase64 != null}");
-      if (fotoBase64 != null) {
-        print("   - Base64 length: ${fotoBase64!.length}");
-      }
-    } else {
-      setState(() {
-        isLoading = false;
-      });
+      return;
     }
+
+    setState(() => isLoading = true);
+
+    // Load from cache service (with API fallback)
+    final userData = await _cacheService.getUserData();
+
+    setState(() {
+      namaLengkap = userData['nama_lengkap'] ?? "Employee Wellness";
+      fotoUrl = userData['foto_url'];
+      fotoBase64 = userData['foto_base64'];
+      isLoading = false;
+    });
+
   }
 
   Future<void> logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("token");
+
     try {
-      final response = await http.post(
-          Uri.parse("https://employee-wellness.netlify.app/api/logout"),
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer ${token}",
-          }
+      // Clear local storage only (no API call)
+      await prefs.remove("token");
+      await prefs.remove("email");
+      await prefs.remove("password");
+      await prefs.remove("rememberMe");
+
+      // Clear user data cache using UserCacheService
+      await _cacheService.clearCache();
+
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Logout berhasil")),
       );
 
-      if (response.statusCode == 200) {
-        await prefs.remove("token");
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Logout berhasil")),
-        );
-
-        Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginPage())
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Gagal logout token: ${response.statusCode}")),
-        );
-      }
+      // Redirect to login and remove all previous routes
+      Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+          (route) => false,
+      );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
+
+      // Even if error, try to clear storage and redirect
+      await prefs.remove("token");
+      await prefs.remove("email");
+      await prefs.remove("password");
+      await prefs.remove("rememberMe");
+      await _cacheService.clearCache();
+
+      // Still redirect to login
+      Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+          (route) => false,
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
+
     return Container(
       padding: const EdgeInsets.all(16),
       width: double.infinity,
@@ -131,7 +129,6 @@ class _HeaderState extends State<Header> {
                           height: 40,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
-                            print("❌ Error loading base64 image: $error");
                             return const Icon(Icons.person, color: Colors.white, size: 24);
                           },
                         ),
@@ -158,6 +155,9 @@ class _HeaderState extends State<Header> {
                       fontSize: 12,
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  // Realtime clock - Widget terpisah untuk prevent rebuild parent
+                  const RealtimeClock(),
                 ],
               ),
             ],
@@ -254,6 +254,116 @@ class _HeaderState extends State<Header> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Widget terpisah untuk realtime clock agar tidak rebuild Header
+class RealtimeClock extends StatefulWidget {
+  const RealtimeClock({super.key});
+
+  @override
+  State<RealtimeClock> createState() => _RealtimeClockState();
+}
+
+class _RealtimeClockState extends State<RealtimeClock> {
+  String currentTime = "";
+  String currentDay = "";
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startRealtimeClock();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  /// Fetch waktu online dari World Time API
+  Future<DateTime?> _fetchOnlineTime() async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://worldtimeapi.org/api/timezone/Asia/Jakarta'),
+      ).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final datetime = DateTime.parse(data['datetime']);
+        print('📅 Online time fetched: $datetime');
+        return datetime;
+      }
+    } catch (e) {
+      print('❌ Error fetching online time: $e');
+    }
+
+    // Fallback to local time if API fails
+    return DateTime.now();
+  }
+
+  /// Start realtime clock dengan waktu online
+  Future<void> _startRealtimeClock() async {
+    // Fetch waktu online
+    final onlineTime = await _fetchOnlineTime();
+    final now = onlineTime ?? DateTime.now();
+
+    // Update UI pertama kali
+    _updateClockDisplay(now);
+
+    // Start timer untuk update setiap detik
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      final currentTime = DateTime.now();
+      _updateClockDisplay(currentTime);
+    });
+  }
+
+  /// Update tampilan jam dan hari
+  void _updateClockDisplay(DateTime time) {
+    if (!mounted) return;
+
+    // Format hari dalam Bahasa Indonesia
+    final List<String> hariIndonesia = [
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+      'Minggu'
+    ];
+
+    final dayOfWeek = hariIndonesia[time.weekday - 1];
+    final formattedTime = DateFormat('HH:mm:ss').format(time);
+    final formattedDate = DateFormat('dd/MM/yyyy').format(time);
+
+    setState(() {
+      currentDay = '$dayOfWeek, $formattedDate';
+      currentTime = formattedTime;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Icon(
+          Icons.access_time,
+          size: 12,
+          color: Colors.grey,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          currentDay.isNotEmpty ? '$currentDay $currentTime' : 'Memuat...',
+          style: const TextStyle(
+            fontSize: 10,
+            color: Colors.grey,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }

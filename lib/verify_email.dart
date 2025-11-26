@@ -1,3 +1,5 @@
+import 'package:employee_wellness/main.dart';
+import 'package:employee_wellness/services/auth_register_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:pinput/pinput.dart';
@@ -19,21 +21,72 @@ class _VerifyEmailState extends State<VerifyEmail> {
   final TextEditingController otpController = TextEditingController();
 
   Future<void> verify() async {
+    // Validation
+    if (otpController.text.trim().isEmpty) {
+      showSnackBar("Kode OTP harus diisi");
+      return;
+    }
+
+    if (otpController.text.trim().length < 4) {
+      showSnackBar("Kode OTP harus 4 digit");
+      return;
+    }
+
     setState(() {
       isLoading = true;
     });
 
     try {
+      // Call verify email API
+      final result = await AuthRegisterService.verifyEmail(
+        email: widget.email,
+        otp: otpController.text.trim(),
+      );
+
       setState(() {
         isLoading = false;
       });
+
+      if (result["success"]) {
+        showSnackBar(result["message"]);
+
+        // Navigate to login page after successful verification
+        Future.delayed(const Duration(seconds: 1), () {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+            (route) => false, // Remove all previous routes
+          );
+        });
+      } else {
+        showSnackBar(result["message"]);
+      }
     } catch (e) {
       setState(() {
         isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Gagal terhubung ke server: $e")),
-      );
+      showSnackBar("Gagal terhubung ke server: $e");
+    }
+  }
+
+  Future<void> resendOTP() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final result = await AuthRegisterService.resendOTP(widget.email);
+
+      setState(() {
+        isLoading = false;
+      });
+
+      showSnackBar(result["message"]);
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      showSnackBar("Gagal mengirim ulang OTP: $e");
     }
   }
 
@@ -162,12 +215,15 @@ class _VerifyEmailState extends State<VerifyEmail> {
                                    fontSize: 16,
                                  ),
                                ),
-                               Text(
-                                 "Kirim ulang",
-                                 style: TextStyle(
-                                   fontSize: 16,
-                                   color: Colors.green,
-                                   fontWeight: FontWeight.w500,
+                               GestureDetector(
+                                 onTap: isLoading ? null : resendOTP,
+                                 child: Text(
+                                   "Kirim ulang",
+                                   style: TextStyle(
+                                     fontSize: 16,
+                                     color: isLoading ? Colors.grey : Colors.green,
+                                     fontWeight: FontWeight.w500,
+                                   ),
                                  ),
                                ),
                              ],

@@ -68,17 +68,17 @@ class AuthRegisterService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse("${ApiConfig.baseUrl}/user/verify-email"),
+        Uri.parse("${ApiConfig.baseUrl}/auth/verify-email"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "email": email,
-          "otp": otp,
+          "code": otp,
         }),
       );
 
       print("📤 Verify Email Request:");
-      print("URL: ${ApiConfig.baseUrl}/user/verify-email");
-      print("Body: ${jsonEncode({"email": email, "otp": otp})}");
+      print("URL: ${ApiConfig.baseUrl}/auth/verify-email");
+      print("Body: ${jsonEncode({"email": email, "code": otp})}");
       print("📥 Response: ${response.statusCode}");
       print("Body: ${response.body}");
 
@@ -115,13 +115,14 @@ class AuthRegisterService {
   static Future<Map<String, dynamic>> resendOTP(String email) async {
     try {
       final response = await http.post(
-        Uri.parse("${ApiConfig.baseUrl}/user/resend-otp"),
+        Uri.parse("${ApiConfig.baseUrl}/auth/resend-verification"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"email": email}),
       );
 
       print("📤 Resend OTP Request:");
-      print("URL: ${ApiConfig.baseUrl}/user/resend-otp");
+      print("URL: ${ApiConfig.baseUrl}/auth/resend-verification");
+      print("Body: ${jsonEncode({"email": email})}");
       print("📥 Response: ${response.statusCode}");
 
       if (response.statusCode == 200) {
