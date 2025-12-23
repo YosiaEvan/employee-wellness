@@ -165,28 +165,28 @@ class _HeaderState extends State<Header> with AutomaticKeepAliveClientMixin {
 
           Row(
             children: [
-              Stack(
-                children: [
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.notifications_outlined),
-                  ),
-                  Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                      )
-                  ),
-                ],
-              ),
-
-              const SizedBox(width: 10),
+              // Stack(
+              //   children: [
+              //     IconButton(
+              //       onPressed: () {},
+              //       icon: const Icon(Icons.notifications_outlined),
+              //     ),
+              //     Positioned(
+              //         right: 8,
+              //         top: 8,
+              //         child: Container(
+              //           width: 8,
+              //           height: 8,
+              //           decoration: const BoxDecoration(
+              //             color: Colors.red,
+              //             shape: BoxShape.circle,
+              //           ),
+              //         )
+              //     ),
+              //   ],
+              // ),
+              //
+              // const SizedBox(width: 10),
 
               PopupMenuButton<String>(
                 color: Colors.white,

@@ -157,6 +157,14 @@ class _SehatHomepageState extends State<SehatHomepage> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 12,
+                            spreadRadius: 2,
+                            offset: Offset(0, 6),
+                          ),
+                        ],
                       ),
                       child: Column(
                         children: [
