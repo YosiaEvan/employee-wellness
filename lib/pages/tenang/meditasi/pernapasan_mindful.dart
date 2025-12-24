@@ -129,7 +129,7 @@ class _PernapasanMindfulState extends State<PernapasanMindful> with TickerProvid
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
-              Header(),
+              const Header(),
               Container(
                 padding: EdgeInsets.all(20),
                 width: double.infinity,

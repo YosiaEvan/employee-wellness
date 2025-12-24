@@ -89,7 +89,7 @@ class _SinarMatahariState extends State<SinarMatahari> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Header(),
+            const Header(),
             BottomHeader(color: Color(0xfffb8f00), heading: "Sinar Matahari", subHeading: "Energi Alami", destination: SehatHomepage(),),
 
             // Main Content

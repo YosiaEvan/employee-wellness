@@ -227,7 +227,7 @@ class _TidurCukupState extends State<TidurCukup> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Header(),
+            const Header(),
             BottomHeader(color: Color(0xff715cff), heading: "Tidur Cukup", subHeading: "Istirahat Berkualitas", destination: SehatHomepage(),),
 
             // Main Content

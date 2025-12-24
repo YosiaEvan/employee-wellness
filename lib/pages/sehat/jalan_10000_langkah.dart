@@ -399,7 +399,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Header(),
+            const Header(),
             BottomHeader(color: Color(0xff1b8cfd), heading: "Jalan 10.000 Langkah", subHeading: "Aktivitas Fisik", destination: SehatHomepage(),),
 
             // Main Content

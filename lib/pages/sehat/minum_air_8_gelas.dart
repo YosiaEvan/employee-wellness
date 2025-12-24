@@ -138,7 +138,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Header(),
+            const Header(),
             BottomHeader(color: Color(0xff00cbf6), heading: "Minum Air 8 Gelas", subHeading: "Hidrasi Optimal", destination: SehatHomepage(),),
 
             // Main Content

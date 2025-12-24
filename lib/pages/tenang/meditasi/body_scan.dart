@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/tenang/meditasi_terpadu.dart';
+import 'package:employee_wellness/pages/tenang/mindfulness_kesadaran.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -320,7 +321,7 @@ class _BodyScanState extends State<BodyScan> with TickerProviderStateMixin {
                                 onTap: () => {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => MeditasiTerpadu()),
+                                    MaterialPageRoute(builder: (context) => MindfulnessKesadaran()),
                                   ),
                                 },
                                 child: Container(

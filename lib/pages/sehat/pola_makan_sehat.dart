@@ -220,7 +220,7 @@ void _checkHealthChallenge() {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Header(),
+            const Header(),
             BottomHeader(color: Color(0xff00c368), heading: "Pola Makan Sehat", subHeading: "Nutrisi Seimbang", destination: SehatHomepage(),),
 
             // Main Content

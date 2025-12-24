@@ -1,6 +1,7 @@
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/module_section_card.dart';
 import 'package:employee_wellness/pages/tenang/meditasi_terpadu.dart';
+import 'package:employee_wellness/pages/tenang/mindfulness_kesadaran.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -101,6 +102,11 @@ class TenangHomepage extends StatelessWidget {
                   children: [
                     // Meditasi Terpadu
                     ModuleSectionCard(destination: MeditasiTerpadu(), backgroundColor: Colors.white, sectionColor: Color(0xff7141fc), icon: FontAwesomeIcons.spa, heading: "Meditasi Terpadu", subHeading: "Panduan Meditasi untuk Ketenangan", description: "Sesi meditasi terpadu dengan berbagai tema dan durasi", targetText: "⏱️ 10-30 menit"),
+
+                    SizedBox(height: 20,),
+
+                    // Mindfulness & Kesadaran
+                    ModuleSectionCard(destination: MindfulnessKesadaran(), backgroundColor: Colors.white, sectionColor: Color(0xff008fed), icon: FontAwesomeIcons.brain, heading: "Mindfulness & Kesadaran", subHeading: "Latihan kesadaran penuh", description: "Teknik mindfulness untuk hidup lebih sadar dan hadir", targetText: "⏱️ 5-15 menit"),
 
                     SizedBox(height: 20,),
 
