@@ -1,5 +1,6 @@
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/module_section_card.dart';
+import 'package:employee_wellness/pages/tenang/manajemen_stress.dart';
 import 'package:employee_wellness/pages/tenang/meditasi_terpadu.dart';
 import 'package:employee_wellness/pages/tenang/mindfulness_kesadaran.dart';
 import 'package:flutter/material.dart';
@@ -106,7 +107,12 @@ class TenangHomepage extends StatelessWidget {
                     SizedBox(height: 20,),
 
                     // Mindfulness & Kesadaran
-                    ModuleSectionCard(destination: MindfulnessKesadaran(), backgroundColor: Colors.white, sectionColor: Color(0xff008fed), icon: FontAwesomeIcons.brain, heading: "Mindfulness & Kesadaran", subHeading: "Latihan kesadaran penuh", description: "Teknik mindfulness untuk hidup lebih sadar dan hadir", targetText: "⏱️ 5-15 menit"),
+                    ModuleSectionCard(destination: MindfulnessKesadaran(), backgroundColor: Colors.white, sectionColor: Color(0xff008fed), icon: FontAwesomeIcons.brain, heading: "Mindfulness & Kesadaran", subHeading: "Latihan Kesadaran Penuh", description: "Teknik mindfulness untuk hidup lebih sadar dan hadir", targetText: "⏱️ 5-15 menit"),
+
+                    SizedBox(height: 20,),
+
+                    // Manajemen Stress
+                    ModuleSectionCard(destination: ManajemenStress(), backgroundColor: Colors.white, sectionColor: Color(0xfff20868), icon: FontAwesomeIcons.faceSmileBeam, heading: "Manajemen Stress", subHeading: "Atasi Stress dan Kecemasan", description: "Strategi efektif untuk mengelola stres dan kecemasan", targetText: "⏱️ 10-20 menit"),
 
                     SizedBox(height: 20,),
 
