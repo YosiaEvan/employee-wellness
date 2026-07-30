@@ -175,11 +175,11 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> {
                                     color: jumlahGelas == targetGelas ? Color(0xfff3b751) : Color(0xff00cbf6),
                                     borderRadius: BorderRadius.circular(40),
                                   ),
-                                  child: jumlahGelas == targetGelas ? Icon(
+                                  child: jumlahGelas == targetGelas ? FaIcon(
                                     FontAwesomeIcons.trophy,
                                     size: 36,
                                     color: Colors.white,
-                                  ) : Icon(
+                                  ) : FaIcon(
                                     FontAwesomeIcons.glassWater,
                                     size: 36,
                                     color: Colors.white,
@@ -282,7 +282,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> {
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        Icon(
+                                        FaIcon(
                                           FontAwesomeIcons.plus,
                                           size: 16,
                                           color: Colors.white,
@@ -320,7 +320,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> {
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        Icon(
+                                        FaIcon(
                                           FontAwesomeIcons.rotateRight,
                                           size: 16,
                                           color: Colors.black,
@@ -374,7 +374,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> {
                                     color: Color(0xff009bf4),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
+                                  child: const FaIcon(
                                     FontAwesomeIcons.calendar,
                                     size: 36,
                                     color: Colors.white,
@@ -475,7 +475,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> {
                                     color: Color(0xff1e89fe),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
+                                  child: const FaIcon(
                                     FontAwesomeIcons.lightbulb,
                                     size: 36,
                                     color: Colors.white,
@@ -690,7 +690,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> {
                                     color: Color(0xff4ab3cd),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
+                                  child: const FaIcon(
                                     FontAwesomeIcons.bullseye,
                                     size: 36,
                                     color: Colors.white,

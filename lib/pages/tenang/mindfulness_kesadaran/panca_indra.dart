@@ -1,6 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/tenang/mindfulness_kesadaran.dart';
+import 'package:employee_wellness/services/tenang_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -24,8 +25,13 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
     });
 
     if (_currentStep == totalStep) {
-      _audioPlayer.play(
-        AssetSource('sounds/done.wav'),
+      _audioPlayer.play(AssetSource('sounds/done.wav'));
+
+      // Kirim data sesi ke backend
+      TenangService.recordSession(
+        kategori: TenangKategori.mindfulness,
+        subKategori: TenangSubKategori.pancaIndra,
+        durasiDetik: 5 * 60,
       );
     }
   }
@@ -101,7 +107,7 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(40),
                               ),
-                              child: const Icon(
+                              child: FaIcon(
                                 FontAwesomeIcons.arrowLeft,
                                 size: 20,
                                 color: Colors.white,
@@ -137,7 +143,7 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(40),
                             ),
-                            child: const Icon(
+                            child: FaIcon(
                               FontAwesomeIcons.brain,
                               size: 20,
                               color: Colors.white,
@@ -173,7 +179,7 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                                           color: const Color(0xff0090ec),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: const Icon(
+                                        child: FaIcon(
                                           FontAwesomeIcons.eye,
                                           size: 52,
                                           color: Colors.white,
@@ -209,7 +215,7 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                                           color: const Color(0xff0090ec),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: const Icon(
+                                        child: FaIcon(
                                           FontAwesomeIcons.hand,
                                           size: 52,
                                           color: Colors.white,
@@ -245,7 +251,7 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                                           color: const Color(0xff0090ec),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: const Icon(
+                                        child: FaIcon(
                                           FontAwesomeIcons.earListen,
                                           size: 52,
                                           color: Colors.white,
@@ -281,7 +287,7 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                                           color: const Color(0xff0090ec),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: const Icon(
+                                        child: FaIcon(
                                           FontAwesomeIcons.wind,
                                           size: 52,
                                           color: Colors.white,
@@ -317,7 +323,7 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                                           color: const Color(0xff0090ec),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: const Icon(
+                                        child: FaIcon(
                                           FontAwesomeIcons.coffee,
                                           size: 52,
                                           color: Colors.white,
@@ -354,7 +360,7 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                                           color: const Color(0xff00d477),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: const Icon(
+                                        child: FaIcon(
                                           FontAwesomeIcons.check,
                                           size: 52,
                                           color: Colors.white,

@@ -60,7 +60,7 @@ class _TeknikQuickReliefState extends State<TeknikQuickRelief> {
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(40),
                               ),
-                              child: const Icon(
+                              child: FaIcon(
                                 FontAwesomeIcons.arrowLeft,
                                 size: 20,
                                 color: Colors.white,
@@ -96,7 +96,7 @@ class _TeknikQuickReliefState extends State<TeknikQuickRelief> {
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(40),
                             ),
-                            child: const Icon(
+                            child: FaIcon(
                               FontAwesomeIcons.brain,
                               size: 20,
                               color: Colors.white,
@@ -142,7 +142,7 @@ class _TeknikQuickReliefState extends State<TeknikQuickRelief> {
                                           color: Color(0xff00c170),
                                           borderRadius: BorderRadius.circular(12),
                                         ),
-                                        child: const Icon(
+                                        child: FaIcon(
                                           FontAwesomeIcons.bolt,
                                           size: 36,
                                           color: Colors.white,

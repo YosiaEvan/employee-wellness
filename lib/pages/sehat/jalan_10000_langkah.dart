@@ -303,7 +303,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: const FaIcon(
               FontAwesomeIcons.chartLine,
               color: Colors.white,
               size: 32,
@@ -316,7 +316,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
               children: [
                 Row(
                   children: [
-                    const Icon(
+                    const FaIcon(
                       FontAwesomeIcons.circleCheck,
                       color: Colors.white,
                       size: 16,
@@ -374,7 +374,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
             ),
           ),
           IconButton(
-            icon: const Icon(
+            icon: const FaIcon(
               FontAwesomeIcons.xmark,
               color: Colors.white,
               size: 18,
@@ -445,7 +445,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
                                 color: Color(0xff1e89fe),
                                 borderRadius: BorderRadius.circular(40),
                               ),
-                              child: const Icon(
+                              child: const FaIcon(
                                 FontAwesomeIcons.shoePrints,
                                 size: 36,
                                 color: Colors.white,
@@ -502,7 +502,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(
+                                    FaIcon(
                                       FontAwesomeIcons.bullseye,
                                       size: 20,
                                       color: Colors.blue,
@@ -549,7 +549,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
+                          FaIcon(
                             FontAwesomeIcons.circleCheck,
                             size: 20,
                             color: Colors.green,
@@ -596,7 +596,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
                                     color: Color(0xff1e89fe),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
+                                  child: const FaIcon(
                                     FontAwesomeIcons.personWalking,
                                     size: 36,
                                     color: Colors.white,
@@ -823,7 +823,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
                                     color: Color(0xff1e89fe),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
+                                  child: const FaIcon(
                                     FontAwesomeIcons.lightbulb,
                                     size: 36,
                                     color: Colors.white,
@@ -1051,7 +1051,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
                     //                 Row(
                     //                   mainAxisSize: MainAxisSize.min,
                     //                   children: [
-                    //                     Icon(
+                    //                     FaIcon(
                     //                       FontAwesomeIcons.circleCheck,
                     //                       size: 20,
                     //                       color: Color(0xff00a63e),

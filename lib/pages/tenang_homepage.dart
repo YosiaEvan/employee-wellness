@@ -3,6 +3,7 @@ import 'package:employee_wellness/components/module_section_card.dart';
 import 'package:employee_wellness/pages/tenang/manajemen_stress.dart';
 import 'package:employee_wellness/pages/tenang/meditasi_terpadu.dart';
 import 'package:employee_wellness/pages/tenang/mindfulness_kesadaran.dart';
+import 'package:employee_wellness/pages/tenang/tenang_kpi_dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -17,167 +18,156 @@ class TenangHomepage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             Header(),
             Container(
               padding: EdgeInsets.all(20),
               width: double.infinity,
               decoration: BoxDecoration(
-                  color: Color(0xff2c7eff),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  )
+                color: Color(0xff2c7eff),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
               ),
-              child: Column(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: SizedBox.square(
+                      dimension: 40,
+                      child: Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(40),
+                        ),
+                        child: FaIcon(FontAwesomeIcons.arrowLeft, size: 20, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                        child: SizedBox.square(
-                          dimension: 40,
-                          child: Container(
-                            padding: EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(40),
-                            ),
-                            child: const Icon(
-                              FontAwesomeIcons.arrowLeft,
-                              size: 20,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            "TENANG 360\u00B0",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            "Zona Kendali Emosi",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                          )
-                        ],
-                      ),
-                      SizedBox.square(
-                        dimension: 40,
-                        child: Container(
-                          padding: EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(40),
-                          ),
-                          child: const Icon(
-                            FontAwesomeIcons.brain,
-                            size: 20,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
+                      Text("TENANG 360\u00B0", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
+                      Text("Zona Kendali Emosi", style: TextStyle(fontSize: 16, color: Colors.white)),
                     ],
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const TenangKPIDashboard()),
+                      );
+                    },
+                    child: SizedBox.square(
+                      dimension: 40,
+                      child: Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(40),
+                        ),
+                        child: FaIcon(FontAwesomeIcons.chartLine, size: 20, color: Colors.white),
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
-            
-            // Main Content
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    // Meditasi Terpadu
-                    ModuleSectionCard(destination: MeditasiTerpadu(), backgroundColor: Colors.white, sectionColor: Color(0xff7141fc), icon: FontAwesomeIcons.spa, heading: "Meditasi Terpadu", subHeading: "Panduan Meditasi untuk Ketenangan", description: "Sesi meditasi terpadu dengan berbagai tema dan durasi", targetText: "⏱️ 10-30 menit"),
-
-                    SizedBox(height: 20,),
-
-                    // Mindfulness & Kesadaran
-                    ModuleSectionCard(destination: MindfulnessKesadaran(), backgroundColor: Colors.white, sectionColor: Color(0xff008fed), icon: FontAwesomeIcons.brain, heading: "Mindfulness & Kesadaran", subHeading: "Latihan Kesadaran Penuh", description: "Teknik mindfulness untuk hidup lebih sadar dan hadir", targetText: "⏱️ 5-15 menit"),
-
-                    SizedBox(height: 20,),
-
-                    // Manajemen Stress
-                    ModuleSectionCard(destination: ManajemenStress(), backgroundColor: Colors.white, sectionColor: Color(0xfff20868), icon: FontAwesomeIcons.faceSmileBeam, heading: "Manajemen Stress", subHeading: "Atasi Stress dan Kecemasan", description: "Strategi efektif untuk mengelola stres dan kecemasan", targetText: "⏱️ 10-20 menit"),
-
-                    SizedBox(height: 20,),
-
-                    // Information
-                    Container(
-                      padding: EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 12,
-                            spreadRadius: 2,
-                            offset: Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              SizedBox.square(
-                                dimension: 60,
-                                child: Container(
-                                  padding: EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Color(0xff00c170),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Icon(
-                                    FontAwesomeIcons.circleInfo,
-                                    size: 36,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 20,),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Tips Kesehatan Mental",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 12,),
-                          Text(
-                            "Luangkan waktu 10-15 menit setiap hari untuk kesehatan mental Anda. Konsistensi adalah kunci untuk hasil yang optimal.",
-                          ),
-                        ],
-                      ),
+                    ModuleSectionCard(
+                      destination: MeditasiTerpadu(),
+                      backgroundColor: Colors.white,
+                      sectionColor: Color(0xff7141fc),
+                      icon: FontAwesomeIcons.spa,
+                      heading: "Meditasi Terpadu",
+                      subHeading: "Panduan Meditasi untuk Ketenangan",
+                      description: "Sesi meditasi terpadu dengan berbagai tema dan durasi",
+                      targetText: "10-30 menit",
                     ),
+                    SizedBox(height: 20),
+                    ModuleSectionCard(
+                      destination: MindfulnessKesadaran(),
+                      backgroundColor: Colors.white,
+                      sectionColor: Color(0xff008fed),
+                      icon: FontAwesomeIcons.brain,
+                      heading: "Mindfulness & Kesadaran",
+                      subHeading: "Latihan Kesadaran Penuh",
+                      description: "Teknik mindfulness untuk hidup lebih sadar dan hadir",
+                      targetText: "5-15 menit",
+                    ),
+                    SizedBox(height: 20),
+                    ModuleSectionCard(
+                      destination: ManajemenStress(),
+                      backgroundColor: Colors.white,
+                      sectionColor: Color(0xfff20868),
+                      icon: FontAwesomeIcons.faceSmileBeam,
+                      heading: "Manajemen Stress",
+                      subHeading: "Atasi Stress dan Kecemasan",
+                      description: "Strategi efektif untuk mengelola stres dan kecemasan",
+                      targetText: "10-20 menit",
+                    ),
+                    SizedBox(height: 20),
+                    _buildTipsCard(),
                   ],
                 ),
               ),
             ),
           ],
-        )
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTipsCard() {
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            spreadRadius: 2,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              SizedBox.square(
+                dimension: 60,
+                child: Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Color(0xff00c170),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: FaIcon(FontAwesomeIcons.circleInfo, size: 36, color: Colors.white),
+                ),
+              ),
+              SizedBox(width: 20),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Tips Kesehatan Mental", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
+                ],
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          Text(
+            "Luangkan waktu 10-15 menit setiap hari untuk kesehatan mental Anda. Konsistensi adalah kunci untuk hasil yang optimal.",
+          ),
+        ],
       ),
     );
   }

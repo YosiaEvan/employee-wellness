@@ -5,11 +5,12 @@ class ModuleSectionCard extends StatelessWidget {
   final Widget? destination;
   final Color backgroundColor;
   final Color sectionColor;
-  final IconData icon;
+  final FaIconData icon;
   final String heading;
   final String subHeading;
   final String description;
   final String targetText;
+  final bool? isCompleted;
 
   const ModuleSectionCard({
     super.key,
@@ -21,6 +22,7 @@ class ModuleSectionCard extends StatelessWidget {
     required this.subHeading,
     required this.description,
     required this.targetText,
+    this.isCompleted,
   });
 
   @override
@@ -46,7 +48,9 @@ class ModuleSectionCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
+        child: Stack(
+          children: [
+            Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -59,7 +63,7 @@ class ModuleSectionCard extends StatelessWidget {
                       color: sectionColor,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(
+                    child: FaIcon( // 🔥 sudah benar
                       icon,
                       size: 36,
                       color: Colors.white,
@@ -131,6 +135,23 @@ class ModuleSectionCard extends StatelessWidget {
             )
           ],
         ),
+        if (isCompleted == true)
+          Positioned(
+            top: -4,
+            right: -4,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: Color(0xFF00C368),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              child: Icon(Icons.check, size: 16, color: Colors.white),
+            ),
+          ),
+      ],
+    ),
       ),
     );
   }

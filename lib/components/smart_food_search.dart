@@ -218,7 +218,7 @@ class _SmartFoodSearchState extends State<SmartFoodSearch> {
           controller: _searchController,
           decoration: InputDecoration(
             hintText: 'Cari makanan... (contoh: Nasi Putih)',
-            prefixIcon: const Icon(FontAwesomeIcons.magnifyingGlass),
+            prefixIcon: const FaIcon(FontAwesomeIcons.magnifyingGlass),
             suffixIcon: _isSearching
                 ? const Padding(
                     padding: EdgeInsets.all(12),
@@ -276,14 +276,14 @@ class _SmartFoodSearchState extends State<SmartFoodSearch> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
+                        FaIcon(
                           _sumber == 'gemini' ? FontAwesomeIcons.brain : FontAwesomeIcons.database,
                           size: 12,
                           color: _sumber == 'gemini' ? const Color(0xFF2196F3) : const Color(0xFF4CAF50),
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          _sumber == 'gemini' ? 'Dari Gemini AI' : 'Dari Database',
+                          _sumber == 'gemini' ? 'Sumber Resmi' : 'Sumber Resmi',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -318,7 +318,7 @@ class _SmartFoodSearchState extends State<SmartFoodSearch> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(FontAwesomeIcons.weightScale, size: 12, color: Color(0xFFFF9800)),
+                          const FaIcon(FontAwesomeIcons.weightScale, size: 12, color: Color(0xFFFF9800)),
                           const SizedBox(width: 6),
                           Text(
                             'Porsi: ${_foodData!['porsi_standard']}',
@@ -354,7 +354,7 @@ class _SmartFoodSearchState extends State<SmartFoodSearch> {
                           ),
                           child: const Row(
                             children: [
-                              Icon(FontAwesomeIcons.chartPie, size: 16, color: Colors.white),
+                              FaIcon(FontAwesomeIcons.chartPie, size: 16, color: Colors.white),
                               SizedBox(width: 8),
                               Text(
                                 'Informasi Nutrisi',
@@ -415,7 +415,7 @@ class _SmartFoodSearchState extends State<SmartFoodSearch> {
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(FontAwesomeIcons.oilCan, size: 12, color: Color(0xFFFF9800)),
+                              FaIcon(FontAwesomeIcons.oilCan, size: 12, color: Color(0xFFFF9800)),
                               SizedBox(width: 6),
                               Text(
                                 'Mengandung Minyak',
@@ -440,7 +440,7 @@ class _SmartFoodSearchState extends State<SmartFoodSearch> {
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(FontAwesomeIcons.cubesStacked, size: 12, color: Color(0xFFE91E63)),
+                              FaIcon(FontAwesomeIcons.cubesStacked, size: 12, color: Color(0xFFE91E63)),
                               SizedBox(width: 6),
                               Text(
                                 'Mengandung Gula',
@@ -475,7 +475,7 @@ class _SmartFoodSearchState extends State<SmartFoodSearch> {
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(FontAwesomeIcons.check, size: 18, color: Colors.white),
+                          FaIcon(FontAwesomeIcons.check, size: 18, color: Colors.white),
                           SizedBox(width: 8),
                           Text(
                             'Pilih Makanan Ini',
@@ -500,7 +500,7 @@ class _SmartFoodSearchState extends State<SmartFoodSearch> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  FaIcon(
                     FontAwesomeIcons.magnifyingGlass,
                     size: 48,
                     color: Colors.grey.shade400,

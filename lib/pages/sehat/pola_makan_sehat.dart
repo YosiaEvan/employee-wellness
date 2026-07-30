@@ -174,7 +174,7 @@ void _checkHealthChallenge() {
               children: [
                 Row(
                   children: [
-                    const Icon(FontAwesomeIcons.check, color: Colors.white, size: 16),
+                    FaIcon(FontAwesomeIcons.check, color: Colors.white, size: 16), // ✅ removed const
                     const SizedBox(width: 8),
                     Expanded(child: Text(result['message'] ?? 'Berhasil menambahkan')),
                   ],
@@ -255,7 +255,7 @@ void _checkHealthChallenge() {
                                 color: Color(0xff00c368),
                                 borderRadius: BorderRadius.circular(40),
                               ),
-                              child: const Icon(
+                              child: FaIcon( // ✅ removed const
                                 FontAwesomeIcons.fireFlameCurved,
                                 size: 36,
                                 color: Colors.white,
@@ -312,7 +312,7 @@ void _checkHealthChallenge() {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(
+                                    FaIcon(
                                       FontAwesomeIcons.bullseye,
                                       size: 20,
                                       color: Color(0xff00c368),
@@ -372,7 +372,7 @@ void _checkHealthChallenge() {
                                     color: Color(0xff00c368),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
+                                  child: FaIcon( // ✅ removed const
                                     FontAwesomeIcons.arrowTrendUp,
                                     size: 36,
                                     color: Colors.white,
@@ -723,7 +723,7 @@ void _checkHealthChallenge() {
                                     color: Color(0xff00c368),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
+                                  child: FaIcon( // ✅ removed const
                                     FontAwesomeIcons.arrowTrendUp,
                                     size: 36,
                                     color: Colors.white,
@@ -756,7 +756,7 @@ void _checkHealthChallenge() {
                                       ),
                                       child: Row(
                                         children: [
-                                          Icon(
+                                          FaIcon( // ✅ removed const
                                             FontAwesomeIcons.plus,
                                             size: 16,
                                             color: Colors.white,
@@ -827,7 +827,7 @@ void _checkHealthChallenge() {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
+                                  FaIcon(
                                     FontAwesomeIcons.appleWhole,
                                     color: Color(0xff99a1af),
                                     size: 40,
@@ -899,7 +899,7 @@ void _checkHealthChallenge() {
                                       : Color(0xff1e89fe),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: Icon(
+                                  child: FaIcon( // ✅ removed const
                                     isChallengeAchieved
                                       ? FontAwesomeIcons.trophy
                                       : FontAwesomeIcons.lightbulb,
@@ -955,7 +955,7 @@ void _checkHealthChallenge() {
                               ),
                               child: Column(
                                 children: [
-                                  Icon(
+                                  FaIcon( // ✅ removed const
                                     FontAwesomeIcons.solidCircleCheck,
                                     size: 48,
                                     color: Color(0xFF4CAF50),
@@ -1044,7 +1044,7 @@ void _checkHealthChallenge() {
                                     children: [
                                       Row(
                                         children: [
-                                          Icon(
+                                          FaIcon( // ✅ removed const
                                             hariTanpaMinyak >= 2
                                               ? FontAwesomeIcons.solidCircleCheck
                                               : FontAwesomeIcons.circle,
@@ -1114,7 +1114,7 @@ void _checkHealthChallenge() {
                                     children: [
                                       Row(
                                         children: [
-                                          Icon(
+                                          FaIcon( // ✅ removed const
                                             hariTanpaGula >= 2
                                               ? FontAwesomeIcons.solidCircleCheck
                                               : FontAwesomeIcons.circle,
@@ -1245,7 +1245,7 @@ void _checkHealthChallenge() {
                             color: const Color(0xFF00C368),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(
+                          child: FaIcon( // ✅ removed const
                             FontAwesomeIcons.utensils,
                             color: Colors.white,
                             size: 20,
@@ -1262,7 +1262,7 @@ void _checkHealthChallenge() {
                       ],
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close),
+                      icon: const Icon(Icons.close), // ✅ changed from FaIcon(Icons.close)
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -1362,7 +1362,7 @@ void _checkHealthChallenge() {
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(FontAwesomeIcons.check, color: Colors.white, size: 16),
+                                    FaIcon(FontAwesomeIcons.check, color: Colors.white, size: 16), // ✅ removed const
                                     const SizedBox(width: 8),
                                     Expanded(child: Text(result['message'] ?? 'Berhasil menambahkan')),
                                   ],
@@ -1496,7 +1496,7 @@ void _checkHealthChallenge() {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(FontAwesomeIcons.fire, size: 14, color: Colors.red),
+                FaIcon(FontAwesomeIcons.fire, size: 14, color: Colors.red), // ✅ removed const
                 const SizedBox(width: 6),
                 Text(
                   "${totalKalori.toStringAsFixed(1)} kkal",
