@@ -1,3 +1,4 @@
+import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/sehat/jalan_10000_langkah.dart';
@@ -13,7 +14,7 @@ class SinarMatahari extends StatefulWidget {
   State<SinarMatahari> createState() => _SinarMatahariState();
 }
 
-class _SinarMatahariState extends State<SinarMatahari> {
+class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<SinarMatahari> {
   bool isSunbathe = false;
   bool isLoading = true;
   bool sudahBerjemur = false;
@@ -22,6 +23,7 @@ class _SinarMatahariState extends State<SinarMatahari> {
   void initState() {
     super.initState();
     _cekStatusBerjemur();
+    startAutoRefresh(refresh: _cekStatusBerjemur);
   }
 
   Future<void> _cekStatusBerjemur() async {
@@ -94,8 +96,11 @@ class _SinarMatahariState extends State<SinarMatahari> {
 
             // Main Content
             Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(20),
+              child: RefreshIndicator(
+                onRefresh: _cekStatusBerjemur,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.all(20),
                 child: Column(
                   children: [
                     // Manfaat Sinar Matahari
@@ -1025,9 +1030,10 @@ class _SinarMatahariState extends State<SinarMatahari> {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
+    ),
+  );
   }
 }

@@ -51,7 +51,7 @@ class TarikNapasService {
       final response = await ApiService.post(
         "/user/tarik-napas",
         body: {
-          "waktu_selesai": DateTime.now().toIso8601String(),
+          "waktu_selesai": DateTime.now().toUtc().toIso8601String(),
         },
       );
 

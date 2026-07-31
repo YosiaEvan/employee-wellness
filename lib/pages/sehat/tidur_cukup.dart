@@ -1,3 +1,4 @@
+import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/sehat_homepage.dart';
@@ -14,7 +15,7 @@ class TidurCukup extends StatefulWidget {
   State<TidurCukup> createState() => _TidurCukupState();
 }
 
-class _TidurCukupState extends State<TidurCukup> {
+class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCukup> {
   final TextEditingController sleepController = TextEditingController(text: "21:00");
   final TextEditingController wakeController = TextEditingController(text: "05:00");
   final List<Map<String, dynamic>> sleepReports = [];
@@ -52,6 +53,7 @@ class _TidurCukupState extends State<TidurCukup> {
     super.initState();
     initializeDateFormatting('id_ID', null);
     _cekStatusTidur();
+    startAutoRefresh(refresh: _cekStatusTidur);
   }
 
   Future<void> _cekStatusTidur() async {
@@ -205,8 +207,11 @@ class _TidurCukupState extends State<TidurCukup> {
 
             // Main Content
             Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(20),
+              child: RefreshIndicator(
+                onRefresh: _cekStatusTidur,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.all(20),
                 child: Column(
                   children: [
                     // Counter
@@ -828,9 +833,10 @@ class _TidurCukupState extends State<TidurCukup> {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
+    ),
+  );
   }
 }

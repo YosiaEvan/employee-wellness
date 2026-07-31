@@ -96,6 +96,8 @@ class _BodyScanState extends State<BodyScan> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _timer?.cancel();
+    _pulseController.dispose();
     _controller.dispose();
     _audioPlayer.dispose();
     super.dispose();

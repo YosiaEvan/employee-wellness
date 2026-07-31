@@ -1,3 +1,4 @@
+import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../services/tenang_kpi_service.dart';
@@ -10,7 +11,7 @@ class TenangKPIDashboard extends StatefulWidget {
   State<TenangKPIDashboard> createState() => _TenangKPIDashboardState();
 }
 
-class _TenangKPIDashboardState extends State<TenangKPIDashboard> {
+class _TenangKPIDashboardState extends State<TenangKPIDashboard> with AutoRefreshMixin<TenangKPIDashboard> {
   bool isLoading = true;
   Map<String, dynamic>? dailyKPI;
   Map<String, dynamic>? weeklyKPI;
@@ -20,6 +21,7 @@ class _TenangKPIDashboardState extends State<TenangKPIDashboard> {
   void initState() {
     super.initState();
     loadKPIData();
+    startAutoRefresh(refresh: loadKPIData);
   }
 
   Future<void> loadKPIData() async {
@@ -123,6 +125,7 @@ class _TenangKPIDashboardState extends State<TenangKPIDashboard> {
                       : RefreshIndicator(
                           onRefresh: loadKPIData,
                           child: SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
                             padding: const EdgeInsets.all(16),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,

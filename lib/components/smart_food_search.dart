@@ -150,11 +150,18 @@ class _SmartFoodSearchState extends State<SmartFoodSearch> {
                       porsi: porsi,
                     );
 
-                    // IMPORTANT: Wait for database to commit transaction
-                    await Future.delayed(const Duration(milliseconds: 500));
-
                     // Hide loading snackbar
                     messenger.hideCurrentSnackBar();
+
+                    if (!result["success"]) {
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(result["message"] ?? "Gagal menambahkan makanan"),
+                          backgroundColor: Colors.red,
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                    }
 
                     // Pass result to parent - ALWAYS call this
                     widget.onFoodSelected(result);

@@ -1,3 +1,4 @@
+import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../services/sehat_kpi_service.dart';
@@ -13,7 +14,7 @@ class SehatKPIDashboard extends StatefulWidget {
   State<SehatKPIDashboard> createState() => _SehatKPIDashboardState();
 }
 
-class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
+class _SehatKPIDashboardState extends State<SehatKPIDashboard> with AutoRefreshMixin<SehatKPIDashboard> {
   bool isLoading = true;
   Map<String, dynamic>? dailyKPI;
   Map<String, dynamic>? weeklyKPI;
@@ -23,6 +24,7 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
   void initState() {
     super.initState();
     loadKPIData();
+    startAutoRefresh(refresh: loadKPIData);
   }
 
   Future<void> loadKPIData() async {
@@ -137,6 +139,7 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> {
                       : RefreshIndicator(
                           onRefresh: loadKPIData,
                           child: SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
                             padding: const EdgeInsets.all(16),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,

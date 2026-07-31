@@ -118,6 +118,8 @@ class _LovingKindnessState extends State<LovingKindness> with TickerProviderStat
 
   @override
   void dispose() {
+    _timer?.cancel();
+    _pulseController.dispose();
     _controller.dispose();
     _audioPlayer.dispose();
     super.dispose();

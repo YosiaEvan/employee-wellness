@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/tenang/meditasi_terpadu.dart';
+import 'package:employee_wellness/pages/tenang/mindfulness_kesadaran.dart';
 import 'package:employee_wellness/services/tenang_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -118,6 +119,8 @@ class _VisualisasiPositifState extends State<VisualisasiPositif> with TickerProv
 
   @override
   void dispose() {
+    _timer?.cancel();
+    _pulseController.dispose();
     _controller.dispose();
     _audioPlayer.dispose();
     super.dispose();
@@ -188,7 +191,7 @@ class _VisualisasiPositifState extends State<VisualisasiPositif> with TickerProv
                               ),
                             ),
                             Text(
-                              "15 menit sesi",
+                              "10 menit sesi",
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.white,
@@ -323,7 +326,7 @@ class _VisualisasiPositifState extends State<VisualisasiPositif> with TickerProv
                                 onTap: () => {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => MeditasiTerpadu()),
+                                    MaterialPageRoute(builder: (context) => MindfulnessKesadaran()),
                                   ),
                                 },
                                 child: Container(

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/sehat/tidur_cukup.dart';
@@ -15,7 +16,8 @@ class UdaraSegar extends StatefulWidget {
   State<UdaraSegar> createState() => _UdaraSegarState();
 }
 
-class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateMixin {
+class _UdaraSegarState extends State<UdaraSegar>
+    with SingleTickerProviderStateMixin, AutoRefreshMixin<UdaraSegar> {
   late AnimationController _controller;
   late Animation<double> _sizeAnimation;
 
@@ -51,6 +53,7 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
     _sizeAnimation = Tween<double>(begin: minSize, end: maxSize)
         .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
     _cekStatusTarikNapas();
+    startAutoRefresh(refresh: _cekStatusTarikNapas);
   }
 
   Future<void> _cekStatusTarikNapas() async {
@@ -196,8 +199,11 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
             const Header(),
             BottomHeader(color: Color(0xff009bf4), heading: "Udara Segar", subHeading: "Teknik Pernapasan", destination: SehatHomepage()),
             Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(20),
+              child: RefreshIndicator(
+                onRefresh: _cekStatusTarikNapas,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.all(20),
                 child: Column(
                   children: [
                     // Counter
@@ -728,9 +734,10 @@ class _UdaraSegarState extends State<UdaraSegar> with SingleTickerProviderStateM
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
+    ),
+  );
   }
 }

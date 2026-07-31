@@ -42,7 +42,7 @@ class SinarMatahariService {
   /// POST - Catat aktivitas berjemur
   static Future<Map<String, dynamic>> catatBerjemur() async {
     try {
-      final now = DateTime.now();
+      final now = DateTime.now().toUtc();
       final waktuSelesai = now.toIso8601String();
 
       print("📤 Catat Berjemur Request:");

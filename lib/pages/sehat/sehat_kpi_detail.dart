@@ -1,3 +1,4 @@
+import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../services/sehat_kpi_service.dart';
@@ -11,7 +12,8 @@ class SehatKPIDetail extends StatefulWidget {
   State<SehatKPIDetail> createState() => _SehatKPIDetailState();
 }
 
-class _SehatKPIDetailState extends State<SehatKPIDetail> with SingleTickerProviderStateMixin {
+class _SehatKPIDetailState extends State<SehatKPIDetail>
+    with SingleTickerProviderStateMixin, AutoRefreshMixin<SehatKPIDetail> {
   late TabController _tabController;
   bool isLoading = true;
 
@@ -24,6 +26,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail> with SingleTickerProvid
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     loadAllKPIData();
+    startAutoRefresh(refresh: loadAllKPIData);
   }
 
   @override

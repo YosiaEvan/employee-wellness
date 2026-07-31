@@ -82,8 +82,8 @@ class TidurService {
       final response = await ApiService.post(
         "/user/tidur",
         body: {
-          "waktu_tidur": sleepTime.toIso8601String(),
-          "waktu_bangun": wakeTime.toIso8601String(),
+          "waktu_tidur": sleepTime.toUtc().toIso8601String(),
+          "waktu_bangun": wakeTime.toUtc().toIso8601String(),
         },
       );
 

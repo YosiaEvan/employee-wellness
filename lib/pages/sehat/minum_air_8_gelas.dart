@@ -1,3 +1,4 @@
+import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/sehat/udara_segar.dart';
@@ -13,7 +14,7 @@ class MinumAir8Gelas extends StatefulWidget {
   State<MinumAir8Gelas> createState() => _MinumAir8GelasState();
 }
 
-class _MinumAir8GelasState extends State<MinumAir8Gelas> {
+class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<MinumAir8Gelas> {
   // API Status
   bool isLoading = true;
 
@@ -40,6 +41,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> {
   void initState() {
     super.initState();
     _loadStatusMinum();
+    startAutoRefresh(refresh: _loadStatusMinum);
   }
 
   Future<void> _loadStatusMinum() async {
@@ -143,8 +145,11 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> {
 
             // Main Content
             Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(20),
+              child: RefreshIndicator(
+                onRefresh: _loadStatusMinum,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.all(20),
                 child: Column(
                   children: [
                     // Counter
@@ -943,9 +948,10 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
+    ),
+  );
   }
 }

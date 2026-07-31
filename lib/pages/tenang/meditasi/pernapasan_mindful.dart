@@ -118,6 +118,8 @@ class _PernapasanMindfulState extends State<PernapasanMindful> with TickerProvid
 
   @override
   void dispose() {
+    _timer?.cancel();
+    _pulseController.dispose();
     _controller.dispose();
     _audioPlayer.dispose();
     super.dispose();

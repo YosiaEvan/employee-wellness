@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/sehat_homepage.dart';
+import 'package:employee_wellness/services/background_steps_tracker.dart';
 import 'package:employee_wellness/services/langkah_service.dart';
 import 'package:employee_wellness/services/steps_sync_service.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +18,7 @@ class Jalan10000Langkah extends StatefulWidget {
   State<Jalan10000Langkah> createState() => _Jalan10000LangkahState();
 }
 
-class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
+class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshMixin<Jalan10000Langkah> {
   int _totalSteps = 0;
   Stream<StepCount>? _stepCountStream;
   StreamSubscription<StepCount>? _subscription;
@@ -40,6 +42,8 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
     _loadYesterdaySteps();
     // Auto-start tracking di background
     _autoStartTracking();
+    // Auto-refresh langkah dari API secara berkala
+    startAutoRefresh(refresh: _initializeSteps);
   }
 
   /// Load data langkah kemarin untuk notifikasi
@@ -98,6 +102,26 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
     }
   }
 
+  /// Load steps from background tracker and merge with current
+  Future<void> _syncWithBackgroundTracker() async {
+    try {
+      if (BackgroundStepsTracker.isInitialized) {
+        final bgSteps = BackgroundStepsTracker.todaySteps;
+        if (bgSteps > _totalSteps) {
+          print('📊 Background tracker has more steps: $bgSteps > $_totalSteps');
+          setState(() {
+            _totalSteps = bgSteps;
+            progressValue = _totalSteps / 10000;
+            _remainingSteps = 10000 - _totalSteps;
+          });
+          await LangkahService.saveTodaySteps(_totalSteps);
+        }
+      }
+    } catch (e) {
+      print('❌ Error syncing with background tracker: $e');
+    }
+  }
+
   /// Initialize steps dengan cek apakah hari sudah berganti
   Future<void> _initializeSteps() async {
     // Cek apakah hari sudah berganti
@@ -139,6 +163,9 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
         _remainingSteps = 10000 - _totalSteps;
       });
     }
+
+    // Sync with background tracker data
+    _syncWithBackgroundTracker();
 
     // Load data dari API untuk sinkronisasi
     _loadFromAPI();
@@ -190,27 +217,36 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
       (StepCount stepCount) async {
         // Jika ini pertama kali, simpan sebagai initial steps
         if (_initialSteps == 0) {
-          _initialSteps = stepCount.steps;
+          // Jika sudah ada total steps dari sync (background tracker),
+          // hitung initial steps backwards
+          if (_totalSteps > 0) {
+            _initialSteps = stepCount.steps - _totalSteps;
+          } else {
+            _initialSteps = stepCount.steps;
+          }
           await LangkahService.saveInitialSteps(_initialSteps);
         }
 
         // Calculate steps hari ini
         final todaySteps = stepCount.steps - _initialSteps;
 
-        setState(() {
-          _totalSteps = todaySteps;
-          progressValue = _totalSteps / 10000;
-          _remainingSteps = 10000 - _totalSteps;
-        });
+        // Only update if higher than current (prevent going backwards)
+        if (todaySteps > _totalSteps) {
+          setState(() {
+            _totalSteps = todaySteps;
+            progressValue = _totalSteps / 10000;
+            _remainingSteps = 10000 - _totalSteps;
+          });
 
-        // Save to local storage
-        await LangkahService.saveTodaySteps(_totalSteps);
+          // Save to local storage
+          await LangkahService.saveTodaySteps(_totalSteps);
 
-        // Auto-sync ke API setiap 30 detik
-        _autoSyncToAPI();
-
+          // Auto-sync ke API setiap 30 detik
+          _autoSyncToAPI();
+        }
       },
       onError: (error) {
+        print('❌ Pedometer error: $error');
       }
     );
 
@@ -235,9 +271,18 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
   /// Sync ke API (sekarang save ke queue untuk background sync)
   Future<void> _syncToAPI() async {
     if (_totalSteps > 0) {
-      // Menggunakan updateLangkahLocal yang akan save ke queue
-      // dan coba sync di background
+      // Save ke LangkahService queue untuk sync
       await LangkahService.updateLangkahLocal(jumlahLangkah: _totalSteps);
+
+      // Juga save ke StepsDatabase agar BackgroundStepsTracker punya data terbaru
+      try {
+        await StepsSyncService.instance.saveStepsLocally(
+          tanggal: DateTime.now().toIso8601String().split('T')[0],
+          totalSteps: _totalSteps,
+        );
+      } catch (e) {
+        print('⚠️ Failed to sync to StepsDatabase: $e');
+      }
     }
   }
 
@@ -404,8 +449,11 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
 
             // Main Content
             Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(20),
+              child: RefreshIndicator(
+                onRefresh: _initializeSteps,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.all(20),
                 child: Column(
                   children: [
                     // Yesterday Steps Notification
@@ -1145,9 +1193,10 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
+    ),
+  );
   }
 }

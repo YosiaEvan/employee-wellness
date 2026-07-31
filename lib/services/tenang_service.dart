@@ -81,7 +81,7 @@ class TenangService {
           'kategori': kategori,
           'sub_kategori': subKategori,
           'durasi_detik': durasiDetik,
-          'selesai_at': DateTime.now().toIso8601String(),
+          'selesai_at': DateTime.now().toUtc().toIso8601String(),
         },
       );      if (response.statusCode == 200 || response.statusCode == 201) {
         final body = jsonDecode(response.body);
@@ -155,7 +155,7 @@ class TenangService {
         body: {
           'user_id': userId,
           'stress_level': stressLevel,
-          'created_at': DateTime.now().toIso8601String(),
+          'created_at': DateTime.now().toUtc().toIso8601String(),
         },
       );
 
