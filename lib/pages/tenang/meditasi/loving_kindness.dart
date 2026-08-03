@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/tenang/meditasi_terpadu.dart';
+import 'package:employee_wellness/services/tenang_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -80,13 +81,15 @@ class _LovingKindnessState extends State<LovingKindness> with TickerProviderStat
   }
 
   void _onSesionComplete() async {
-    await _audioPlayer.play(
-      AssetSource('sounds/done.wav'),
-    );
+    await _audioPlayer.play(AssetSource('sounds/done.wav'));
+    setState(() => _status = SessionStatus.finished);
 
-    setState(() {
-      _status = SessionStatus.finished;
-    });
+    // Kirim data sesi ke backend
+    TenangService.recordSession(
+      kategori: TenangKategori.meditasi,
+      subKategori: TenangSubKategori.lovingKindness,
+      durasiDetik: totalSeconds - _remainingSeconds,
+    );
   }
 
   @override
@@ -115,6 +118,8 @@ class _LovingKindnessState extends State<LovingKindness> with TickerProviderStat
 
   @override
   void dispose() {
+    _timer?.cancel();
+    _pulseController.dispose();
     _controller.dispose();
     _audioPlayer.dispose();
     super.dispose();
@@ -165,7 +170,7 @@ class _LovingKindnessState extends State<LovingKindness> with TickerProviderStat
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(40),
                               ),
-                              child: const Icon(
+                              child: FaIcon(
                                 FontAwesomeIcons.arrowLeft,
                                 size: 20,
                                 color: Colors.white,
@@ -201,7 +206,7 @@ class _LovingKindnessState extends State<LovingKindness> with TickerProviderStat
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(40),
                             ),
-                            child: const Icon(
+                            child: FaIcon(
                               FontAwesomeIcons.brain,
                               size: 20,
                               color: Colors.white,
@@ -233,7 +238,7 @@ class _LovingKindnessState extends State<LovingKindness> with TickerProviderStat
                                 color: const Color(0xff00d477),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
+                              child: FaIcon(
                                 FontAwesomeIcons.check,
                                 size: 52,
                                 color: Colors.white,
@@ -414,7 +419,7 @@ class _LovingKindnessState extends State<LovingKindness> with TickerProviderStat
                             // Reset Button
                             OutlinedButton.icon(
                               onPressed: resetTimer,
-                              icon: Icon(FontAwesomeIcons.rotateLeft),
+                              icon: FaIcon(FontAwesomeIcons.rotateLeft),
                               label: Text("Reset"),
                               style: OutlinedButton.styleFrom(
                                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -437,7 +442,7 @@ class _LovingKindnessState extends State<LovingKindness> with TickerProviderStat
                                   startTimer();
                                 }
                               },
-                              icon: Icon(
+                              icon: FaIcon(
                                 _status == SessionStatus.running
                                     ? FontAwesomeIcons.pause
                                     : FontAwesomeIcons.play,

@@ -1,6 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/tenang/mindfulness_kesadaran.dart';
+import 'package:employee_wellness/services/tenang_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -95,7 +96,7 @@ class _MomenSekarangState extends State<MomenSekarang> with TickerProviderStateM
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(40),
                               ),
-                              child: const Icon(
+                              child: FaIcon(
                                 FontAwesomeIcons.arrowLeft,
                                 size: 20,
                                 color: Colors.white,
@@ -131,7 +132,7 @@ class _MomenSekarangState extends State<MomenSekarang> with TickerProviderStateM
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(40),
                             ),
-                            child: const Icon(
+                            child: FaIcon(
                               FontAwesomeIcons.brain,
                               size: 20,
                               color: Colors.white,
@@ -257,8 +258,13 @@ class _MomenSekarangState extends State<MomenSekarang> with TickerProviderStateM
                                   isComplete = true;
                                 });
 
-                                _audioPlayer.play(
-                                  AssetSource('sounds/done.wav'),
+                                _audioPlayer.play(AssetSource('sounds/done.wav'));
+
+                                // Kirim data sesi ke backend
+                                TenangService.recordSession(
+                                  kategori: TenangKategori.mindfulness,
+                                  subKategori: TenangSubKategori.momenSekarang,
+                                  durasiDetik: 5 * 60,
                                 );
                               },
                               style: ElevatedButton.styleFrom(
@@ -293,7 +299,7 @@ class _MomenSekarangState extends State<MomenSekarang> with TickerProviderStateM
                                   color: const Color(0xff00d477),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: FaIcon(
                                   FontAwesomeIcons.check,
                                   size: 52,
                                   color: Colors.white,

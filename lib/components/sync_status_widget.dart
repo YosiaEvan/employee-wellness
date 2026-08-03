@@ -94,7 +94,7 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
                     color: const Color(0xFF00C97A).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
+                  child: FaIcon(
                     FontAwesomeIcons.arrowsRotate,
                     color: Color(0xFF00C97A),
                     size: 20,
@@ -137,7 +137,7 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
                 else
                   IconButton(
                     onPressed: _syncNow,
-                    icon: const Icon(
+                    icon: FaIcon(
                       FontAwesomeIcons.arrowsRotate,
                       size: 16,
                     ),
@@ -193,7 +193,7 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
                 ),
                 child: Row(
                   children: [
-                    Icon(
+                    FaIcon(
                       FontAwesomeIcons.circleExclamation,
                       color: Colors.orange,
                       size: 16,
@@ -219,14 +219,14 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
   }
 
   Widget _buildStatItem({
-    required IconData icon,
+    required FaIconData icon,
     required String label,
     required String value,
     required Color color,
   }) {
     return Column(
       children: [
-        Icon(icon, color: color, size: 24),
+        FaIcon(icon, color: color, size: 24),
         const SizedBox(height: 4),
         Text(
           value,

@@ -1,3 +1,4 @@
+import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/sehat/jalan_10000_langkah.dart';
@@ -13,7 +14,7 @@ class SinarMatahari extends StatefulWidget {
   State<SinarMatahari> createState() => _SinarMatahariState();
 }
 
-class _SinarMatahariState extends State<SinarMatahari> {
+class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<SinarMatahari> {
   bool isSunbathe = false;
   bool isLoading = true;
   bool sudahBerjemur = false;
@@ -22,6 +23,7 @@ class _SinarMatahariState extends State<SinarMatahari> {
   void initState() {
     super.initState();
     _cekStatusBerjemur();
+    startAutoRefresh(refresh: _cekStatusBerjemur);
   }
 
   Future<void> _cekStatusBerjemur() async {
@@ -94,8 +96,11 @@ class _SinarMatahariState extends State<SinarMatahari> {
 
             // Main Content
             Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(20),
+              child: RefreshIndicator(
+                onRefresh: _cekStatusBerjemur,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.all(20),
                 child: Column(
                   children: [
                     // Manfaat Sinar Matahari
@@ -125,11 +130,7 @@ class _SinarMatahariState extends State<SinarMatahari> {
                                     color: Color(0xfffb8f00),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
-                                    FontAwesomeIcons.cloudSun,
-                                    size: 36,
-                                    color: Colors.white,
-                                  ),
+                                  child: FaIcon(FontAwesomeIcons.cloudSun, size: 36, color: Colors.white), // ✅ fixed
                                 ),
                               ),
                               SizedBox(width: 20,),
@@ -230,11 +231,7 @@ class _SinarMatahariState extends State<SinarMatahari> {
                                     color: Color(0xff00aa61),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
-                                    FontAwesomeIcons.check,
-                                    size: 36,
-                                    color: Colors.white,
-                                  ),
+                                  child: FaIcon(FontAwesomeIcons.check, size: 36, color: Colors.white), // ✅ fixed
                                 ),
                               ),
                               SizedBox(width: 20,),
@@ -351,11 +348,7 @@ class _SinarMatahariState extends State<SinarMatahari> {
                                     color: Color(0xff008dd4),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
-                                    FontAwesomeIcons.clock,
-                                    size: 36,
-                                    color: Colors.white,
-                                  ),
+                                  child: FaIcon(FontAwesomeIcons.clock, size: 36, color: Colors.white), // ✅ fixed
                                 ),
                               ),
                               SizedBox(width: 20,),
@@ -488,11 +481,7 @@ class _SinarMatahariState extends State<SinarMatahari> {
                                     color: Color(0xffbd4aef),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
-                                    FontAwesomeIcons.shirt,
-                                    size: 36,
-                                    color: Colors.white,
-                                  ),
+                                  child: FaIcon(FontAwesomeIcons.shirt, size: 36, color: Colors.white), // ✅ fixed
                                 ),
                               ),
                               SizedBox(width: 20,),
@@ -718,11 +707,7 @@ class _SinarMatahariState extends State<SinarMatahari> {
                                     color: Color(0xffec0865),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
-                                    FontAwesomeIcons.shield,
-                                    size: 36,
-                                    color: Colors.white,
-                                  ),
+                                  child: FaIcon(FontAwesomeIcons.shield, size: 36, color: Colors.white), // ✅ fixed
                                 ),
                               ),
                               SizedBox(width: 20,),
@@ -946,11 +931,7 @@ class _SinarMatahariState extends State<SinarMatahari> {
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(
-                                          FontAwesomeIcons.circleCheck,
-                                          size: 20,
-                                          color: Color(0xff00a63e),
-                                        ),
+                                        FaIcon(FontAwesomeIcons.circleCheck, size: 20, color: Color(0xff00a63e)), // ✅ fixed
                                         SizedBox(width: 8,),
                                         Text(
                                           "Selamat!",
@@ -1049,9 +1030,10 @@ class _SinarMatahariState extends State<SinarMatahari> {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
+    ),
+  );
   }
 }

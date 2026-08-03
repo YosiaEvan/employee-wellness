@@ -45,8 +45,8 @@ class MinumAirService {
       print("URL: /user/minum");
       print("🔐 Using Bearer token (auto-refresh if expired)");
 
-      // Gunakan waktu saat ini
-      final now = DateTime.now();
+      // Gunakan waktu saat ini (UTC agar konsisten dengan server)
+      final now = DateTime.now().toUtc();
       print("💧 Waktu minum: ${now.toIso8601String()}");
 
       final response = await ApiService.post(

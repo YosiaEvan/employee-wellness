@@ -1,5 +1,6 @@
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/tenang/manajemen_stress/teknik_quick_relief.dart';
+import 'package:employee_wellness/services/tenang_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -58,7 +59,7 @@ class _ManajemenStressState extends State<ManajemenStress> {
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(40),
                               ),
-                              child: const Icon(
+                              child: const FaIcon(
                                 FontAwesomeIcons.arrowLeft,
                                 size: 20,
                                 color: Colors.white,
@@ -94,7 +95,7 @@ class _ManajemenStressState extends State<ManajemenStress> {
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(40),
                             ),
-                            child: const Icon(
+                            child: const FaIcon(
                               FontAwesomeIcons.brain,
                               size: 20,
                               color: Colors.white,
@@ -140,7 +141,7 @@ class _ManajemenStressState extends State<ManajemenStress> {
                                           color: Color(0xff00c170),
                                           borderRadius: BorderRadius.circular(12),
                                         ),
-                                        child: const Icon(
+                                        child: const FaIcon(
                                           FontAwesomeIcons.message,
                                           size: 36,
                                           color: Colors.white,
@@ -205,7 +206,7 @@ class _ManajemenStressState extends State<ManajemenStress> {
                                       : Color(0xfff0003d),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: Icon(
+                                  child: FaIcon(
                                     stressValue == 1
                                       ? FontAwesomeIcons.faceSmileBeam
                                       : stressValue == 2
@@ -269,6 +270,11 @@ class _ManajemenStressState extends State<ManajemenStress> {
                                   width: double.infinity,
                                   child: ElevatedButton(
                                     onPressed: () {
+                                      // Catat level stres sebelum navigasi
+                                      TenangService.recordStressLevel(
+                                        stressLevel: stressValue.toInt(),
+                                      );
+
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(builder: (context) => TeknikQuickRelief()),
@@ -324,7 +330,7 @@ class _ManajemenStressState extends State<ManajemenStress> {
                                           color: Color(0xff00c170),
                                           borderRadius: BorderRadius.circular(12),
                                         ),
-                                        child: const Icon(
+                                        child: const FaIcon(
                                           FontAwesomeIcons.info,
                                           size: 36,
                                           color: Colors.white,

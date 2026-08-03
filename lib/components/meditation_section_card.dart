@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // tambahkan import ini
 
 class MeditationSectionCard extends StatelessWidget {
   final Widget? destination;
   final Color sectionColor;
-  final IconData icon;
+  final FaIconData icon; // ganti IconData menjadi FaIconData
   final String heading;
   final String description;
   final String targetText;
@@ -21,14 +22,16 @@ class MeditationSectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => destination!),
-        ),
+      onTap: () {
+        if (destination != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => destination!),
+          );
+        }
       },
       child: Container(
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -37,7 +40,7 @@ class MeditationSectionCard extends StatelessWidget {
               color: Colors.black.withOpacity(0.08),
               blurRadius: 12,
               spreadRadius: 2,
-              offset: Offset(0, 6),
+              offset: const Offset(0, 6),
             ),
           ],
         ),
@@ -49,25 +52,25 @@ class MeditationSectionCard extends StatelessWidget {
                 SizedBox.square(
                   dimension: 60,
                   child: Container(
-                    padding: EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: sectionColor,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(
+                    child: FaIcon( // ganti Icon menjadi FaIcon
                       icon,
                       size: 36,
                       color: Colors.white,
                     ),
                   ),
                 ),
-                SizedBox(width: 20,),
+                const SizedBox(width: 20),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       heading,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w500,
                       ),
@@ -76,14 +79,14 @@ class MeditationSectionCard extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 12,),
+            const SizedBox(height: 12),
             Text(
               description,
               textAlign: TextAlign.left,
             ),
             Container(
               width: double.infinity,
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
@@ -92,14 +95,14 @@ class MeditationSectionCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: sectionColor,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       targetText,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
                       ),
@@ -107,7 +110,7 @@ class MeditationSectionCard extends StatelessWidget {
                   ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),

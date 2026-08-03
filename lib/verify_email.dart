@@ -136,7 +136,7 @@ class _VerifyEmailState extends State<VerifyEmail> {
                    CircleAvatar(
                      radius: 40,
                      backgroundColor: const Color(0xFF00C97A),
-                     child: Icon(FontAwesomeIcons.building, size: 40, color: Colors.white),
+                     child: FaIcon(FontAwesomeIcons.building, size: 40, color: Colors.white),
                    ),
 
                    const SizedBox(height: 20),

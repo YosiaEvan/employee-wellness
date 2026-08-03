@@ -216,7 +216,7 @@ class _HeaderState extends State<Header> with AutomaticKeepAliveClientMixin {
                       width: 191,
                       child: Row(
                         children: [
-                          Icon(FontAwesomeIcons.circleUser, size: 20, color: Colors.blue),
+                          FaIcon(FontAwesomeIcons.circleUser, size: 20, color: Colors.blue),
                           SizedBox(width: 12),
                           Text("Profil Kesehatan"),
                         ],

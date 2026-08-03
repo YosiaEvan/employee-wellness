@@ -1,8 +1,7 @@
-import 'dart:math';
-
 import 'package:audioplayers/audioplayers.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/tenang/mindfulness_kesadaran.dart';
+import 'package:employee_wellness/services/tenang_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -102,8 +101,13 @@ class _PernapasanState extends State<Pernapasan> with SingleTickerProviderStateM
       cycleCount++;
 
       if (cycleCount == requiredCycles) {
-        _audioPlayer.play(
-          AssetSource('sounds/done.wav'),
+        _audioPlayer.play(AssetSource('sounds/done.wav'));
+
+        // Kirim data sesi ke backend
+        TenangService.recordSession(
+          kategori: TenangKategori.mindfulness,
+          subKategori: TenangSubKategori.pernapasan478,
+          durasiDetik: (inhale + hold + exhale) * requiredCycles,
         );
       }
     }
@@ -206,7 +210,7 @@ class _PernapasanState extends State<Pernapasan> with SingleTickerProviderStateM
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(40),
                               ),
-                              child: const Icon(
+                              child: FaIcon(
                                 FontAwesomeIcons.arrowLeft,
                                 size: 20,
                                 color: Colors.white,
@@ -242,7 +246,7 @@ class _PernapasanState extends State<Pernapasan> with SingleTickerProviderStateM
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(40),
                             ),
-                            child: const Icon(
+                            child: FaIcon(
                               FontAwesomeIcons.brain,
                               size: 20,
                               color: Colors.white,
@@ -341,7 +345,7 @@ class _PernapasanState extends State<Pernapasan> with SingleTickerProviderStateM
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(
+                                    FaIcon(
                                       FontAwesomeIcons.play,
                                     ),
                                     SizedBox(width: 8,),
@@ -365,7 +369,7 @@ class _PernapasanState extends State<Pernapasan> with SingleTickerProviderStateM
                                     ),
                                     child: Row(
                                       children: [
-                                        Icon(
+                                        FaIcon(
                                           FontAwesomeIcons.pause,
                                         ),
                                         SizedBox(width: 8,),
@@ -389,7 +393,7 @@ class _PernapasanState extends State<Pernapasan> with SingleTickerProviderStateM
                                     ),
                                     child: Row(
                                       children: [
-                                        Icon(
+                                        FaIcon(
                                           FontAwesomeIcons.arrowRotateLeft,
                                         ),
                                         SizedBox(width: 8,),
@@ -484,7 +488,7 @@ class _PernapasanState extends State<Pernapasan> with SingleTickerProviderStateM
                                   color: const Color(0xff00d477),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: FaIcon(
                                   FontAwesomeIcons.check,
                                   size: 52,
                                   color: Colors.white,

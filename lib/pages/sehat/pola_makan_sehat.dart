@@ -1,3 +1,4 @@
+import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/smart_food_search.dart';
@@ -15,7 +16,7 @@ class PolaMakanSehat extends StatefulWidget {
   State<PolaMakanSehat> createState() => _PolaMakanSehatState();
 }
 
-class _PolaMakanSehatState extends State<PolaMakanSehat> {
+class _PolaMakanSehatState extends State<PolaMakanSehat> with AutoRefreshMixin<PolaMakanSehat> {
   bool isLoading = true;
 
   // New API structure
@@ -57,6 +58,7 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
   void initState() {
     super.initState();
     loadTodayFood();
+    startAutoRefresh(refresh: loadTodayFood);
   }
 
   Future<void> loadTodayFood() async {
@@ -89,7 +91,20 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> {
         daftarMakanan.forEach((jenis, items) {
           foods.addAll(items);
         });
-  } else {
+      } else {
+        trackingData = {};
+        targetData = {};
+        konsumsiData = {};
+        progressData = {};
+        sisaData = {};
+        daftarMakanan = {
+          'sarapan': [],
+          'makan_siang': [],
+          'makan_malam': [],
+          'snack': [],
+        };
+        foods = [];
+        totalItem = 0;
       }
 
       // Check health challenge
@@ -174,7 +189,7 @@ void _checkHealthChallenge() {
               children: [
                 Row(
                   children: [
-                    const Icon(FontAwesomeIcons.check, color: Colors.white, size: 16),
+                    FaIcon(FontAwesomeIcons.check, color: Colors.white, size: 16), // ✅ removed const
                     const SizedBox(width: 8),
                     Expanded(child: Text(result['message'] ?? 'Berhasil menambahkan')),
                   ],
@@ -225,8 +240,11 @@ void _checkHealthChallenge() {
 
             // Main Content
             Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(20),
+              child: RefreshIndicator(
+                onRefresh: loadTodayFood,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.all(20),
                 child: Column(
                   children: [
                     // Calorie Counter
@@ -255,7 +273,7 @@ void _checkHealthChallenge() {
                                 color: Color(0xff00c368),
                                 borderRadius: BorderRadius.circular(40),
                               ),
-                              child: const Icon(
+                              child: FaIcon( // ✅ removed const
                                 FontAwesomeIcons.fireFlameCurved,
                                 size: 36,
                                 color: Colors.white,
@@ -312,7 +330,7 @@ void _checkHealthChallenge() {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(
+                                    FaIcon(
                                       FontAwesomeIcons.bullseye,
                                       size: 20,
                                       color: Color(0xff00c368),
@@ -330,7 +348,7 @@ void _checkHealthChallenge() {
                                 ),
                                 SizedBox(height: 8,),
                                 Text(
-                                  "Target: ${totalCalories} kalori",
+                                  "Target: ${targetCalories} kalori",
                                   style: TextStyle(
                                     color: Color(0xff00c368),
                                     fontSize: 16,
@@ -372,7 +390,7 @@ void _checkHealthChallenge() {
                                     color: Color(0xff00c368),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
+                                  child: FaIcon( // ✅ removed const
                                     FontAwesomeIcons.arrowTrendUp,
                                     size: 36,
                                     color: Colors.white,
@@ -490,8 +508,8 @@ void _checkHealthChallenge() {
                                     ),
                                     SizedBox(width: 16,),
                                     Flexible(
-                                      child: Text(
-                                        "${((totalProtein/totalAll)*100).toStringAsFixed(2)}%",
+                                      child:                                       Text(
+                                        "${totalAll > 0 ? ((totalProtein/totalAll)*100).toStringAsFixed(2) : "0.00"}%",
                                         style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
@@ -572,8 +590,8 @@ void _checkHealthChallenge() {
                                     ),
                                     SizedBox(width: 16,),
                                     Flexible(
-                                      child: Text(
-                                        "${((totalCarb/totalAll)*100).toStringAsFixed(2)}%",
+                                      child:                                       Text(
+                                        "${totalAll > 0 ? ((totalCarb/totalAll)*100).toStringAsFixed(2) : "0.00"}%",
                                         style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
@@ -654,8 +672,8 @@ void _checkHealthChallenge() {
                                     ),
                                     SizedBox(width: 16,),
                                     Flexible(
-                                      child: Text(
-                                        "${((totalFiber/totalAll)*100).toStringAsFixed(2)}%",
+                                      child:                                       Text(
+                                        "${totalAll > 0 ? ((totalFiber/totalAll)*100).toStringAsFixed(2) : "0.00"}%",
                                         style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
@@ -723,7 +741,7 @@ void _checkHealthChallenge() {
                                     color: Color(0xff00c368),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
+                                  child: FaIcon( // ✅ removed const
                                     FontAwesomeIcons.arrowTrendUp,
                                     size: 36,
                                     color: Colors.white,
@@ -756,7 +774,7 @@ void _checkHealthChallenge() {
                                       ),
                                       child: Row(
                                         children: [
-                                          Icon(
+                                          FaIcon( // ✅ removed const
                                             FontAwesomeIcons.plus,
                                             size: 16,
                                             color: Colors.white,
@@ -827,7 +845,7 @@ void _checkHealthChallenge() {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
+                                  FaIcon(
                                     FontAwesomeIcons.appleWhole,
                                     color: Color(0xff99a1af),
                                     size: 40,
@@ -899,7 +917,7 @@ void _checkHealthChallenge() {
                                       : Color(0xff1e89fe),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: Icon(
+                                  child: FaIcon( // ✅ removed const
                                     isChallengeAchieved
                                       ? FontAwesomeIcons.trophy
                                       : FontAwesomeIcons.lightbulb,
@@ -955,7 +973,7 @@ void _checkHealthChallenge() {
                               ),
                               child: Column(
                                 children: [
-                                  Icon(
+                                  FaIcon( // ✅ removed const
                                     FontAwesomeIcons.solidCircleCheck,
                                     size: 48,
                                     color: Color(0xFF4CAF50),
@@ -1044,7 +1062,7 @@ void _checkHealthChallenge() {
                                     children: [
                                       Row(
                                         children: [
-                                          Icon(
+                                          FaIcon( // ✅ removed const
                                             hariTanpaMinyak >= 2
                                               ? FontAwesomeIcons.solidCircleCheck
                                               : FontAwesomeIcons.circle,
@@ -1114,7 +1132,7 @@ void _checkHealthChallenge() {
                                     children: [
                                       Row(
                                         children: [
-                                          Icon(
+                                          FaIcon( // ✅ removed const
                                             hariTanpaGula >= 2
                                               ? FontAwesomeIcons.solidCircleCheck
                                               : FontAwesomeIcons.circle,
@@ -1212,10 +1230,11 @@ void _checkHealthChallenge() {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
+    ),
+  );
   }
 
   // Build Smart Food Search Dialog
@@ -1245,7 +1264,7 @@ void _checkHealthChallenge() {
                             color: const Color(0xFF00C368),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(
+                          child: FaIcon( // ✅ removed const
                             FontAwesomeIcons.utensils,
                             color: Colors.white,
                             size: 20,
@@ -1262,7 +1281,7 @@ void _checkHealthChallenge() {
                       ],
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close),
+                      icon: const Icon(Icons.close), // ✅ changed from FaIcon(Icons.close)
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -1281,6 +1300,9 @@ void _checkHealthChallenge() {
                       print("Message: ${result["message"]}");
                       print("Data: ${result["data"]}");
 
+                      // Capture messenger BEFORE closing dialog (context akan invalid setelah pop)
+                      final messenger = ScaffoldMessenger.of(context);
+
                       // Close bottom sheet first
                       print("\n[1/8] Closing bottom sheet...");
                       Navigator.pop(context);
@@ -1291,28 +1313,26 @@ void _checkHealthChallenge() {
 
                       // Show loading feedback
                       print("[3/8] Showing loading snackbar...");
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Row(
-                              children: [
-                                SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
+                      messenger.showSnackBar(
+                        const SnackBar(
+                          content: Row(
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
                                 ),
-                                SizedBox(width: 12),
-                                Text('Memuat data terbaru...'),
-                              ],
-                            ),
-                            backgroundColor: Colors.blue,
-                            duration: Duration(seconds: 3),
+                              ),
+                              SizedBox(width: 12),
+                              Text('Memuat data terbaru...'),
+                            ],
                           ),
-                        );
-                      }
+                          backgroundColor: Colors.blue,
+                          duration: Duration(seconds: 3),
+                        ),
+                      );
 
                       // Set loading state
                       print("[4/8] Setting isLoading = true...");
@@ -1344,44 +1364,52 @@ void _checkHealthChallenge() {
 
                       // Hide loading and show success
                       print("[8/8] Showing success notification...");
+                      messenger.hideCurrentSnackBar();
+
                       if (mounted) {
-                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                      }
+                        if (result["success"]) {
+                          print("\n✅ SUCCESS - Current State:");
+                          print("   Total Calories: $totalCalories kkal");
+                          print("   Total Items: $totalItem");
+                          print("   Foods Count: ${foods.length}");
 
-                      if (result["success"] && mounted) {
-                        print("\n✅ SUCCESS - Current State:");
-                        print("   Total Calories: $totalCalories kkal");
-                        print("   Total Items: $totalItem");
-                        print("   Foods Count: ${foods.length}");
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(FontAwesomeIcons.check, color: Colors.white, size: 16),
-                                    const SizedBox(width: 8),
-                                    Expanded(child: Text(result['message'] ?? 'Berhasil menambahkan')),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '📊 Total Kalori: ${totalCalories.toStringAsFixed(1)} kkal',
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                                ),
-                                Text(
-                                  '✅ Total Makanan: $totalItem item',
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              ],
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      FaIcon(FontAwesomeIcons.check, color: Colors.white, size: 16),
+                                      const SizedBox(width: 8),
+                                      Expanded(child: Text(result['message'] ?? 'Berhasil menambahkan')),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '📊 Total Kalori: ${totalCalories.toStringAsFixed(1)} kkal',
+                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    '✅ Total Makanan: $totalItem item',
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                              backgroundColor: const Color(0xFF00C368),
+                              duration: const Duration(seconds: 3),
                             ),
-                            backgroundColor: const Color(0xFF00C368),
-                            duration: const Duration(seconds: 3),
-                          ),
-                        );
+                          );
+                        } else {
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(result["message"] ?? "Gagal menambahkan makanan"),
+                              backgroundColor: Colors.red,
+                              duration: const Duration(seconds: 3),
+                            ),
+                          );
+                        }
                       }
 
                     },
@@ -1496,7 +1524,7 @@ void _checkHealthChallenge() {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(FontAwesomeIcons.fire, size: 14, color: Colors.red),
+                FaIcon(FontAwesomeIcons.fire, size: 14, color: Colors.red), // ✅ removed const
                 const SizedBox(width: 6),
                 Text(
                   "${totalKalori.toStringAsFixed(1)} kkal",

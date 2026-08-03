@@ -44,7 +44,7 @@ class BottomHeader extends StatelessWidget {
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(40),
                     ),
-                    child: const Icon(
+                    child: FaIcon( // 🔥 ganti Icon -> FaIcon
                       FontAwesomeIcons.arrowLeft,
                       size: 20,
                       color: Colors.white,
@@ -89,7 +89,7 @@ class BottomHeader extends StatelessWidget {
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(40),
                     ),
-                    child: const Icon(
+                    child: FaIcon( // 🔥 ganti Icon -> FaIcon
                       FontAwesomeIcons.house,
                       size: 20,
                       color: Colors.white,

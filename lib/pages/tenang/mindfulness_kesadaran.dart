@@ -55,7 +55,7 @@ class MindfulnessKesadaran extends StatelessWidget {
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(40),
                               ),
-                              child: const Icon(
+                              child: FaIcon( // ✅ changed from Icon to FaIcon
                                 FontAwesomeIcons.arrowLeft,
                                 size: 20,
                                 color: Colors.white,
@@ -91,7 +91,7 @@ class MindfulnessKesadaran extends StatelessWidget {
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(40),
                             ),
-                            child: const Icon(
+                            child: FaIcon( // ✅ changed from Icon to FaIcon
                               FontAwesomeIcons.brain,
                               size: 20,
                               color: Colors.white,
@@ -157,7 +157,7 @@ class MindfulnessKesadaran extends StatelessWidget {
                                         color: Color(0xff00c170),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: const Icon(
+                                      child: FaIcon( // ✅ changed from Icon to FaIcon
                                         FontAwesomeIcons.circleInfo,
                                         size: 36,
                                         color: Colors.white,

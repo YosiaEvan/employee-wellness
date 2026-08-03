@@ -60,7 +60,7 @@ class _MeditasiTerpaduState extends State<MeditasiTerpadu> {
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(40),
                               ),
-                              child: const Icon(
+                              child: FaIcon( // ✅ removed const
                                 FontAwesomeIcons.arrowLeft,
                                 size: 20,
                                 color: Colors.white,
@@ -96,7 +96,7 @@ class _MeditasiTerpaduState extends State<MeditasiTerpadu> {
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(40),
                             ),
-                            child: const Icon(
+                            child: FaIcon( // ✅ removed const
                               FontAwesomeIcons.brain,
                               size: 20,
                               color: Colors.white,
@@ -162,7 +162,7 @@ class _MeditasiTerpaduState extends State<MeditasiTerpadu> {
                                         color: Color(0xff00c170),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: const Icon(
+                                      child: FaIcon( // ✅ removed const
                                         FontAwesomeIcons.circleInfo,
                                         size: 36,
                                         color: Colors.white,

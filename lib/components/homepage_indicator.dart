@@ -283,7 +283,7 @@ class _IndicatorState extends State<Indicator> {
                                 color: Colors.blue,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(
+                              child: const FaIcon( 
                                 FontAwesomeIcons.brain,
                                 size: 36,
                                 color: Colors.white,
@@ -476,7 +476,7 @@ class _IndicatorState extends State<Indicator> {
                                 color: Colors.green,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(
+                              child: const FaIcon( 
                                 FontAwesomeIcons.leaf,
                                 size: 36,
                                 color: Colors.white,

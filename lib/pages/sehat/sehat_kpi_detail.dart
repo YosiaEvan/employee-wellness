@@ -1,3 +1,4 @@
+import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../services/sehat_kpi_service.dart';
@@ -11,7 +12,8 @@ class SehatKPIDetail extends StatefulWidget {
   State<SehatKPIDetail> createState() => _SehatKPIDetailState();
 }
 
-class _SehatKPIDetailState extends State<SehatKPIDetail> with SingleTickerProviderStateMixin {
+class _SehatKPIDetailState extends State<SehatKPIDetail>
+    with SingleTickerProviderStateMixin, AutoRefreshMixin<SehatKPIDetail> {
   late TabController _tabController;
   bool isLoading = true;
 
@@ -24,6 +26,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail> with SingleTickerProvid
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     loadAllKPIData();
+    startAutoRefresh(refresh: loadAllKPIData);
   }
 
   @override
@@ -86,7 +89,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail> with SingleTickerProvid
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(FontAwesomeIcons.arrowLeft),
+                    icon: FaIcon(FontAwesomeIcons.arrowLeft), // ✅ fixed
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: const Color(0xFFC9001E),
@@ -230,7 +233,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail> with SingleTickerProvid
               children: [
                 Row(
                   children: [
-                    const Icon(FontAwesomeIcons.calendarDay, color: Colors.white, size: 24),
+                    FaIcon(FontAwesomeIcons.calendarDay, color: Colors.white, size: 24), // ✅ fixed
                     const SizedBox(width: 12),
                     Text(
                       _formatTanggal(tanggal),
@@ -320,7 +323,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail> with SingleTickerProvid
     final target = activity['target'];
     final tercapai = activity['tercapai'];
 
-    IconData icon;
+    FaIconData icon; // ✅ fixed: from FaFaIconDataicon to FaIconData icon
     Color color;
 
     if (nama.toLowerCase().contains('berjemur')) {
@@ -375,7 +378,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail> with SingleTickerProvid
                   color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: color, size: 24),
+                child: FaIcon(icon, color: color, size: 24), // ✅ already correct
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -519,8 +522,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail> with SingleTickerProvid
                 value: ((activity['tercapai'] as num) / (activity['target'] as num)).clamp(0.0, 1.0),
                 minHeight: 8,
                 backgroundColor: Colors.grey.shade200,
-                valueColor: const AlwaysStoppedAnimation<Color>(Color(
-                    0xFFA80032)),
+                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFA80032)),
               ),
             ),
           ],
@@ -705,7 +707,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail> with SingleTickerProvid
               children: [
                 Row(
                   children: [
-                    const Icon(FontAwesomeIcons.calendarWeek, color: Colors.white, size: 24),
+                    FaIcon(FontAwesomeIcons.calendarWeek, color: Colors.white, size: 24), // ✅ fixed
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -772,7 +774,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail> with SingleTickerProvid
     final bobot = activity['bobot'] ?? '';
     final totalLangkah = activity['total_langkah'];
 
-    IconData icon;
+    FaIconData icon; // ✅ fixed: from FaFaIconDataicon to FaIconData icon
     Color color;
 
     if (nama.toLowerCase().contains('berjemur')) {
@@ -815,7 +817,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail> with SingleTickerProvid
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                child: Icon(icon, color: color, size: 24),
+                child: FaIcon(icon, color: color, size: 24), // ✅ already correct
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -840,8 +842,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail> with SingleTickerProvid
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Tercapai', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                  Text('$tercapai hari', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(
-                      0xFFA80032))),
+                  Text('$tercapai hari', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFA80032))),
                 ],
               ),
               Column(
@@ -936,7 +937,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail> with SingleTickerProvid
               children: [
                 Row(
                   children: [
-                    const Icon(FontAwesomeIcons.calendarDays, color: Colors.white, size: 24),
+                    FaIcon(FontAwesomeIcons.calendarDays, color: Colors.white, size: 24), // ✅ fixed
                     const SizedBox(width: 12),
                     Expanded(child: Text('$namaBulan $tahun', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white))),
                   ],
@@ -998,7 +999,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail> with SingleTickerProvid
     final rataRataLangkah = activity['rata_rata_langkah'];
     final rataRataDurasiJam = activity['rata_rata_durasi_jam'];
 
-    IconData icon;
+    FaIconData icon; // ✅ fixed: from FaFaIconDataicon to FaIconData icon
     Color color;
 
     if (nama.toLowerCase().contains('berjemur')) {
@@ -1041,7 +1042,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail> with SingleTickerProvid
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                child: Icon(icon, color: color, size: 24),
+                child: FaIcon(icon, color: color, size: 24), // ✅ already correct
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1066,8 +1067,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail> with SingleTickerProvid
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Tercapai', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                  Text('$tercapai hari', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(
-                      0xFFA80032))),
+                  Text('$tercapai hari', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFA80032))),
                 ],
               ),
               Column(
@@ -1149,4 +1149,3 @@ class _SehatKPIDetailState extends State<SehatKPIDetail> with SingleTickerProvid
     return bulan > 0 && bulan <= 12 ? bulanList[bulan] : '';
   }
 }
-
