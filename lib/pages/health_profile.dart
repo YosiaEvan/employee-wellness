@@ -9,6 +9,12 @@ import 'dart:io';
 import '../services/profile_health_service.dart';
 import '../services/auth_storage.dart';
 import '../main.dart';
+import '../components/responsive_container.dart';
+import '../services/app_localizations.dart';
+import 'settings_page.dart';
+
+import 'package:employee_wellness/services/language_provider.dart';
+import 'package:provider/provider.dart';
 
 class HealthProfile extends StatefulWidget {
   const HealthProfile({super.key});
@@ -49,16 +55,20 @@ class _HealthProfileState extends State<HealthProfile> {
   @override
   void initState() {
     super.initState();
-    _loadExistingProfile();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadExistingProfile();
+    });
   }
 
   Future<void> _loadExistingProfile() async {
+    if (!mounted) return;
+    final loc = AppLocalizations.of(context)!;
     setState(() => isLoadingData = true);
     final hasCredentials = await _checkCredentials();
     if (!hasCredentials) {
       setState(() => isLoadingData = false);
       if (mounted) {
-        _showSnackBar("Sesi Anda telah berakhir. Silakan login kembali.", Colors.red);
+        _showSnackBar(loc.translate('session_expired'), Colors.red);
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
             Navigator.of(context).pushAndRemoveUntil(
@@ -72,11 +82,12 @@ class _HealthProfileState extends State<HealthProfile> {
     }
 
     final result = await ProfileHealthService.getProfile();
+    if (!mounted) return;
     setState(() => isLoadingData = false);
 
     if (result["needsLogin"] == true) {
       if (mounted) {
-        _showSnackBar("Sesi Anda telah berakhir. Silakan login kembali.", Colors.red);
+        _showSnackBar(loc.translate('session_expired'), Colors.red);
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
             Navigator.of(context).pushAndRemoveUntil(
@@ -127,7 +138,7 @@ class _HealthProfileState extends State<HealthProfile> {
         _emergencyNameController.text = data['nama_kontak_darurat'] ?? '';
         _emergencyPhoneController.text = data['nomor_kontak_darurat'] ?? '';
       });
-      _showSnackBar("Data profil berhasil dimuat", const Color(0xFF00C368));
+      _showSnackBar(loc.translate('profile_loaded'), const Color(0xFF00C368));
     }
   }
 
@@ -157,6 +168,7 @@ class _HealthProfileState extends State<HealthProfile> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
+    final loc = AppLocalizations.of(context)!;
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: source,
@@ -173,25 +185,26 @@ class _HealthProfileState extends State<HealthProfile> {
           }
           _photoBase64 = base64String;
         });
-        _showSnackBar("Foto berhasil dipilih dan dikompres!", const Color(0xFF00C368));
+        _showSnackBar(loc.translate('photo_selected'), const Color(0xFF00C368));
       }
     } catch (e) {
-      _showSnackBar("Gagal memilih foto.", Colors.red);
+      _showSnackBar(loc.translate('photo_failed'), Colors.red);
     }
   }
 
   void _showImageSourceDialog() {
+    final loc = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Pilih Sumber Foto"),
+          title: Text(loc.translate('select_photo_source')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt, color: Colors.blue),
-                title: const Text("Kamera"),
+                title: Text(loc.translate('camera')),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.camera);
@@ -199,7 +212,7 @@ class _HealthProfileState extends State<HealthProfile> {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library, color: Colors.blue),
-                title: const Text("Galeri"),
+                title: Text(loc.translate('gallery')),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.gallery);
@@ -275,36 +288,37 @@ class _HealthProfileState extends State<HealthProfile> {
   }
 
   Future<void> _saveProfile() async {
+    final loc = AppLocalizations.of(context)!;
     if (_namaController.text.trim().isEmpty) {
-      _showSnackBar("Nama lengkap harus diisi", Colors.red);
+      _showSnackBar(loc.translate('full_name_required'), Colors.red);
       return;
     }
     if (_emailController.text.trim().isEmpty) {
-      _showSnackBar("Email harus diisi", Colors.red);
+      _showSnackBar(loc.translate('email_required'), Colors.red);
       return;
     }
     if (_dateController.text.trim().isEmpty) {
-      _showSnackBar("Tanggal lahir harus diisi", Colors.red);
+      _showSnackBar(loc.translate('birth_date_required'), Colors.red);
       return;
     }
     if (_heightController.text.trim().isEmpty || _weightController.text.trim().isEmpty) {
-      _showSnackBar("Tinggi dan berat badan harus diisi", Colors.red);
+      _showSnackBar(loc.translate('height_weight_required'), Colors.red);
       return;
     }
     if (_targetWeightController.text.trim().isEmpty || _targetCalorieController.text.trim().isEmpty) {
-      _showSnackBar("Target berat dan kalori harus diisi", Colors.red);
+      _showSnackBar(loc.translate('target_required'), Colors.red);
       return;
     }
     if (selectedDietType == null || (selectedDietType?.isEmpty ?? true)) {
-      _showSnackBar("Tipe diet harus dipilih", Colors.red);
+      _showSnackBar(loc.translate('diet_required'), Colors.red);
       return;
     }
     if (selectedActivityLevel == null || (selectedActivityLevel?.isEmpty ?? true)) {
-      _showSnackBar("Level aktivitas harus dipilih", Colors.red);
+      _showSnackBar(loc.translate('activity_required'), Colors.red);
       return;
     }
     if (_emergencyNameController.text.trim().isEmpty || _emergencyPhoneController.text.trim().isEmpty) {
-      _showSnackBar("Kontak darurat harus diisi", Colors.red);
+      _showSnackBar(loc.translate('emergency_required'), Colors.red);
       return;
     }
 
@@ -335,19 +349,21 @@ class _HealthProfileState extends State<HealthProfile> {
       fotoBase64: _photoBase64,
     );
 
+    if (!mounted) return;
     setState(() => isLoading = false);
 
     if (result["success"]) {
-      _showSnackBar("Profil kesehatan berhasil disimpan!", const Color(0xFF00C368));
+      _showSnackBar(loc.translate('profile_save_success'), const Color(0xFF00C368));
       Future.delayed(const Duration(seconds: 1), () {
         if (mounted) Navigator.pop(context);
       });
     } else {
-      _showSnackBar(result["message"] ?? "Gagal menyimpan profil", Colors.red);
+      _showSnackBar(result["message"] ?? loc.translate('profile_save_failed'), Colors.red);
     }
   }
 
   void _showSnackBar(String message, Color backgroundColor) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -376,54 +392,50 @@ class _HealthProfileState extends State<HealthProfile> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final title = loc.translate('health_profile_title');
+    final personalInfo = loc.translate('personal_info');
+    final loadingProfile = loc.translate('loading_profile');
+
     return Scaffold(
-      backgroundColor: Colors.white.withValues(alpha: 0.98),
-      body: SafeArea(
-        child: Column(
+      backgroundColor: Colors.white.withOpacity(0.98),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: const FaIcon(FontAwesomeIcons.arrowLeft, size: 20, color: Colors.black),
+        ),
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.all(16),
-              width: double.infinity,
-              color: Colors.white,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: FaIcon(FontAwesomeIcons.arrowLeft, size: 20), // ✅ fixed
-                  ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text("Profil Kesehatan", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                      Text("Biodata Lengkap"),
-                    ],
-                  ),
-                ],
-              ),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black),
             ),
-
-            if (isLoadingData)
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      CircularProgressIndicator(color: Color(0xFF00C368)),
-                      SizedBox(height: 16),
-                      Text("Memuat data profil...", style: TextStyle(fontSize: 16, color: Colors.grey)),
-                    ],
-                  ),
+            Text(
+              personalInfo,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+      body: SafeArea(
+        child: isLoadingData
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(color: Color(0xFF00C368)),
+                    const SizedBox(height: 16),
+                    Text(loadingProfile, style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                  ],
                 ),
-              ),
-
-            if (!isLoadingData)
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(20),
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: ResponsiveContainer(
+                  maxWidth: 600,
                   child: Column(
                     children: [
                       // Alert
@@ -431,24 +443,24 @@ class _HealthProfileState extends State<HealthProfile> {
                         width: double.infinity,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
-                          color: Color(0xfffff8ed),
+                          color: const Color(0xfffff8ed),
                         ),
                         child: Container(
-                          padding: EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(20),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
-                                margin: EdgeInsets.only(top: 4),
-                                child: FaIcon(FontAwesomeIcons.circleInfo, size: 16), // ✅ fixed
+                                margin: const EdgeInsets.only(top: 4),
+                                child: const FaIcon(FontAwesomeIcons.circleInfo, size: 16, color: Color(0xfff67200)),
                               ),
-                              SizedBox(width: 16),
+                              const SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text("Lengkapi Profil Kesehatan", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                                    Text("Data ini akan membantu personalisasi program wellness Anda", style: TextStyle(fontSize: 16)),
+                                    Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                                    Text(loc.translate('health_profile_desc'), style: const TextStyle(fontSize: 16)),
                                   ],
                                 ),
                               ),
@@ -456,14 +468,14 @@ class _HealthProfileState extends State<HealthProfile> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // Informasi Pribadi
                       Container(
                         width: double.infinity,
                         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
                         child: Container(
-                          padding: EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(20),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -474,25 +486,25 @@ class _HealthProfileState extends State<HealthProfile> {
                                     dimension: 40,
                                     child: Container(
                                       alignment: Alignment.center,
-                                      padding: EdgeInsets.all(8),
+                                      padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(12)),
-                                      child: FaIcon(FontAwesomeIcons.person, size: 20, color: Colors.white), // ✅ fixed
+                                      child: const FaIcon(FontAwesomeIcons.person, size: 20, color: Colors.white),
                                     ),
                                   ),
                                   const SizedBox(width: 20),
-                                  Text("Informasi Pribadi", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                                  Expanded(child: Text(personalInfo, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
                                 ],
                               ),
                               const SizedBox(height: 20),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text("Nama Lengkap", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                                  Text(loc.translate('full_name_label'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                                   const SizedBox(height: 4),
                                   TextField(
                                     controller: _namaController,
                                     decoration: InputDecoration(
-                                      hintText: "Masukan nama lengkap",
+                                      hintText: loc.translate('full_name_hint'),
                                       isDense: true,
                                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                                     ),
@@ -503,13 +515,13 @@ class _HealthProfileState extends State<HealthProfile> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text("Email", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                                  Text(loc.translate('email_label'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                                   const SizedBox(height: 4),
                                   TextField(
                                     controller: _emailController,
                                     keyboardType: TextInputType.emailAddress,
                                     decoration: InputDecoration(
-                                      hintText: "email@example.com",
+                                      hintText: loc.translate('email_hint'),
                                       isDense: true,
                                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                                     ),
@@ -520,13 +532,13 @@ class _HealthProfileState extends State<HealthProfile> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text("Foto Profil", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                                  Text(loc.translate('profile_photo'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                                   const SizedBox(height: 8),
                                   GestureDetector(
                                     onTap: _showImageSourceDialog,
                                     child: Container(
                                       width: double.infinity,
-                                      padding: EdgeInsets.all(20),
+                                      padding: const EdgeInsets.all(20),
                                       decoration: BoxDecoration(
                                         border: Border.all(color: Colors.grey.shade300, width: 2),
                                         borderRadius: BorderRadius.circular(10),
@@ -537,8 +549,8 @@ class _HealthProfileState extends State<HealthProfile> {
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 Icon(Icons.cloud_upload_outlined, size: 48, color: Colors.grey.shade400),
-                                                SizedBox(height: 8),
-                                                Text("Klik untuk upload foto", style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+                                                const SizedBox(height: 8),
+                                                Text(loc.translate('click_to_upload'), style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
                                                 Text("JPG, PNG (Max 1MB)", style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
                                               ],
                                             )
@@ -548,7 +560,15 @@ class _HealthProfileState extends State<HealthProfile> {
                                                   child: ClipRRect(
                                                     borderRadius: BorderRadius.circular(10),
                                                     child: _photoBase64 != null
-                                                        ? Image.memory(base64Decode(_photoBase64!), height: 200, fit: BoxFit.cover)
+                                                        ? Builder(
+                                                            builder: (context) {
+                                                              try {
+                                                                return Image.memory(base64Decode(_photoBase64!), height: 200, fit: BoxFit.cover);
+                                                              } catch (e) {
+                                                                return Container(alignment: Alignment.center, height: 200, color: Colors.grey.shade200, child: Icon(Icons.person, size: 80, color: Colors.grey.shade400));
+                                                              }
+                                                            },
+                                                          )
                                                         : (_imageFile != null
                                                             ? Image.file(_imageFile!, height: 200, fit: BoxFit.cover)
                                                             : Container(alignment: Alignment.center, height: 200, color: Colors.grey.shade200, child: Icon(Icons.person, size: 80, color: Colors.grey.shade400))),
@@ -565,9 +585,9 @@ class _HealthProfileState extends State<HealthProfile> {
                                                       });
                                                     },
                                                     child: Container(
-                                                      padding: EdgeInsets.all(8),
-                                                      decoration: BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                                                      child: Icon(Icons.close, color: Colors.white, size: 20),
+                                                      padding: const EdgeInsets.all(8),
+                                                      decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                                                      child: const Icon(Icons.close, color: Colors.white, size: 20),
                                                     ),
                                                   ),
                                                 ),
@@ -581,29 +601,33 @@ class _HealthProfileState extends State<HealthProfile> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text("Jenis Kelamin", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                                  Text(loc.translate('gender'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                                   const SizedBox(height: 4),
                                   Row(
                                     children: [
-                                      Row(
-                                        children: [
-                                          Radio<String>(
-                                            value: "L",
-                                            groupValue: selectedOption,
-                                            onChanged: (value) => setState(() => selectedOption = value),
-                                          ),
-                                          const Text("Laki-Laki"),
-                                        ],
+                                      Expanded(
+                                        child: Row(
+                                          children: [
+                                            Radio<String>(
+                                              value: "L",
+                                              groupValue: selectedOption,
+                                              onChanged: (value) => setState(() => selectedOption = value),
+                                            ),
+                                            Flexible(child: Text(loc.translate('male'))),
+                                          ],
+                                        ),
                                       ),
-                                      Row(
-                                        children: [
-                                          Radio<String>(
-                                            value: "P",
-                                            groupValue: selectedOption,
-                                            onChanged: (value) => setState(() => selectedOption = value),
-                                          ),
-                                          const Text("Perempuan"),
-                                        ],
+                                      Expanded(
+                                        child: Row(
+                                          children: [
+                                            Radio<String>(
+                                              value: "P",
+                                              groupValue: selectedOption,
+                                              onChanged: (value) => setState(() => selectedOption = value),
+                                            ),
+                                            Flexible(child: Text(loc.translate('female'))),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -613,7 +637,7 @@ class _HealthProfileState extends State<HealthProfile> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text("Tanggal Lahir", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                                  Text(loc.translate('birth_date'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                                   const SizedBox(height: 4),
                                   TextField(
                                     controller: _dateController,
@@ -621,7 +645,7 @@ class _HealthProfileState extends State<HealthProfile> {
                                     decoration: InputDecoration(
                                       hintText: "hh/bb/tttt",
                                       isDense: true,
-                                      suffixIcon: FaIcon(FontAwesomeIcons.calendar), // ✅ already correct
+                                      suffixIcon: const FaIcon(FontAwesomeIcons.calendar),
                                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                                     ),
                                     onTap: () => _selectDate(context),
@@ -634,12 +658,12 @@ class _HealthProfileState extends State<HealthProfile> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Informasi Fisik
+                      // Pengaturan Bahasa (Centralized in Settings)
                       Container(
                         width: double.infinity,
                         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
                         child: Container(
-                          padding: EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(20),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -650,13 +674,58 @@ class _HealthProfileState extends State<HealthProfile> {
                                     dimension: 40,
                                     child: Container(
                                       alignment: Alignment.center,
-                                      padding: EdgeInsets.all(8),
-                                      decoration: BoxDecoration(color: Color(0xff9810fa), borderRadius: BorderRadius.circular(12)),
-                                      child: FaIcon(FontAwesomeIcons.ruler, size: 20, color: Colors.white), // ✅ fixed
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(color: Colors.orange, borderRadius: BorderRadius.circular(12)),
+                                      child: const FaIcon(FontAwesomeIcons.language, size: 20, color: Colors.white),
                                     ),
                                   ),
                                   const SizedBox(width: 20),
-                                  Text("Informasi Fisik", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                                  Expanded(child: Text(loc.translate('language_setting'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
+                                  TextButton(
+                                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage())),
+                                    child: const Text("Ubah", style: TextStyle(color: Colors.blue)),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 60),
+                                child: Text(
+                                  Provider.of<LanguageProvider>(context).currentLocale.languageCode == 'id' 
+                                    ? "Bahasa Indonesia" 
+                                    : "English",
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Informasi Fisik
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  SizedBox.square(
+                                    dimension: 40,
+                                    child: Container(
+                                      alignment: Alignment.center,
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(color: const Color(0xff9810fa), borderRadius: BorderRadius.circular(12)),
+                                      child: const FaIcon(FontAwesomeIcons.ruler, size: 20, color: Colors.white),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 20),
+                                  Expanded(child: Text(loc.translate('physical_info'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
                                 ],
                               ),
                               const SizedBox(height: 20),
@@ -666,8 +735,8 @@ class _HealthProfileState extends State<HealthProfile> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text("Tinggi Badan (cm)", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-                                        SizedBox(height: 4),
+                                        Text(loc.translate('height'), style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+                                        const SizedBox(height: 4),
                                         TextField(
                                           controller: _heightController,
                                           decoration: InputDecoration(
@@ -679,13 +748,13 @@ class _HealthProfileState extends State<HealthProfile> {
                                       ],
                                     ),
                                   ),
-                                  SizedBox(width: 16),
+                                  const SizedBox(width: 16),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text("Berat Badan (kg)", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-                                        SizedBox(height: 4),
+                                        Text(loc.translate('weight'), style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+                                        const SizedBox(height: 4),
                                         TextField(
                                           controller: _weightController,
                                           keyboardType: TextInputType.number,
@@ -711,7 +780,7 @@ class _HealthProfileState extends State<HealthProfile> {
                         width: double.infinity,
                         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
                         child: Container(
-                          padding: EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(20),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -722,13 +791,13 @@ class _HealthProfileState extends State<HealthProfile> {
                                     dimension: 40,
                                     child: Container(
                                       alignment: Alignment.center,
-                                      padding: EdgeInsets.all(8),
+                                      padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(12)),
-                                      child: FaIcon(FontAwesomeIcons.bullseye, size: 20, color: Colors.white), // ✅ fixed
+                                      child: const FaIcon(FontAwesomeIcons.bullseye, size: 20, color: Colors.white),
                                     ),
                                   ),
                                   const SizedBox(width: 20),
-                                  Text("Target Kesehatan", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                                  Expanded(child: Text(loc.translate('health_target'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
                                 ],
                               ),
                               const SizedBox(height: 20),
@@ -738,8 +807,8 @@ class _HealthProfileState extends State<HealthProfile> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text("Target Berat (kg)", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-                                        SizedBox(height: 4),
+                                        Text(loc.translate('target_weight'), style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+                                        const SizedBox(height: 4),
                                         TextField(
                                           controller: _targetWeightController,
                                           keyboardType: TextInputType.number,
@@ -752,13 +821,13 @@ class _HealthProfileState extends State<HealthProfile> {
                                       ],
                                     ),
                                   ),
-                                  SizedBox(width: 16),
+                                  const SizedBox(width: 16),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text("Target Kalori/Hari", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-                                        SizedBox(height: 4),
+                                        Text(loc.translate('target_calorie'), style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+                                        const SizedBox(height: 4),
                                         TextField(
                                           controller: _targetCalorieController,
                                           keyboardType: TextInputType.number,
@@ -780,14 +849,14 @@ class _HealthProfileState extends State<HealthProfile> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text("Tipe Diet", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-                                        SizedBox(height: 4),
+                                        Text(loc.translate('diet_type'), style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+                                        const SizedBox(height: 4),
                                         DropdownButtonFormField<String>(
                                           value: selectedDietType,
                                           hint: const Text("Pilih"),
                                           isExpanded: true,
                                           decoration: InputDecoration(
-                                            contentPadding: EdgeInsets.all(10),
+                                            contentPadding: const EdgeInsets.all(10),
                                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                                           ),
                                           items: const [
@@ -802,19 +871,19 @@ class _HealthProfileState extends State<HealthProfile> {
                                       ],
                                     ),
                                   ),
-                                  SizedBox(width: 16),
+                                  const SizedBox(width: 16),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text("Level Aktivitas", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-                                        SizedBox(height: 4),
+                                        Text(loc.translate('activity_level'), style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+                                        const SizedBox(height: 4),
                                         DropdownButtonFormField<String>(
                                           value: selectedActivityLevel,
                                           hint: const Text("Pilih"),
                                           isExpanded: true,
                                           decoration: InputDecoration(
-                                            contentPadding: EdgeInsets.all(10),
+                                            contentPadding: const EdgeInsets.all(10),
                                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                                           ),
                                           items: const [
@@ -843,7 +912,7 @@ class _HealthProfileState extends State<HealthProfile> {
                         width: double.infinity,
                         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
                         child: Container(
-                          padding: EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(20),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -854,27 +923,27 @@ class _HealthProfileState extends State<HealthProfile> {
                                     dimension: 40,
                                     child: Container(
                                       alignment: Alignment.center,
-                                      padding: EdgeInsets.all(8),
+                                      padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        gradient: LinearGradient(
+                                        gradient: const LinearGradient(
                                           colors: [Color(0xFFb749f6), Color(0xFFec3ca9)],
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
                                         ),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: FaIcon(FontAwesomeIcons.heart, size: 20, color: Colors.white), // ✅ fixed
+                                      child: const FaIcon(FontAwesomeIcons.heart, size: 20, color: Colors.white),
                                     ),
                                   ),
                                   const SizedBox(width: 20),
-                                  Text("Kondisi Kesehatan Dasar", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                                  Expanded(child: Text(loc.translate('basic_health_condition'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
                                 ],
                               ),
                               const SizedBox(height: 20),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text("Alergi", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                                  Text(loc.translate('allergies'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                                   const SizedBox(height: 4),
                                   Row(
                                     children: [
@@ -894,7 +963,7 @@ class _HealthProfileState extends State<HealthProfile> {
                                           ),
                                         ),
                                       ),
-                                      SizedBox(width: 10),
+                                      const SizedBox(width: 10),
                                       SizedBox(
                                         height: 48,
                                         width: 48,
@@ -910,9 +979,9 @@ class _HealthProfileState extends State<HealthProfile> {
                                       ),
                                     ],
                                   ),
-                                  SizedBox(height: 12),
+                                  const SizedBox(height: 12),
                                   if (_allergyList.isEmpty)
-                                    Text("Tidak ada alergi yang tercatat", style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey))
+                                    const Text("Tidak ada alergi yang tercatat", style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey))
                                   else
                                     Wrap(
                                       spacing: 8,
@@ -932,7 +1001,7 @@ class _HealthProfileState extends State<HealthProfile> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text("Kondisi Medis", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                                  Text(loc.translate('medical_conditions'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                                   const SizedBox(height: 4),
                                   Row(
                                     children: [
@@ -952,7 +1021,7 @@ class _HealthProfileState extends State<HealthProfile> {
                                           ),
                                         ),
                                       ),
-                                      SizedBox(width: 10),
+                                      const SizedBox(width: 10),
                                       SizedBox(
                                         height: 48,
                                         width: 48,
@@ -968,9 +1037,9 @@ class _HealthProfileState extends State<HealthProfile> {
                                       ),
                                     ],
                                   ),
-                                  SizedBox(height: 12),
+                                  const SizedBox(height: 12),
                                   if (_medicalConditionList.isEmpty)
-                                    Text("Tidak ada kondisi medis yang tercatat", style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey))
+                                    const Text("Tidak ada kondisi medis yang tercatat", style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey))
                                   else
                                     Wrap(
                                       spacing: 8,
@@ -990,7 +1059,7 @@ class _HealthProfileState extends State<HealthProfile> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text("Obat yang Dikonsumsi", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                                  Text(loc.translate('medications'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                                   const SizedBox(height: 4),
                                   Row(
                                     children: [
@@ -1010,7 +1079,7 @@ class _HealthProfileState extends State<HealthProfile> {
                                           ),
                                         ),
                                       ),
-                                      SizedBox(width: 10),
+                                      const SizedBox(width: 10),
                                       SizedBox(
                                         height: 48,
                                         width: 48,
@@ -1026,9 +1095,9 @@ class _HealthProfileState extends State<HealthProfile> {
                                       ),
                                     ],
                                   ),
-                                  SizedBox(height: 12),
+                                  const SizedBox(height: 12),
                                   if (_drugList.isEmpty)
-                                    Text("Tidak ada obat yang tercatat", style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey))
+                                    const Text("Tidak ada obat yang tercatat", style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey))
                                   else
                                     Wrap(
                                       spacing: 8,
@@ -1048,14 +1117,14 @@ class _HealthProfileState extends State<HealthProfile> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // Kontak Darurat
                       Container(
                         width: double.infinity,
                         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
                         child: Container(
-                          padding: EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(20),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1066,20 +1135,20 @@ class _HealthProfileState extends State<HealthProfile> {
                                     dimension: 40,
                                     child: Container(
                                       alignment: Alignment.center,
-                                      padding: EdgeInsets.all(8),
+                                      padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(12)),
-                                      child: FaIcon(FontAwesomeIcons.phone, size: 20, color: Colors.white), // ✅ fixed
+                                      child: const FaIcon(FontAwesomeIcons.phone, size: 20, color: Colors.white),
                                     ),
                                   ),
                                   const SizedBox(width: 20),
-                                  Text("Kontak Darurat", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                                  Expanded(child: Text(loc.translate('emergency_contact'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
                                 ],
                               ),
                               const SizedBox(height: 20),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text("Nama Kontak Darurat", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                                  Text(loc.translate('emergency_name'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                                   const SizedBox(height: 4),
                                   TextField(
                                     controller: _emergencyNameController,
@@ -1095,7 +1164,7 @@ class _HealthProfileState extends State<HealthProfile> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text("Nomor Telepon", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                                  Text(loc.translate('emergency_phone'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                                   const SizedBox(height: 4),
                                   TextField(
                                     controller: _emergencyPhoneController,
@@ -1119,24 +1188,24 @@ class _HealthProfileState extends State<HealthProfile> {
                         width: double.infinity,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
-                          color: Color(0xffecfafe),
+                          color: const Color(0xffecfafe),
                         ),
                         child: Container(
-                          padding: EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(20),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
-                                margin: EdgeInsets.only(top: 4),
-                                child: FaIcon(FontAwesomeIcons.circleInfo, size: 16), // ✅ fixed
+                                margin: const EdgeInsets.only(top: 4),
+                                child: const FaIcon(FontAwesomeIcons.circleInfo, size: 16),
                               ),
-                              SizedBox(width: 16),
+                              const SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text("Privasi Anda Terjamin", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                                    Text("Semua data kesehatan disimpan secara aman.", style: TextStyle(fontSize: 16)),
+                                    Text(loc.translate('privacy_note'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                                    Text(loc.translate('privacy_desc'), style: const TextStyle(fontSize: 16)),
                                   ],
                                 ),
                               ),
@@ -1159,9 +1228,9 @@ class _HealthProfileState extends State<HealthProfile> {
                           ),
                           child: isLoading
                               ? const CircularProgressIndicator(color: Colors.white)
-                              : const Text(
-                                  "Simpan Profil Kesehatan",
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white),
+                              : Text(
+                                  loc.translate('save_profile'),
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white),
                                 ),
                         ),
                       ),
@@ -1169,8 +1238,6 @@ class _HealthProfileState extends State<HealthProfile> {
                   ),
                 ),
               ),
-          ],
-        ),
       ),
     );
   }

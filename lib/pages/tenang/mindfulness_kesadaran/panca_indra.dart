@@ -1,5 +1,6 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/tenang/mindfulness_kesadaran.dart';
 import 'package:employee_wellness/services/tenang_service.dart';
 import 'package:flutter/material.dart';
@@ -67,99 +68,100 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
     return Scaffold(
       backgroundColor: Colors.white.withValues(alpha: 0.98),
       body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              const Header(),
-              Container(
-                padding: EdgeInsets.all(20),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Color(0xff0090ec),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 12,
-                      spreadRadius: 2,
-                      offset: Offset(0, 6),
-                    ),
-                  ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            const Header(),
+            Container(
+              padding: const EdgeInsets.all(20),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xff0090ec),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
                 ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
-                          child: SizedBox.square(
-                            dimension: 40,
-                            child: Container(
-                              alignment: Alignment.center,
-                              padding: EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(40),
-                              ),
-                              child: FaIcon(
-                                FontAwesomeIcons.arrowLeft,
-                                size: 20,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              "5 Panca Indra",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Text(
-                              "Langkah ${_currentStep + 1} dari 5",
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
-                            )
-                          ],
-                        ),
-                        SizedBox.square(
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: SizedBox.square(
                           dimension: 40,
                           child: Container(
                             alignment: Alignment.center,
-                            padding: EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(40),
                             ),
-                            child: FaIcon(
-                              FontAwesomeIcons.brain,
+                            child: const FaIcon(
+                              FontAwesomeIcons.arrowLeft,
                               size: 20,
                               color: Colors.white,
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "5 Panca Indra",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            "Langkah ${_currentStep + 1} dari 5",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          )
+                        ],
+                      ),
+                      SizedBox.square(
+                        dimension: 40,
+                        child: Container(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(40),
+                          ),
+                          child: const FaIcon(
+                            FontAwesomeIcons.brain,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
+            ),
 
-              // Main Content
-              Expanded(
+            // Main Content
+            Expanded(
+              child: ResponsiveContainer(
                 child: SizedBox(
                   width: double.infinity,
                   child: Row(
@@ -170,235 +172,235 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                         children: [
                           SizedBox(
                               child: switch (_currentStep) {
-                                0 => Column(
-                                  children: [
-                                    ScaleTransition(
-                                      scale: _pulseAnimation,
-                                      child: Container(
-                                        alignment: Alignment.center,
-                                        width: 140,
-                                        height: 140,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xff0090ec),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: FaIcon(
-                                          FontAwesomeIcons.eye,
-                                          size: 52,
-                                          color: Colors.white,
-                                        ),
+                            0 => Column(
+                                children: [
+                                  ScaleTransition(
+                                    scale: _pulseAnimation,
+                                    child: Container(
+                                      alignment: Alignment.center,
+                                      width: 140,
+                                      height: 140,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xff0090ec),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const FaIcon(
+                                        FontAwesomeIcons.eye,
+                                        size: 52,
+                                        color: Colors.white,
                                       ),
                                     ),
-                                    SizedBox(height: 20,),
-                                    Text(
-                                      "Lihat",
-                                      style: TextStyle(
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.w500,
+                                  ),
+                                  const SizedBox(height: 20),
+                                  const Text(
+                                    "Lihat",
+                                    style: TextStyle(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    "5 hal yang dapat Anda lihat di sekitar",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            1 => Column(
+                                children: [
+                                  ScaleTransition(
+                                    scale: _pulseAnimation,
+                                    child: Container(
+                                      alignment: Alignment.center,
+                                      width: 140,
+                                      height: 140,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xff0090ec),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const FaIcon(
+                                        FontAwesomeIcons.hand,
+                                        size: 52,
+                                        color: Colors.white,
                                       ),
                                     ),
-                                    SizedBox(height: 12,),
-                                    Text(
-                                      "5 hal yang dapat Anda lihat di sekitar",
+                                  ),
+                                  const SizedBox(height: 20),
+                                  const Text(
+                                    "Sentuh",
+                                    style: TextStyle(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    "4 hal yang dapat Anda sentuh",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            2 => Column(
+                                children: [
+                                  ScaleTransition(
+                                    scale: _pulseAnimation,
+                                    child: Container(
+                                      alignment: Alignment.center,
+                                      width: 140,
+                                      height: 140,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xff0090ec),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const FaIcon(
+                                        FontAwesomeIcons.earListen,
+                                        size: 52,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  const Text(
+                                    "Dengar",
+                                    style: TextStyle(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    "3 suara yang dapat Anda dengar",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            3 => Column(
+                                children: [
+                                  ScaleTransition(
+                                    scale: _pulseAnimation,
+                                    child: Container(
+                                      alignment: Alignment.center,
+                                      width: 140,
+                                      height: 140,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xff0090ec),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const FaIcon(
+                                        FontAwesomeIcons.wind,
+                                        size: 52,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  const Text(
+                                    "Cium",
+                                    style: TextStyle(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    "2 aroma yang dapat Anda cium",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            4 => Column(
+                                children: [
+                                  ScaleTransition(
+                                    scale: _pulseAnimation,
+                                    child: Container(
+                                      alignment: Alignment.center,
+                                      width: 140,
+                                      height: 140,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xff0090ec),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const FaIcon(
+                                        FontAwesomeIcons.mugSaucer,
+                                        size: 52,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  const Text(
+                                    "Rasa",
+                                    style: TextStyle(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    "1 rasa di mulut Anda",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            _ => Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  ScaleTransition(
+                                    scale: _pulseAnimation,
+                                    child: Container(
+                                      alignment: Alignment.center,
+                                      width: 160,
+                                      height: 160,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xff00d477),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const FaIcon(
+                                        FontAwesomeIcons.check,
+                                        size: 52,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 40),
+                                  const Text(
+                                    "Sesi Selesai 🎉",
+                                    style: TextStyle(
+                                      fontSize: 40,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ConstrainedBox(
+                                    constraints: const BoxConstraints(maxWidth: 320),
+                                    child: const Text(
+                                      "Selamat! Anda telah menyelesaikan sesi Body Scan. Bagaimana perasaan Anda sekarang?",
                                       style: TextStyle(
                                         fontSize: 20,
                                       ),
                                       textAlign: TextAlign.center,
+                                      softWrap: true,
                                     ),
-                                  ],
-                                ),
-                                1 => Column(
-                                  children: [
-                                    ScaleTransition(
-                                      scale: _pulseAnimation,
-                                      child: Container(
-                                        alignment: Alignment.center,
-                                        width: 140,
-                                        height: 140,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xff0090ec),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: FaIcon(
-                                          FontAwesomeIcons.hand,
-                                          size: 52,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(height: 20,),
-                                    Text(
-                                      "Sentuh",
-                                      style: TextStyle(
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    SizedBox(height: 12,),
-                                    Text(
-                                      "4 hal yang dapat Anda sentuh",
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
-                                ),
-                                2 => Column(
-                                  children: [
-                                    ScaleTransition(
-                                      scale: _pulseAnimation,
-                                      child: Container(
-                                        alignment: Alignment.center,
-                                        width: 140,
-                                        height: 140,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xff0090ec),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: FaIcon(
-                                          FontAwesomeIcons.earListen,
-                                          size: 52,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(height: 20,),
-                                    Text(
-                                      "Dengar",
-                                      style: TextStyle(
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    SizedBox(height: 12,),
-                                    Text(
-                                      "3 suara yang dapat Anda dengar",
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
-                                ),
-                                3 => Column(
-                                  children: [
-                                    ScaleTransition(
-                                      scale: _pulseAnimation,
-                                      child: Container(
-                                        alignment: Alignment.center,
-                                        width: 140,
-                                        height: 140,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xff0090ec),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: FaIcon(
-                                          FontAwesomeIcons.wind,
-                                          size: 52,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(height: 20,),
-                                    Text(
-                                      "Cium",
-                                      style: TextStyle(
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    SizedBox(height: 12,),
-                                    Text(
-                                      "2 aroma yang dapat Anda cium",
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
-                                ),
-                                4 => Column(
-                                  children: [
-                                    ScaleTransition(
-                                      scale: _pulseAnimation,
-                                      child: Container(
-                                        alignment: Alignment.center,
-                                        width: 140,
-                                        height: 140,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xff0090ec),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: FaIcon(
-                                          FontAwesomeIcons.coffee,
-                                          size: 52,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(height: 20,),
-                                    Text(
-                                      "Rasa",
-                                      style: TextStyle(
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    SizedBox(height: 12,),
-                                    Text(
-                                      "1 rasa di mulut Anda",
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
-                                ),
-                                _ => Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    ScaleTransition(
-                                      scale: _pulseAnimation,
-                                      child: Container(
-                                        alignment: Alignment.center,
-                                        width: 160,
-                                        height: 160,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xff00d477),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: FaIcon(
-                                          FontAwesomeIcons.check,
-                                          size: 52,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(height: 40,),
-                                    Text(
-                                      "Sesi Selesai 🎉",
-                                      style: TextStyle(
-                                        fontSize: 40,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    SizedBox(height: 8,),
-                                    ConstrainedBox(
-                                      constraints: const BoxConstraints(maxWidth: 320),
-                                      child: Text(
-                                        "Selamat! Anda telah menyelesaikan sesi Body Scan. Bagaimana perasaan Anda sekarang?",
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                        softWrap: true,
-                                      ),
-                                    ),
-                                    SizedBox(height: 20,),
+                                  ),
+                                  const SizedBox(height: 20),
 
-                                    // Button
-                                    ConstrainedBox(
+                                  // Button
+                                  ConstrainedBox(
                                       constraints: const BoxConstraints(maxWidth: 320),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -408,16 +410,16 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                                             onTap: () => {
                                               Navigator.push(
                                                 context,
-                                                MaterialPageRoute(builder: (context) => MindfulnessKesadaran()),
+                                                MaterialPageRoute(builder: (context) => const MindfulnessKesadaran()),
                                               ),
                                             },
                                             child: Container(
-                                              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                               decoration: BoxDecoration(
-                                                color: Color(0xff0090ed),
+                                                color: const Color(0xff0090ed),
                                                 borderRadius: BorderRadius.circular(8),
                                               ),
-                                              child: Text(
+                                              child: const Text(
                                                 "Pilih Latihan Lain",
                                                 style: TextStyle(
                                                   color: Colors.white,
@@ -429,25 +431,24 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                                             ),
                                           ),
 
-                                          SizedBox(height: 16,),
+                                          const SizedBox(height: 16),
 
                                           // Continue to Manajemen Stress button
                                           GestureDetector(
                                             onTap: () => {
                                               Navigator.push(
                                                 context,
-                                                MaterialPageRoute(builder: (context) => MindfulnessKesadaran()),
+                                                MaterialPageRoute(builder: (context) => const MindfulnessKesadaran()),
                                               ),
                                             },
                                             child: Container(
-                                              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                               decoration: BoxDecoration(
                                                   borderRadius: BorderRadius.circular(8),
                                                   border: Border.all(
                                                     color: Colors.grey,
-                                                  )
-                                              ),
-                                              child: Text(
+                                                  )),
+                                              child: const Text(
                                                 "Lanjut ke Manajemen Stress",
                                                 style: TextStyle(
                                                   fontSize: 20,
@@ -458,66 +459,65 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                                             ),
                                           ),
                                         ],
-                                      )
+                                      )),
+                                ],
+                              ),
+                          }),
+                          (_currentStep < totalStep)
+                              ? Column(
+                                  children: [
+                                    const SizedBox(height: 40),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: List.generate(totalStep, (index) {
+                                        final bool isActive = index == _currentStep;
+
+                                        return Padding(
+                                          padding: const EdgeInsets.only(right: 8),
+                                          child: AnimatedContainer(
+                                            duration: const Duration(milliseconds: 300),
+                                            width: isActive ? 32 : 8,
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                              color: isActive ? const Color(0xff00b8db) : Colors.grey,
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                        );
+                                      }),
+                                    ),
+                                    const SizedBox(height: 40),
+                                    GestureDetector(
+                                      onTap: addStep,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xff0090ec),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Text(
+                                          "Lanjut",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
                                     ),
                                   ],
-                                ),
-                              }
-                          ),
-                          (_currentStep < totalStep) ?
-                              Column(
-                                children: [
-                                  SizedBox(height: 40,),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: List.generate(totalStep, (index) {
-                                      final bool isActive = index == _currentStep;
-
-                                      return Padding(
-                                        padding: const EdgeInsets.only(right: 8),
-                                        child: AnimatedContainer(
-                                          duration: const Duration(milliseconds: 300),
-                                          width: isActive ? 32 : 8,
-                                          height: 8,
-                                          decoration: BoxDecoration(
-                                            color: isActive ? const Color(0xff00b8db) : Colors.grey,
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                        ),
-                                      );
-                                    }),
-                                  ),
-                                  SizedBox(height: 40,),
-                                  GestureDetector(
-                                    onTap: addStep,
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                      decoration: BoxDecoration(
-                                        color: Color(0xff0090ec),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        "Lanjut",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              )
-                          : Text(""),
+                                )
+                              : const Text(""),
                         ],
                       )
                     ],
-                  )
-                )
+                  ),
+                ),
               ),
-            ],
-          )
+            ),
+          ],
+        ),
       ),
     );
   }

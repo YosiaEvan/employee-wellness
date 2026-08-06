@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/sehat/tidur_cukup.dart';
 import 'package:employee_wellness/pages/sehat_homepage.dart';
 import 'package:employee_wellness/services/tarik_napas_service.dart';
@@ -204,8 +205,9 @@ class _UdaraSegarState extends State<UdaraSegar>
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: EdgeInsets.all(20),
-                child: Column(
-                  children: [
+                child: ResponsiveContainer(
+                  child: Column(
+                    children: [
                     // Counter
                     Container(
                       width: double.infinity,
@@ -737,6 +739,7 @@ class _UdaraSegarState extends State<UdaraSegar>
                 ),
               ),
             ),
+          ),
           ),
         ],
       ),

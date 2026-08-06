@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/tenang/meditasi_terpadu.dart';
 import 'package:employee_wellness/services/tenang_service.dart';
 import 'package:flutter/material.dart';
@@ -104,8 +105,8 @@ class _PernapasanMindfulState extends State<PernapasanMindful> with TickerProvid
       end: 1.1,
     ).animate(
       CurvedAnimation(
-          parent: _pulseController,
-          curve: Curves.easeInOut,
+        parent: _pulseController,
+        curve: Curves.easeInOut,
       ),
     );
     _pulseController.repeat(reverse: true);
@@ -130,416 +131,414 @@ class _PernapasanMindfulState extends State<PernapasanMindful> with TickerProvid
     return Scaffold(
       backgroundColor: Colors.white.withValues(alpha: 0.98),
       body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              const Header(),
-              Container(
-                padding: EdgeInsets.all(20),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Color(0xff0087ef),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 12,
-                      spreadRadius: 2,
-                      offset: Offset(0, 6),
-                    ),
-                  ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            const Header(),
+            Container(
+              padding: const EdgeInsets.all(20),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xff0087ef),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
                 ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
-                          child: SizedBox.square(
-                            dimension: 40,
-                            child: Container(
-                              alignment: Alignment.center,
-                              padding: EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(40),
-                              ),
-                              child: FaIcon(
-                                FontAwesomeIcons.arrowLeft,
-                                size: 20,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Pernapasan Mindful",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Text(
-                              "5 menit sesi",
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
-                            )
-                          ],
-                        ),
-                        SizedBox.square(
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: SizedBox.square(
                           dimension: 40,
                           child: Container(
                             alignment: Alignment.center,
-                            padding: EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(40),
                             ),
-                            child: FaIcon(
-                              FontAwesomeIcons.brain,
+                            child: const FaIcon(
+                              FontAwesomeIcons.arrowLeft,
                               size: 20,
                               color: Colors.white,
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              // Main Content
-              Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.all(20),
-                    child: _status == SessionStatus.finished
-                      ? Padding(
-                        padding: EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            ScaleTransition(
-                              scale: _pulseAnimation,
-                              child: Container(
-                                width: double.infinity,
-                                height: 160,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xff00d477),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: FaIcon(
-                                  FontAwesomeIcons.check,
-                                  size: 52,
-                                  color: Colors.white,
-                                ),
-                              ),
+                      ),
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Pernapasan Mindful",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
                             ),
-                            SizedBox(height: 40,),
-                            Text(
-                              "Sesi Selesai 🎉",
-                              style: TextStyle(
-                                fontSize: 40,
-                                fontWeight: FontWeight.w500,
-                              ),
+                          ),
+                          Text(
+                            "5 menit sesi",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
                             ),
-                            SizedBox(height: 8,),
-                            Text(
-                              "Selamat! Anda telah menyelesaikan sesi Pernapasan Mindful. Bagaimana perasaan Anda sekarang?",
-                              style: TextStyle(
-                                fontSize: 20,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            SizedBox(height: 20,),
-
-                            // Button
-                            Column(
-                              children: [
-                                // Retry Session Button
-                                GestureDetector(
-                                  onTap: resetTimer,
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      color: Color(0xff0087ef),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      "Ulangi Sesi",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ),
-
-                                SizedBox(height: 16,),
-
-                                // Select Another Meditation Button
-                                GestureDetector(
-                                  onTap: () => {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (context) => MeditasiTerpadu()),
-                                    ),
-                                  },
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: Colors.grey,
-                                      )
-                                    ),
-                                    child: Text(
-                                      "Pilih Meditasi Lain",
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ),
-
-                                SizedBox(height: 16,),
-
-                                // Continue to Mindfulness button
-                                GestureDetector(
-                                  onTap: () => {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (context) => MeditasiTerpadu()),
-                                    ),
-                                  },
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: Colors.grey,
-                                        )
-                                    ),
-                                    child: Text(
-                                      "Lanjut ke Mindfulness",
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )
-                          ],
+                          )
+                        ],
+                      ),
+                      SizedBox.square(
+                        dimension: 40,
+                        child: Container(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(40),
+                          ),
+                          child: const FaIcon(
+                            FontAwesomeIcons.brain,
+                            size: 20,
+                            color: Colors.white,
+                          ),
                         ),
-                      ) : Column(
-                      children: [
-                        SizedBox(
-                          width: 260,
-                          height: 260,
-                          child: Stack(
-                            alignment: Alignment.center,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Main Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: ResponsiveContainer(
+                  child: _status == SessionStatus.finished
+                      ? Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              // Progress Ring
-                              Positioned.fill(
-                                child: AnimatedBuilder(
-                                    animation: _controller,
-                                    builder: (context, child) {
-                                      return CircularProgressIndicator(
-                                        value: _controller.value,
-                                        strokeWidth: 10,
-                                        backgroundColor: Colors.grey.shade300,
-                                        valueColor: AlwaysStoppedAnimation(Color(0xff0087ef)),
-                                      );
-                                    }
+                              ScaleTransition(
+                                scale: _pulseAnimation,
+                                child: Container(
+                                  width: double.infinity,
+                                  height: 160,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xff00d477),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const FaIcon(
+                                    FontAwesomeIcons.check,
+                                    size: 52,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
+                              const SizedBox(height: 40),
+                              const Text(
+                                "Sesi Selesai 🎉",
+                                style: TextStyle(
+                                  fontSize: 40,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                "Selamat! Anda telah menyelesaikan sesi Pernapasan Mindful. Bagaimana perasaan Anda sekarang?",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 20),
 
-                              // Center Content
+                              // Button
                               Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text(
-                                    "🌬️",
-                                    style: TextStyle(
-                                      fontSize: 100,
+                                  // Retry Session Button
+                                  GestureDetector(
+                                    onTap: resetTimer,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xff0087ef),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Text(
+                                        "Ulangi Sesi",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
                                     ),
                                   ),
-                                  SizedBox(height: 8,),
-                                  Text(
-                                    timerText,
-                                    style: TextStyle(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold,
+
+                                  const SizedBox(height: 16),
+
+                                  // Select Another Meditation Button
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (context) => const MeditasiTerpadu()),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          )),
+                                      child: const Text(
+                                        "Pilih Meditasi Lain",
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
                                     ),
                                   ),
-                                  SizedBox(height: 4,),
-                                  Text(
-                                    (_status == SessionStatus.idle) || (_status == SessionStatus.paused)
-                                        ? "Siap memulai"
-                                        : _status == SessionStatus.running
-                                        ? "Bermeditasi..."
-                                        : "Sesi Selesai",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey,
+
+                                  const SizedBox(height: 16),
+
+                                  // Continue to Mindfulness button
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (context) => const MeditasiTerpadu()),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          )),
+                                      child: const Text(
+                                        "Lanjut ke Mindfulness",
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
                                     ),
                                   ),
                                 ],
                               )
                             ],
                           ),
-                        ),
-
-                        SizedBox(height: 40,),
-
-                        // Buttons
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        )
+                      : Column(
                           children: [
-                            // Reset Button
-                            OutlinedButton.icon(
-                              onPressed: resetTimer,
-                              icon: FaIcon(FontAwesomeIcons.rotateLeft),
-                              label: Text("Reset"),
-                              style: OutlinedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                foregroundColor: Color(0xff0087ef),
-                                side: BorderSide(color: Color(0xff0087ef)),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
+                            SizedBox(
+                              width: 260,
+                              height: 260,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  // Progress Ring
+                                  Positioned.fill(
+                                    child: AnimatedBuilder(
+                                        animation: _controller,
+                                        builder: (context, child) {
+                                          return CircularProgressIndicator(
+                                            value: _controller.value,
+                                            strokeWidth: 10,
+                                            backgroundColor: Colors.grey.shade300,
+                                            valueColor: const AlwaysStoppedAnimation(Color(0xff0087ef)),
+                                          );
+                                        }),
+                                  ),
+
+                                  // Center Content
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Text(
+                                        "🌬️",
+                                        style: TextStyle(
+                                          fontSize: 100,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        timerText,
+                                        style: const TextStyle(
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        (_status == SessionStatus.idle) || (_status == SessionStatus.paused)
+                                            ? "Siap memulai"
+                                            : _status == SessionStatus.running
+                                                ? "Bermeditasi..."
+                                                : "Sesi Selesai",
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                ],
                               ),
                             ),
 
-                            SizedBox(width: 16,),
+                            const SizedBox(height: 40),
 
-                            // Play Button
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                if (_status == SessionStatus.running) {
-                                  pauseTimer();
-                                } else {
-                                  startTimer();
-                                }
-                              },
-                              icon: FaIcon(
-                                _status == SessionStatus.running
-                                    ? FontAwesomeIcons.pause
-                                    : FontAwesomeIcons.play,
-                              ),
-                              label: Text(
-                                _status == SessionStatus.running ? "Pause" : "Mulai",
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                backgroundColor: Color(0xff0087ef),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
+                            // Buttons
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Reset Button
+                                OutlinedButton.icon(
+                                  onPressed: resetTimer,
+                                  icon: const FaIcon(FontAwesomeIcons.rotateLeft),
+                                  label: const Text("Reset"),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                    foregroundColor: const Color(0xff0087ef),
+                                    side: const BorderSide(color: Color(0xff0087ef)),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
                                 ),
+
+                                const SizedBox(width: 16),
+
+                                // Play Button
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    if (_status == SessionStatus.running) {
+                                      pauseTimer();
+                                    } else {
+                                      startTimer();
+                                    }
+                                  },
+                                  icon: FaIcon(
+                                    _status == SessionStatus.running ? FontAwesomeIcons.pause : FontAwesomeIcons.play,
+                                  ),
+                                  label: Text(
+                                    _status == SessionStatus.running ? "Pause" : "Mulai",
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                    backgroundColor: const Color(0xff0087ef),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // Guide
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.08),
+                                    blurRadius: 12,
+                                    spreadRadius: 2,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Panduan:",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      for (var entry in guide.asMap().entries) ...[
+                                        Row(
+                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                          children: [
+                                            Container(
+                                              width: 24,
+                                              height: 24,
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xfff3e8ff),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  "${entry.key + 1}",
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color(0xff9810fa),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                entry.value,
+                                                style: const TextStyle(fontSize: 16),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                      ],
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-
-                        SizedBox(height: 20,),
-
-                        // Guide
-                        Container(
-                          padding: EdgeInsets.all(20),
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
-                                blurRadius: 12,
-                                spreadRadius: 2,
-                                offset: Offset(0, 6),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Panduan:",
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 16,),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  for (var entry in guide.asMap().entries) ...[
-                                    Row(
-                                      crossAxisAlignment: CrossAxisAlignment.center,
-                                      children: [
-                                        Container(
-                                          width: 24,
-                                          height: 24,
-                                          decoration: BoxDecoration(
-                                            color: Color(0xfff3e8ff),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              "${entry.key + 1}",
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                                color: Color(0xff9810fa),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(width: 12),
-                                        Expanded(
-                                          child: Text(
-                                            entry.value,
-                                            style: TextStyle(fontSize: 16),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(height: 12),
-                                  ],
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
+                ),
               ),
-            ],
-          )
+            ),
+          ],
+        ),
       ),
     );
   }

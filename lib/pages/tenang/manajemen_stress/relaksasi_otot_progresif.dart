@@ -1,4 +1,5 @@
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/tenang/manajemen_stress/strategi_coping.dart';
 import 'package:employee_wellness/pages/tenang/manajemen_stress/teknik_quick_relief.dart';
 import 'package:flutter/material.dart';
@@ -35,7 +36,7 @@ class RelaksasiOtotProgresif extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 12,
                     spreadRadius: 2,
                     offset: Offset(0, 6),
@@ -55,7 +56,7 @@ class RelaksasiOtotProgresif extends StatelessWidget {
                             alignment: Alignment.center,
                             padding: EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(40),
                             ),
                             child: FaIcon(FontAwesomeIcons.arrowLeft, size: 20, color: Colors.white),
@@ -75,7 +76,7 @@ class RelaksasiOtotProgresif extends StatelessWidget {
                           alignment: Alignment.center,
                           padding: EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(40),
                           ),
                           child: FaIcon(FontAwesomeIcons.brain, size: 20, color: Colors.white),
@@ -89,8 +90,9 @@ class RelaksasiOtotProgresif extends StatelessWidget {
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(20),
-                child: Column(
-                  children: [
+                child: ResponsiveContainer(
+                  child: Column(
+                    children: [
                     Container(
                       width: double.infinity,
                       padding: EdgeInsets.all(20),
@@ -112,7 +114,7 @@ class RelaksasiOtotProgresif extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
+                            color: Colors.black.withValues(alpha: 0.08),
                             blurRadius: 12,
                             spreadRadius: 2,
                             offset: Offset(0, 6),
@@ -192,9 +194,10 @@ class RelaksasiOtotProgresif extends StatelessWidget {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

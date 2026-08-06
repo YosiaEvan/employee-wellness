@@ -1,6 +1,7 @@
 import 'package:employee_wellness/main.dart';
 import 'package:employee_wellness/verify_email.dart';
 import 'package:employee_wellness/services/auth_register_service.dart';
+import 'package:employee_wellness/services/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -24,12 +25,13 @@ class _RegisterState extends State<Register> {
   bool isPrivacyAccepted = false;
 
   Future<void> register() async {
+    final loc = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     if (!isPrivacyAccepted) {
-      showSnackBar("Anda harus menyetujui Kebijakan Privasi");
+      showSnackBar(loc.translate('privacy_required'));
       return;
     }
 
@@ -74,7 +76,7 @@ class _RegisterState extends State<Register> {
         setState(() {
           isLoading = false;
         });
-        showSnackBar("Terjadi kesalahan: $e");
+        showSnackBar("${loc.translate('error_occurred')}$e");
       }
     }
   }
@@ -87,8 +89,9 @@ class _RegisterState extends State<Register> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: Color(0xFFEDFDF4),
+      backgroundColor: const Color(0xFFEDFDF4),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -101,17 +104,17 @@ class _RegisterState extends State<Register> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    CircleAvatar(
+                    const CircleAvatar(
                       radius: 40,
-                      backgroundColor: const Color(0xFF00C97A),
+                      backgroundColor: Color(0xFF00C97A),
                       child: FaIcon(FontAwesomeIcons.building, size: 40, color: Colors.white),
                     ),
 
                     const SizedBox(height: 20),
 
-                    const Text(
-                      "Employee Wellness",
-                      style: TextStyle(
+                    Text(
+                      loc.translate('app_title'),
+                      style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
@@ -119,9 +122,9 @@ class _RegisterState extends State<Register> {
 
                     const SizedBox(height: 16),
 
-                    const Text(
-                      "Kesehatan & Kebahagiaan Karyawan",
-                      style: TextStyle(
+                    Text(
+                      loc.translate('app_subtitle'),
+                      style: const TextStyle(
                         fontSize: 16,
                         color: Color(0xFF4A5565),
                       ),
@@ -150,9 +153,9 @@ class _RegisterState extends State<Register> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const Text(
-                                "Buat akun baru Anda",
-                                style: TextStyle(
+                              Text(
+                                loc.translate('register_title'),
+                                style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -165,21 +168,21 @@ class _RegisterState extends State<Register> {
                               TextFormField(
                                 controller: namaController,
                                 decoration: InputDecoration(
-                                  prefixIcon: Padding(
-                                    padding: const EdgeInsets.all(12.0),
+                                  prefixIcon: const Padding(
+                                    padding: EdgeInsets.all(12.0),
                                     child: FaIcon(
                                       FontAwesomeIcons.user,
                                       size: 20,
                                     ),
                                   ),
-                                  labelText: "Nama Lengkap",
+                                  labelText: loc.translate('full_name_label'),
                                   border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(10)
                                   ),
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Nama lengkap wajib diisi';
+                                    return loc.translate('full_name_required');
                                   }
                                   return null;
                                 },
@@ -190,25 +193,25 @@ class _RegisterState extends State<Register> {
                               TextFormField(
                                 controller: emailController,
                                 decoration: InputDecoration(
-                                  prefixIcon: Padding(
-                                    padding: const EdgeInsets.all(12.0),
+                                  prefixIcon: const Padding(
+                                    padding: EdgeInsets.all(12.0),
                                     child: FaIcon(
                                       FontAwesomeIcons.envelope,
                                       size: 20,
                                     ),
                                   ),
-                                  labelText: "Email",
+                                  labelText: loc.translate('email_label'),
                                   border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(10)
                                   ),
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Email wajib diisi';
+                                    return loc.translate('email_required');
                                   }
                                   final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
                                   if (!emailRegex.hasMatch(value)) {
-                                    return 'Format email tidak valid';
+                                    return loc.translate('email_invalid');
                                   }
                                   return null;
                                 },
@@ -220,8 +223,8 @@ class _RegisterState extends State<Register> {
                                 controller: passwordController,
                                 obscureText: _obscurePassword,
                                 decoration: InputDecoration(
-                                  prefixIcon: Padding(
-                                    padding: const EdgeInsets.all(12.0),
+                                  prefixIcon: const Padding(
+                                    padding: EdgeInsets.all(12.0),
                                     child: FaIcon(
                                       FontAwesomeIcons.lock,
                                       size: 20,
@@ -235,8 +238,8 @@ class _RegisterState extends State<Register> {
                                     },
                                     icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
                                   ),
-                                  hintText: "Masukan kata sandi",
-                                  labelText: "Kata Sandi",
+                                  hintText: loc.translate('password_hint'),
+                                  labelText: loc.translate('password_label'),
                                   isDense: true,
                                   border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(10)
@@ -244,10 +247,10 @@ class _RegisterState extends State<Register> {
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Password wajib diisi';
+                                    return loc.translate('password_required');
                                   }
                                   if (value.length < 8) {
-                                    return 'Password minimal 8 karakter';
+                                    return loc.translate('password_min_length');
                                   }
 
                                   // Cek kombinasi password
@@ -257,19 +260,19 @@ class _RegisterState extends State<Register> {
                                   final hasSpecialChar = RegExp(r'[!@#\$&*~%^()_+\-=\[\]{};:"\\|,.<>\/?]').hasMatch(value);
 
                                   if (!hasUppercase) {
-                                    return 'Password harus mengandung huruf kapital';
+                                    return loc.translate('password_uppercase');
                                   }
                                   if (!hasLowercase) {
-                                    return 'Password harus mengandung huruf kecil';
+                                    return loc.translate('password_lowercase');
                                   }
                                   if (!hasDigit) {
-                                    return 'Password harus mengandung angka';
+                                    return loc.translate('password_digit');
                                   }
                                   if (!hasSpecialChar) {
-                                    return 'Password harus mengandung simbol';
+                                    return loc.translate('password_special');
                                   }
                                   if (value == '12345678') {
-                                    return 'Password tidak boleh 12345678';
+                                    return loc.translate('password_forbidden');
                                   }
                                   return null;
                                 },
@@ -281,8 +284,8 @@ class _RegisterState extends State<Register> {
                                 controller: confirmPasswordController,
                                 obscureText: _obscureConfirmPassword,
                                 decoration: InputDecoration(
-                                  prefixIcon: Padding(
-                                    padding: const EdgeInsets.all(12.0),
+                                  prefixIcon: const Padding(
+                                    padding: EdgeInsets.all(12.0),
                                     child: FaIcon(
                                       FontAwesomeIcons.lock,
                                       size: 20,
@@ -296,8 +299,8 @@ class _RegisterState extends State<Register> {
                                     },
                                     icon: Icon(_obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
                                   ),
-                                  hintText: "Masukan kata sandi",
-                                  labelText: "Konfirmasi Kata Sandi",
+                                  hintText: loc.translate('password_hint'),
+                                  labelText: loc.translate('confirm_password_label'),
                                   isDense: true,
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
@@ -305,13 +308,13 @@ class _RegisterState extends State<Register> {
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Konfirmasi Password wajib diisi';
+                                    return loc.translate('confirm_password_required');
                                   }
                                   if (value.length < 8) {
-                                    return 'Password minimal 8 karakter';
+                                    return loc.translate('password_min_length');
                                   }
                                   if (value != passwordController.text) {
-                                    return 'Password tidak cocok';
+                                    return loc.translate('password_mismatch');
                                   }
 
                                   return null;
@@ -323,15 +326,15 @@ class _RegisterState extends State<Register> {
                               TextFormField(
                                 controller: companyTokenController,
                                 decoration: InputDecoration(
-                                  prefixIcon: Padding(
-                                    padding: const EdgeInsets.all(12.0),
+                                  prefixIcon: const Padding(
+                                    padding: EdgeInsets.all(12.0),
                                     child: FaIcon(
                                       FontAwesomeIcons.building,
                                       size: 20,
                                     ),
                                   ),
-                                  hintText: "Masukan token perusahaan",
-                                  labelText: "Token Perusahaan",
+                                  hintText: loc.translate('company_token_hint'),
+                                  labelText: loc.translate('company_token_label'),
                                   isDense: true,
                                   border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(10)
@@ -339,10 +342,10 @@ class _RegisterState extends State<Register> {
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Token perusahaan wajib diisi';
+                                    return loc.translate('company_token_required');
                                   }
                                   if (value.length < 6) {
-                                    return 'Token minimal 6 karakter';
+                                    return loc.translate('company_token_min');
                                   }
 
                                   return null;
@@ -368,12 +371,12 @@ class _RegisterState extends State<Register> {
                                     },
                                     child: RichText(
                                       text: TextSpan(
-                                        text: 'Saya menyetujui ',
-                                        style: TextStyle(color: Colors.black),
+                                        text: loc.translate('i_agree'),
+                                        style: const TextStyle(color: Colors.black),
                                         children: [
                                           TextSpan(
-                                            text: 'Kebijakan Privasi',
-                                            style: TextStyle(
+                                            text: loc.translate('privacy_policy'),
+                                            style: const TextStyle(
                                               color: Colors.blue,
                                               decoration: TextDecoration.underline,
                                             ),
@@ -385,7 +388,7 @@ class _RegisterState extends State<Register> {
                                 ],
                               ),
 
-                          SizedBox(height: 24,),
+                          const SizedBox(height: 24,),
 
                               // Tombol
                               SizedBox(
@@ -398,13 +401,13 @@ class _RegisterState extends State<Register> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(20),
                                     ),
-                                    backgroundColor: Color(0xFF7EDFBB),
+                                    backgroundColor: const Color(0xFF7EDFBB),
                                   ),
                                   child: isLoading
                                       ? const CircularProgressIndicator(color: Colors.white)
-                                      : const Text(
-                                    "Daftar",
-                                    style: TextStyle(
+                                      : Text(
+                                    loc.translate('register_button'),
+                                    style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w500,
                                       color: Colors.white,
@@ -413,14 +416,14 @@ class _RegisterState extends State<Register> {
                                 ),
                               ),
 
-                              SizedBox(height: 24,),
+                              const SizedBox(height: 24,),
 
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    "Sudah punya akun? ",
-                                    style: TextStyle(
+                                    loc.translate('already_have_account'),
+                                    style: const TextStyle(
                                       fontSize: 16,
                                     ),
                                   ),
@@ -432,8 +435,8 @@ class _RegisterState extends State<Register> {
                                       )
                                     },
                                     child: Text(
-                                      "Masuk",
-                                      style: TextStyle(
+                                      loc.translate('login_button'),
+                                      style: const TextStyle(
                                         fontSize: 16,
                                         color: Colors.green,
                                         fontWeight: FontWeight.w500,

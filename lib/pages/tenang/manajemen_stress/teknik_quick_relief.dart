@@ -1,5 +1,6 @@
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/quick_relief_technique_card.dart';
+import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/tenang/manajemen_stress/relaksasi_otot_progresif.dart';
 import 'package:employee_wellness/pages/tenang/manajemen_stress/strategi_coping.dart';
 import 'package:employee_wellness/pages/tenang/manajemen_stress/teknik_grounding.dart';
@@ -115,8 +116,9 @@ class _TeknikQuickReliefState extends State<TeknikQuickRelief> {
               Expanded(
                   child: SingleChildScrollView(
                       padding: EdgeInsets.all(20),
-                      child: Column(
-                        children: [
+                      child: ResponsiveContainer(
+                        child: Column(
+                          children: [
                           // CTA
                           Container(
                             padding: EdgeInsets.all(20),
@@ -221,7 +223,8 @@ class _TeknikQuickReliefState extends State<TeknikQuickRelief> {
                             ),
                           ),
                         ],
-                      )
+                      ),
+                    )
                   )
               ),
             ],

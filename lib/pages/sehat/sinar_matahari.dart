@@ -1,6 +1,7 @@
 import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/sehat/jalan_10000_langkah.dart';
 import 'package:employee_wellness/pages/sehat_homepage.dart';
 import 'package:employee_wellness/services/sinar_matahari_service.dart';
@@ -101,8 +102,9 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: EdgeInsets.all(20),
-                child: Column(
-                  children: [
+                child: ResponsiveContainer(
+                  child: Column(
+                    children: [
                     // Manfaat Sinar Matahari
                     Container(
                       padding: EdgeInsets.all(20),
@@ -755,7 +757,12 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                       ),
                                     ),
                                     SizedBox(width: 8,),
-                                    Text("Gunakan tabir surya SPF minimal 30")
+                                    Expanded(
+                                      child: Text(
+                                        "Gunakan tabir surya SPF minimal 30",
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    )
                                   ],
                                 ),
                               ),
@@ -782,7 +789,12 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                       ),
                                     ),
                                     SizedBox(width: 8,),
-                                    Text("Hindari jam 10:00 - 15:00 (puncak UV)")
+                                    Expanded(
+                                      child: Text(
+                                        "Hindari jam 10:00 - 15:00 (puncak UV)",
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    )
                                   ],
                                 ),
                               ),
@@ -809,7 +821,12 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                       ),
                                     ),
                                     SizedBox(width: 8,),
-                                    Text("Gunakan kacamata hitam dan topi")
+                                    Expanded(
+                                      child: Text(
+                                        "Gunakan kacamata hitam dan topi",
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    )
                                   ],
                                 ),
                               ),
@@ -836,7 +853,12 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                       ),
                                     ),
                                     SizedBox(width: 8,),
-                                    Text("Hindari kepanasan - minum air yang cukup")
+                                    Expanded(
+                                      child: Text(
+                                        "Hindari kepanasan - minum air yang cukup",
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    )
                                   ],
                                 ),
                               ),
@@ -1039,6 +1061,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                 ),
               ),
             ),
+          ),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/sehat/udara_segar.dart';
 import 'package:employee_wellness/pages/sehat_homepage.dart';
 import 'package:employee_wellness/services/minum_air_service.dart';
@@ -150,8 +151,9 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: EdgeInsets.all(20),
-                child: Column(
-                  children: [
+                child: ResponsiveContainer(
+                  child: Column(
+                    children: [
                     // Counter
                     Container(
                       width: double.infinity,
@@ -530,7 +532,12 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                       ),
                                     ),
                                     SizedBox(width: 8,),
-                                    Text("Menjaga hidrasi tubuh optimal")
+                                    Expanded(
+                                      child: Text(
+                                        "Menjaga hidrasi tubuh optimal",
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    )
                                   ],
                                 ),
                               ),
@@ -557,7 +564,12 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                       ),
                                     ),
                                     SizedBox(width: 8,),
-                                    Text("Membantu fungsi ginjal dan detoksifikasi")
+                                    Expanded(
+                                      child: Text(
+                                        "Membantu fungsi ginjal dan detoksifikasi",
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    )
                                   ],
                                 ),
                               ),
@@ -584,7 +596,12 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                       ),
                                     ),
                                     SizedBox(width: 8,),
-                                    Text("Meningkatkan konsentrasi dan fokus")
+                                    Expanded(
+                                      child: Text(
+                                        "Meningkatkan konsentrasi dan fokus",
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    )
                                   ],
                                 ),
                               ),
@@ -611,7 +628,12 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                       ),
                                     ),
                                     SizedBox(width: 8,),
-                                    Text("Menjaga kesehatan kulit")
+                                    Expanded(
+                                      child: Text(
+                                        "Menjaga kesehatan kulit",
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    )
                                   ],
                                 ),
                               ),
@@ -638,7 +660,12 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                       ),
                                     ),
                                     SizedBox(width: 8,),
-                                    Text("Memperlancar pencernaan")
+                                    Expanded(
+                                      child: Text(
+                                        "Memperlancar pencernaan",
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    )
                                   ],
                                 ),
                               ),
@@ -665,7 +692,12 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                       ),
                                     ),
                                     SizedBox(width: 8,),
-                                    Text("Mengatur suhu tubuh")
+                                    Expanded(
+                                      child: Text(
+                                        "Mengatur suhu tubuh",
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    )
                                   ],
                                 ),
                               ),
@@ -958,6 +990,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                 ),
               ),
             ),
+          ),
           ),
         ],
       ),

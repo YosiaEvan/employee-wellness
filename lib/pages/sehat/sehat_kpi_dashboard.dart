@@ -1,4 +1,5 @@
 import 'package:employee_wellness/components/auto_refresh_mixin.dart';
+import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../services/sehat_kpi_service.dart';
@@ -141,18 +142,20 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> with AutoRefreshM
                           child: SingleChildScrollView(
                             physics: const AlwaysScrollableScrollPhysics(),
                             padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildMonthlyCard(),
-                                const SizedBox(height: 16),
-                                _buildWeeklyCard(),
-                                const SizedBox(height: 16),
-                                _buildTodayCard(),
-                                const SizedBox(height: 16),
-                                _buildKPITable(),
-                                const SizedBox(height: 100),
-                              ],
+                            child: ResponsiveContainer(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildMonthlyCard(),
+                                  const SizedBox(height: 16),
+                                  _buildWeeklyCard(),
+                                  const SizedBox(height: 16),
+                                  _buildTodayCard(),
+                                  const SizedBox(height: 16),
+                                  _buildKPITable(),
+                                  const SizedBox(height: 100),
+                                ],
+                              ),
                             ),
                           ),
                         ),

@@ -1,6 +1,7 @@
 import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/components/smart_food_search.dart';
 import 'package:employee_wellness/pages/sehat/udara_segar.dart';
 import 'package:employee_wellness/pages/sehat_homepage.dart';
@@ -245,8 +246,9 @@ void _checkHealthChallenge() {
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: EdgeInsets.all(20),
-                child: Column(
-                  children: [
+                child: ResponsiveContainer(
+                  child: Column(
+                    children: [
                     // Calorie Counter
                     Container(
                       width: double.infinity,
@@ -337,12 +339,15 @@ void _checkHealthChallenge() {
                                       color: Color(0xff00c368),
                                     ),
                                     SizedBox(width: 8,),
-                                    Text(
-                                      "${remainingCalories} kalori lagi",
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xff00c368),
+                                    Flexible(
+                                      child: Text(
+                                        "${remainingCalories} kalori lagi",
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xff00c368),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
@@ -1238,6 +1243,7 @@ void _checkHealthChallenge() {
               ),
             ),
           ),
+          ),
         ],
       ),
     ),
@@ -1451,6 +1457,7 @@ void _checkHealthChallenge() {
               fontWeight: FontWeight.bold,
               color: Color(0xFF2E7D32),
             ),
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(width: 8),
           Container(

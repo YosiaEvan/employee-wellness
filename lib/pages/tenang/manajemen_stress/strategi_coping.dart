@@ -1,5 +1,6 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/tenang/manajemen_stress.dart';
 import 'package:employee_wellness/services/tenang_service.dart';
 import 'package:flutter/material.dart';
@@ -130,8 +131,9 @@ class _StrategiCopingState extends State<StrategiCoping> with TickerProviderStat
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(20),
-                child: !isComplete
-                    ? Column(
+                child: ResponsiveContainer(
+                  child: !isComplete
+                      ? Column(
                         children: [
                           // Strategic
                           Container(
@@ -498,6 +500,7 @@ class _StrategiCopingState extends State<StrategiCoping> with TickerProviderStat
                           ],
                         ),
                       ),
+                ),
               ),
             ),
           ],

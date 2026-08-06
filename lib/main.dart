@@ -5,8 +5,12 @@ import 'package:employee_wellness/services/background_steps_tracker.dart';
 import 'package:employee_wellness/services/background_task_service.dart';
 import 'package:employee_wellness/services/offline_steps_service.dart';
 import 'package:employee_wellness/services/steps_sync_service.dart';
+import 'package:employee_wellness/services/language_provider.dart';
+import 'package:employee_wellness/services/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +23,12 @@ void main() async {
     await BackgroundTaskService.instance.registerCleanupTask();
     await StepsSyncService.instance.autoSync();
   }
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => LanguageProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -29,9 +38,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Employee Wellness',
+      locale: languageProvider.currentLocale,
+      supportedLocales: const [
+        Locale('en', 'US'),
+        Locale('id', 'ID'),
+      ],
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: FutureBuilder(
         future: checkLogin(),
         builder: (context, snapshot) {
@@ -65,15 +87,16 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> login() async {
     print("🔵 Login button pressed");
+    final loc = AppLocalizations.of(context)!;
     if (emailController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Email harus diisi"), backgroundColor: Colors.red),
+        SnackBar(content: Text(loc.translate('email_required')), backgroundColor: Colors.red),
       );
       return;
     }
     if (passwordController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Password harus diisi"), backgroundColor: Colors.red),
+        SnackBar(content: Text(loc.translate('password_required')), backgroundColor: Colors.red),
       );
       return;
     }
@@ -88,38 +111,39 @@ class _LoginPageState extends State<LoginPage> {
     if (result["success"]) {
       await BackgroundStepsTracker.initialize();
       await OfflineStepsService.autoSyncOnAppStart();
+      if (!mounted) return;
       await Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text("Login berhasil! Selamat datang."),
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Text(loc.translate('login_success')),
               ],
             ),
-            backgroundColor: Color(0xFF00C368),
-            duration: Duration(seconds: 2),
+            backgroundColor: const Color(0xFF00C368),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
     } else {
       print("❌ Login FAILED: ${result['message']}");
-      String errorMessage = result["message"] ?? "Login gagal";
+      String errorMessage = result["message"] ?? loc.translate('login_failed');
       errorIcon = Icons.error_outline; // ✅ now defined
       Color errorColor = Colors.red;
 
       if (errorMessage.toLowerCase().contains("email atau password salah") ||
           errorMessage.toLowerCase().contains("credentials")) {
-        errorMessage = "Email atau password salah!\nSilakan periksa kembali data Anda.";
+        errorMessage = loc.translate('invalid_credentials');
         errorIcon = Icons.lock_outline;
       } else if (errorMessage.toLowerCase().contains("network") ||
           errorMessage.toLowerCase().contains("connection")) {
-        errorMessage = "Tidak dapat terhubung ke server.\nPeriksa koneksi internet Anda.";
+        errorMessage = loc.translate('server_error');
         errorIcon = Icons.wifi_off;
       }
 
@@ -149,8 +173,9 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: Color(0xFFEDFDF4),
+      backgroundColor: const Color(0xFFEDFDF4),
       body: SingleChildScrollView(
         child: SizedBox(
           height: MediaQuery.of(context).size.height,
@@ -159,15 +184,15 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 40,
-                  backgroundColor: const Color(0xFF00C97A),
+                  backgroundColor: Color(0xFF00C97A),
                   child: FaIcon(FontAwesomeIcons.building, size: 40, color: Colors.white), // ✅ already FaIcon
                 ),
                 const SizedBox(height: 20),
-                const Text("Employee Wellness", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                Text(loc.translate('app_title'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
-                const Text("Kesehatan & Kebahagiaan Karyawan", style: TextStyle(fontSize: 16, color: Color(0xFF4A5565))),
+                Text(loc.translate('app_subtitle'), style: const TextStyle(fontSize: 16, color: Color(0xFF4A5565))),
                 const SizedBox(height: 20),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -178,23 +203,23 @@ class _LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
+                          color: Colors.black.withOpacity(0.05),
                           blurRadius: 10,
-                          offset: Offset(0, 5),
+                          offset: const Offset(0, 5),
                         ),
                       ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text("Masuk ke Akun Anda", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+                        Text(loc.translate('login_title'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
                         const SizedBox(height: 20),
                         TextField(
                           controller: emailController,
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.email_outlined),
-                            hintText: "nama@perusahaan.com",
-                            labelText: "Email",
+                            hintText: loc.translate('email_hint'),
+                            labelText: loc.translate('email_label'),
                             isDense: true,
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                           ),
@@ -209,8 +234,8 @@ class _LoginPageState extends State<LoginPage> {
                               onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                               icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
                             ),
-                            hintText: "Masukan kata sandi",
-                            labelText: "Kata Sandi",
+                            hintText: loc.translate('password_hint'),
+                            labelText: loc.translate('password_label'),
                             isDense: true,
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                           ),
@@ -219,10 +244,10 @@ class _LoginPageState extends State<LoginPage> {
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: () {},
-                            child: const Text("Lupa kata sandi?", style: TextStyle(color: Color(0xFF30B762), fontSize: 16)),
+                            child: Text(loc.translate('forgot_password'), style: const TextStyle(color: Color(0xFF30B762), fontSize: 16)),
                           ),
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         SizedBox(
                           width: double.infinity,
                           height: 52,
@@ -231,21 +256,21 @@ class _LoginPageState extends State<LoginPage> {
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 15),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                              backgroundColor: Color(0xFF7EDFBB),
+                              backgroundColor: const Color(0xFF7EDFBB),
                             ),
                             child: isLoading
                                 ? const CircularProgressIndicator(color: Colors.white)
-                                : const Text("Masuk", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
+                                : Text(loc.translate('login_button'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
                           ),
                         ),
-                        SizedBox(height: 24),
+                        const SizedBox(height: 24),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text("Belum punya akun? ", style: TextStyle(fontSize: 16)),
+                            Text(loc.translate('no_account'), style: const TextStyle(fontSize: 16)),
                             GestureDetector(
                               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const Register())),
-                              child: Text("Registrasi", style: TextStyle(fontSize: 16, color: Colors.green, fontWeight: FontWeight.w500)),
+                              child: Text(loc.translate('register_now'), style: const TextStyle(fontSize: 16, color: Colors.green, fontWeight: FontWeight.w500)),
                             ),
                           ],
                         ),

@@ -1,5 +1,6 @@
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/module_section_card.dart';
+import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/hijau/hemat_energi.dart';
 import 'package:employee_wellness/pages/hijau/hijau_kpi_dashboard.dart';
 import 'package:employee_wellness/pages/hijau/zero_waste.dart';
@@ -7,6 +8,7 @@ import 'package:employee_wellness/pages/hijau/konservasi_air.dart';
 import 'package:employee_wellness/pages/hijau/gaya_hidup_hijau.dart';
 import 'package:employee_wellness/pages/hijau/ajak_orang_lain.dart';
 import 'package:employee_wellness/pages/hijau/ubah_kebiasaan.dart';
+import 'package:employee_wellness/services/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -15,6 +17,7 @@ class HijauHomepage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.white.withValues(alpha: 0.98),
       body: SafeArea(
@@ -23,9 +26,9 @@ class HijauHomepage extends StatelessWidget {
           children: [
             Header(),
             Container(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               width: double.infinity,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Color(0xff059669), Color(0xff34D399)],
                 ),
@@ -43,21 +46,23 @@ class HijauHomepage extends StatelessWidget {
                       dimension: 40,
                       child: Container(
                         alignment: Alignment.center,
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(40),
                         ),
-                        child: FaIcon(FontAwesomeIcons.arrowLeft, size: 20, color: Colors.white),
+                        child: const FaIcon(FontAwesomeIcons.arrowLeft, size: 20, color: Colors.white),
                       ),
                     ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text("HIJAU 360\u00B0", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
-                      Text("Lingkungan Berkelanjutan", style: TextStyle(fontSize: 16, color: Colors.white)),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(loc.translate('hijau_title'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
+                        Text(loc.translate('hijau_subtitle'), style: const TextStyle(fontSize: 16, color: Colors.white)),
+                      ],
+                    ),
                   ),
                   GestureDetector(
                     onTap: () {
@@ -70,12 +75,12 @@ class HijauHomepage extends StatelessWidget {
                       dimension: 40,
                       child: Container(
                         alignment: Alignment.center,
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(40),
                         ),
-                        child: FaIcon(FontAwesomeIcons.chartLine, size: 20, color: Colors.white),
+                        child: const FaIcon(FontAwesomeIcons.chartLine, size: 20, color: Colors.white),
                       ),
                     ),
                   ),
@@ -84,77 +89,79 @@ class HijauHomepage extends StatelessWidget {
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    ModuleSectionCard(
-                      destination: const HematEnergi(),
-                      backgroundColor: const Color(0xffecfdf5),
-                      sectionColor: const Color(0xff059669),
-                      icon: FontAwesomeIcons.bolt,
-                      heading: "Hemat Energi",
-                      subHeading: "Efisiensi Sumber Daya",
-                      description: "Langkah kecil harian untuk mengurangi emisi karbon.",
-                      targetText: "4 tugas harian",
-                    ),
-                    const SizedBox(height: 20),
-                    ModuleSectionCard(
-                      destination: const ZeroWaste(),
-                      backgroundColor: const Color(0xfff0fdf4),
-                      sectionColor: const Color(0xff16a34a),
-                      icon: FontAwesomeIcons.recycle,
-                      heading: "Zero Waste",
-                      subHeading: "Manajemen Sampah",
-                      description: "Kelola konsumsi dan limbah untuk lingkungan lebih bersih.",
-                      targetText: "8 tugas harian",
-                    ),
-                    const SizedBox(height: 20),
-                    ModuleSectionCard(
-                      destination: const KonservasiAir(),
-                      backgroundColor: const Color(0xfff0f9ff),
-                      sectionColor: const Color(0xff0ea5e9),
-                      icon: FontAwesomeIcons.droplet,
-                      heading: "Konservasi Air",
-                      subHeading: "Manajemen Air Bersih",
-                      description: "Jaga setiap tetes air dengan penggunaan yang bijak.",
-                      targetText: "3 tugas harian",
-                    ),
-                    const SizedBox(height: 20),
-                    ModuleSectionCard(
-                      destination: const GayaHidupHijau(),
-                      backgroundColor: const Color(0xfff7fee7),
-                      sectionColor: const Color(0xff15803d),
-                      icon: FontAwesomeIcons.leaf,
-                      heading: "Gaya Hidup Hijau",
-                      subHeading: "Harmoni dengan Alam",
-                      description: "Integrasikan kebiasaan ramah lingkungan dalam keseharian.",
-                      targetText: "4 misi selesai",
-                    ),
-                    const SizedBox(height: 20),
-                    ModuleSectionCard(
-                      destination: const UbahKebiasaan(),
-                      backgroundColor: const Color(0xffecfdf5),
-                      sectionColor: const Color(0xff10b981),
-                      icon: FontAwesomeIcons.arrowsRotate,
-                      heading: "Ubah Kebiasaan",
-                      subHeading: "Langkah Kecil Berkelanjutan",
-                      description: "Mulai perjalanan Anda mengubah kebiasaan lama menjadi ramah lingkungan.",
-                      targetText: "Streak 5 hari",
-                    ),
-                    const SizedBox(height: 20),
-                    ModuleSectionCard(
-                      destination: const AjakOrangLain(),
-                      backgroundColor: const Color(0xfffffbeb),
-                      sectionColor: const Color(0xfff59e0b),
-                      icon: FontAwesomeIcons.userPlus,
-                      heading: "Ajak Orang Lain",
-                      subHeading: "Kolaborasi Sosial",
-                      description: "Bagikan semangat hidup sehat dan kumpulkan poin bersama teman.",
-                      targetText: "+75 poin/teman",
-                    ),
-                    const SizedBox(height: 20),
-                    _buildComingSoonCard(),
-                  ],
+                padding: const EdgeInsets.all(20),
+                child: ResponsiveContainer(
+                  child: Column(
+                    children: [
+                      ModuleSectionCard(
+                        destination: const HematEnergi(),
+                        backgroundColor: const Color(0xffecfdf5),
+                        sectionColor: const Color(0xff059669),
+                        icon: FontAwesomeIcons.bolt,
+                        heading: loc.translate('energy_title'),
+                        subHeading: loc.translate('energy_subtitle'),
+                        description: loc.translate('energy_desc'),
+                        targetText: loc.translate('energy_target'),
+                      ),
+                      const SizedBox(height: 20),
+                      ModuleSectionCard(
+                        destination: const ZeroWaste(),
+                        backgroundColor: const Color(0xfff0fdf4),
+                        sectionColor: const Color(0xff16a34a),
+                        icon: FontAwesomeIcons.recycle,
+                        heading: loc.translate('waste_title'),
+                        subHeading: loc.translate('waste_subtitle'),
+                        description: loc.translate('waste_desc'),
+                        targetText: loc.translate('waste_target'),
+                      ),
+                      const SizedBox(height: 20),
+                      ModuleSectionCard(
+                        destination: const KonservasiAir(),
+                        backgroundColor: const Color(0xfff0f9ff),
+                        sectionColor: const Color(0xff0ea5e9),
+                        icon: FontAwesomeIcons.droplet,
+                        heading: loc.translate('water_cons_title'),
+                        subHeading: loc.translate('water_cons_subtitle'),
+                        description: loc.translate('water_cons_desc'),
+                        targetText: loc.translate('water_cons_target'),
+                      ),
+                      const SizedBox(height: 20),
+                      ModuleSectionCard(
+                        destination: const GayaHidupHijau(),
+                        backgroundColor: const Color(0xfff7fee7),
+                        sectionColor: const Color(0xff15803d),
+                        icon: FontAwesomeIcons.leaf,
+                        heading: loc.translate('lifestyle_title'),
+                        subHeading: loc.translate('lifestyle_subtitle'),
+                        description: loc.translate('lifestyle_desc'),
+                        targetText: loc.translate('lifestyle_target'),
+                      ),
+                      const SizedBox(height: 20),
+                      ModuleSectionCard(
+                        destination: const UbahKebiasaan(),
+                        backgroundColor: const Color(0xffecfdf5),
+                        sectionColor: const Color(0xff10b981),
+                        icon: FontAwesomeIcons.arrowsRotate,
+                        heading: loc.translate('habit_title'),
+                        subHeading: loc.translate('habit_subtitle'),
+                        description: loc.translate('habit_desc'),
+                        targetText: loc.translate('habit_target'),
+                      ),
+                      const SizedBox(height: 20),
+                      ModuleSectionCard(
+                        destination: const AjakOrangLain(),
+                        backgroundColor: const Color(0xfffffbeb),
+                        sectionColor: const Color(0xfff59e0b),
+                        icon: FontAwesomeIcons.userPlus,
+                        heading: loc.translate('invite_title'),
+                        subHeading: loc.translate('invite_subtitle'),
+                        description: loc.translate('invite_desc'),
+                        targetText: loc.translate('invite_target'),
+                      ),
+                      const SizedBox(height: 20),
+                      _buildComingSoonCard(context),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -164,9 +171,10 @@ class HijauHomepage extends StatelessWidget {
     );
   }
 
-  Widget _buildComingSoonCard() {
+  Widget _buildComingSoonCard(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Container(
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -176,25 +184,25 @@ class HijauHomepage extends StatelessWidget {
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             spreadRadius: 0,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         children: [
           FaIcon(FontAwesomeIcons.leaf, size: 40, color: Colors.green.withOpacity(0.2)),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
-            "Fitur Lainnya Segera Hadir",
-            style: TextStyle(
+            loc.translate('coming_soon'),
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: Colors.grey,
             ),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(
-            "Manajemen sampah, efisiensi air, dan lainnya sedang dikembangkan.",
+            loc.translate('coming_soon_desc'),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: Colors.grey[400]),
           ),

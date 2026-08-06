@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/sehat_homepage.dart';
 import 'package:employee_wellness/services/background_steps_tracker.dart';
 import 'package:employee_wellness/services/langkah_service.dart';
@@ -457,8 +458,9 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: EdgeInsets.all(20),
-                child: Column(
-                  children: [
+                child: ResponsiveContainer(
+                  child: Column(
+                    children: [
                     // Yesterday Steps Notification
                     if (_showYesterdayNotification && _yesterdaySteps != null)
                       _buildYesterdayNotification(),
@@ -924,7 +926,13 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                                       ),
                                     ),
                                     SizedBox(width: 8,),
-                                    Text("Parkir kendaraan lebih jauh dari tujuan")
+                                    Expanded(
+                                      child: Text(
+                                        "Parkir kendaraan lebih jauh dari tujuan",
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 2,
+                                      ),
+                                    )
                                   ],
                                 ),
                               ),
@@ -951,7 +959,13 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                                       ),
                                     ),
                                     SizedBox(width: 8,),
-                                    Text("Gunakan tangga daripada lift")
+                                    Expanded(
+                                      child: Text(
+                                        "Gunakan tangga daripada lift",
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 2,
+                                      ),
+                                    )
                                   ],
                                 ),
                               ),
@@ -978,7 +992,13 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                                       ),
                                     ),
                                     SizedBox(width: 8,),
-                                    Text("Jalan-jalan saat istirahat makan siang")
+                                    Expanded(
+                                      child: Text(
+                                        "Jalan-jalan saat istirahat makan siang",
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 2,
+                                      ),
+                                    )
                                   ],
                                 ),
                               ),
@@ -1005,7 +1025,13 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                                       ),
                                     ),
                                     SizedBox(width: 8,),
-                                    Text("Ajak rekan kerja jalan bersama")
+                                    Expanded(
+                                      child: Text(
+                                        "Ajak rekan kerja jalan bersama",
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 2,
+                                      ),
+                                    )
                                   ],
                                 ),
                               ),
@@ -1203,6 +1229,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                 ),
               ),
             ),
+          ),
           ),
         ],
       ),

@@ -1,3 +1,4 @@
+import 'package:employee_wellness/services/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -27,6 +28,7 @@ class ModuleSectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: () => {
         Navigator.push(
@@ -35,7 +37,7 @@ class ModuleSectionCard extends StatelessWidget {
         ),
       },
       child: Container(
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(20),
@@ -44,7 +46,7 @@ class ModuleSectionCard extends StatelessWidget {
               color: Colors.black.withOpacity(0.08),
               blurRadius: 12,
               spreadRadius: 2,
-              offset: Offset(0, 6),
+              offset: const Offset(0, 6),
             ),
           ],
         ),
@@ -59,7 +61,7 @@ class ModuleSectionCard extends StatelessWidget {
                   dimension: 60,
                   child: Container(
                     alignment: Alignment.center,
-                    padding: EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: sectionColor,
                       borderRadius: BorderRadius.circular(12),
@@ -71,36 +73,38 @@ class ModuleSectionCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(width: 20,),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      heading,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
+                const SizedBox(width: 20,),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        heading,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                    Text(
-                      subHeading,
-                      style: TextStyle(
-                        fontSize: 12,
+                      Text(
+                        subHeading,
+                        style: const TextStyle(
+                          fontSize: 12,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
-            SizedBox(height: 12,),
+            const SizedBox(height: 12,),
             Text(
               description,
               textAlign: TextAlign.left,
             ),
-            SizedBox(height: 12,),
+            const SizedBox(height: 12,),
             Container(
               width: double.infinity,
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
@@ -114,21 +118,21 @@ class ModuleSectionCard extends StatelessWidget {
                         dimension: 10,
                         child: Container(
                           alignment: Alignment.center,
-                          padding: EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: sectionColor,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Text(""),
+                          child: const Text(""),
                         ),
                       ),
-                      SizedBox(width: 8,),
-                      Text("Target")
+                      const SizedBox(width: 8,),
+                      Text(loc.translate('target_label'))
                     ],
                   ),
                   Text(
                     targetText,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.w500,
                     ),
                   )
@@ -146,11 +150,11 @@ class ModuleSectionCard extends StatelessWidget {
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                color: Color(0xFF00C368),
+                color: const Color(0xFF00C368),
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 2),
               ),
-              child: Icon(Icons.check, size: 16, color: Colors.white),
+              child: const Icon(Icons.check, size: 16, color: Colors.white),
             ),
           ),
       ],

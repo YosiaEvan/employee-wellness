@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/tenang/meditasi_terpadu.dart';
 import 'package:employee_wellness/pages/tenang/mindfulness_kesadaran.dart';
 import 'package:employee_wellness/services/tenang_service.dart';
@@ -177,8 +178,9 @@ class _BodyScanState extends State<BodyScan> with TickerProviderStateMixin {
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(20),
-                child: _status == SessionStatus.finished
-                    ? Padding(
+                child: ResponsiveContainer(
+                  child: _status == SessionStatus.finished
+                      ? Padding(
                         padding: EdgeInsets.all(20),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -380,6 +382,7 @@ class _BodyScanState extends State<BodyScan> with TickerProviderStateMixin {
                           ),
                         ],
                       ),
+                ),
               ),
             ),
           ],

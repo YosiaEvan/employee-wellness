@@ -1,5 +1,6 @@
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/meditation_section_card.dart';
+import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/tenang/meditasi/body_scan.dart';
 import 'package:employee_wellness/pages/tenang/meditasi/loving_kindness.dart';
 import 'package:employee_wellness/pages/tenang/meditasi/pernapasan_mindful.dart';
@@ -7,14 +8,9 @@ import 'package:employee_wellness/pages/tenang/meditasi/visualisasi_positif.dart
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class MeditasiTerpadu extends StatefulWidget {
+class MeditasiTerpadu extends StatelessWidget {
   const MeditasiTerpadu({super.key});
 
-  @override
-  State<MeditasiTerpadu> createState() => _MeditasiTerpaduState();
-}
-
-class _MeditasiTerpaduState extends State<MeditasiTerpadu> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,22 +20,22 @@ class _MeditasiTerpaduState extends State<MeditasiTerpadu> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
-              Header(),
+              const Header(),
               Container(
-                padding: EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Color(0xff7141fc),
-                  borderRadius: BorderRadius.only(
+                  color: const Color(0xff7141fc),
+                  borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(20),
                     bottomRight: Radius.circular(20),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withValues(alpha: 0.08),
                       blurRadius: 12,
                       spreadRadius: 2,
-                      offset: Offset(0, 6),
+                      offset: const Offset(0, 6),
                     ),
                   ],
                 ),
@@ -56,12 +52,12 @@ class _MeditasiTerpaduState extends State<MeditasiTerpadu> {
                             dimension: 40,
                             child: Container(
                               alignment: Alignment.center,
-                              padding: EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(40),
                               ),
-                              child: FaIcon( // ✅ removed const
+                              child: const FaIcon(
                                 FontAwesomeIcons.arrowLeft,
                                 size: 20,
                                 color: Colors.white,
@@ -69,7 +65,7 @@ class _MeditasiTerpaduState extends State<MeditasiTerpadu> {
                             ),
                           ),
                         ),
-                        Column(
+                        const Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Text(
@@ -81,7 +77,7 @@ class _MeditasiTerpaduState extends State<MeditasiTerpadu> {
                               ),
                             ),
                             Text(
-                              "Pilih Jenis Meditasi Anda",
+                              "Pilih Sesi Meditasi",
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.white,
@@ -93,12 +89,12 @@ class _MeditasiTerpaduState extends State<MeditasiTerpadu> {
                           dimension: 40,
                           child: Container(
                             alignment: Alignment.center,
-                            padding: EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(40),
                             ),
-                            child: FaIcon( // ✅ removed const
+                            child: const FaIcon(
                               FontAwesomeIcons.brain,
                               size: 20,
                               color: Colors.white,
@@ -114,41 +110,42 @@ class _MeditasiTerpaduState extends State<MeditasiTerpadu> {
               // Main Content
               Expanded(
                   child: SingleChildScrollView(
-                    padding: EdgeInsets.all(20),
-                    child: Column(
-                      children: [
+                    padding: const EdgeInsets.all(20),
+                    child: ResponsiveContainer(
+                      child: Column(
+                        children: [
                         // Pernapasan Mindful
-                        MeditationSectionCard(destination: PernapasanMindful(), sectionColor: Color(0xff0087ef), icon: FontAwesomeIcons.wind, heading: "Pernapasan Mindful", description: "Fokus pada pernapasan untuk menenangkan pikiran.", targetText: "⏱️ 5 menit"),
+                        const MeditationSectionCard(destination: PernapasanMindful(), sectionColor: Color(0xff0087ef), icon: FontAwesomeIcons.wind, heading: "Pernapasan Mindful", description: "Fokus pada pernapasan untuk menenangkan pikiran.", targetText: "⏱️ 5 menit"),
 
-                        SizedBox(height: 20,),
+                        const SizedBox(height: 20,),
 
                         // Body Scan
-                        MeditationSectionCard(destination: BodyScan(), sectionColor: Color(0xff7541fc), icon: FontAwesomeIcons.userCheck, heading: "Body Scan", description: "Scan tubuh dari kepala hingga kaki.", targetText: "⏱️ 10 menit"),
+                        const MeditationSectionCard(destination: BodyScan(), sectionColor: Color(0xff7541fc), icon: FontAwesomeIcons.userCheck, heading: "Body Scan", description: "Scan tubuh dari kepala hingga kaki.", targetText: "⏱️ 10 menit"),
 
-                        SizedBox(height: 20,),
+                        const SizedBox(height: 20,),
 
                         // Loving Kindness
-                        MeditationSectionCard(destination: LovingKindness(), sectionColor: Color(0xffef006d), icon: FontAwesomeIcons.heart, heading: "Loving Kindness", description: "Meditasi kasih sayang untuk diri dan orang lain.", targetText: "⏱️ 15 menit"),
+                        const MeditationSectionCard(destination: LovingKindness(), sectionColor: Color(0xfff20868), icon: FontAwesomeIcons.heart, heading: "Loving Kindness", description: "Kembangkan rasa kasih sayang pada diri sendiri.", targetText: "⏱️ 10 menit"),
 
-                        SizedBox(height: 20,),
+                        const SizedBox(height: 20,),
 
                         // Visualisasi Positif
-                        MeditationSectionCard(destination: VisualisasiPositif(), sectionColor: Color(0xfffb7600), icon: FontAwesomeIcons.sunPlantWilt, heading: "Visualisasi Positif", description: "Visualisasi tempat yang menyenangkan.", targetText: "⏱️ 10 menit"),
+                        const MeditationSectionCard(destination: VisualisasiPositif(), sectionColor: Color(0xff00bca8), icon: FontAwesomeIcons.eye, heading: "Visualisasi Positif", description: "Bayangkan tempat yang tenang dan damai.", targetText: "⏱️ 10 menit"),
 
-                        SizedBox(height: 20,),
+                        const SizedBox(height: 20,),
 
-                        // Information
+                        // Info Card
                         Container(
-                          padding: EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
+                                color: Colors.black.withValues(alpha: 0.08),
                                 blurRadius: 12,
                                 spreadRadius: 2,
-                                offset: Offset(0, 6),
+                                offset: const Offset(0, 6),
                               ),
                             ],
                           ),
@@ -160,20 +157,16 @@ class _MeditasiTerpaduState extends State<MeditasiTerpadu> {
                                     dimension: 60,
                                     child: Container(
                                       alignment: Alignment.center,
-                                      padding: EdgeInsets.all(8),
+                                      padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: Color(0xff00c170),
+                                        color: const Color(0xff00c170),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: FaIcon( // ✅ removed const
-                                        FontAwesomeIcons.circleInfo,
-                                        size: 36,
-                                        color: Colors.white,
-                                      ),
+                                      child: const FaIcon(FontAwesomeIcons.circleInfo, size: 36, color: Colors.white),
                                     ),
                                   ),
-                                  SizedBox(width: 20,),
-                                  Column(
+                                  const SizedBox(width: 20,),
+                                  const Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
@@ -187,17 +180,18 @@ class _MeditasiTerpaduState extends State<MeditasiTerpadu> {
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 12,),
-                              Text(
+                              const SizedBox(height: 12,),
+                              const Text(
                                 "Pilih jenis meditasi yang sesuai dengan kebutuhan Anda saat ini. Setiap sesi dirancang untuk membantu Anda mencapai ketenangan.",
                               ),
                             ],
                           ),
                         ),
                       ],
-                    )
+                    ),
                   ),
-              )
+                ),
+              ),
             ],
           )
       ),

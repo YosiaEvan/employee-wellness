@@ -1,5 +1,6 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/tenang/mindfulness_kesadaran.dart';
 import 'package:employee_wellness/services/tenang_service.dart';
 import 'package:flutter/material.dart';
@@ -140,10 +141,10 @@ class _PernapasanState extends State<Pernapasan> with SingleTickerProviderStateM
   }
 
   Future<void> _runSecondCounter(
-      int totalSeconds,
-      double start,
-      double end,
-      ) async {
+    int totalSeconds,
+    double start,
+    double end,
+  ) async {
     for (int i = totalSeconds; i > 0; i--) {
       if (!mounted || !isRunning) return;
 
@@ -162,6 +163,7 @@ class _PernapasanState extends State<Pernapasan> with SingleTickerProviderStateM
   @override
   void dispose() {
     _audioPlayer.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
 
@@ -170,59 +172,60 @@ class _PernapasanState extends State<Pernapasan> with SingleTickerProviderStateM
     return Scaffold(
       backgroundColor: Colors.white.withValues(alpha: 0.98),
       body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              const Header(),
-              Container(
-                padding: EdgeInsets.all(20),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Color(0xff445ffe),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 12,
-                      spreadRadius: 2,
-                      offset: Offset(0, 6),
-                    ),
-                  ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            const Header(),
+            Container(
+              padding: const EdgeInsets.all(20),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xff445ffe),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
                 ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
-                          child: SizedBox.square(
-                            dimension: 40,
-                            child: Container(
-                              alignment: Alignment.center,
-                              padding: EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(40),
-                              ),
-                              child: FaIcon(
-                                FontAwesomeIcons.arrowLeft,
-                                size: 20,
-                                color: Colors.white,
-                              ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: SizedBox.square(
+                          dimension: 40,
+                          child: Container(
+                            alignment: Alignment.center,
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(40),
+                            ),
+                            child: const FaIcon(
+                              FontAwesomeIcons.arrowLeft,
+                              size: 20,
+                              color: Colors.white,
                             ),
                           ),
                         ),
-                        Column(
+                      ),
+                      Expanded(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Text(
+                            const Text(
                               "Pernapasan 4-7-8",
                               style: TextStyle(
                                 fontSize: 20,
@@ -231,361 +234,357 @@ class _PernapasanState extends State<Pernapasan> with SingleTickerProviderStateM
                               ),
                             ),
                             Text(
-                              "Siklus ${cycleCount} dari ${requiredCycles}",
-                              style: TextStyle(
+                              "Siklus $cycleCount dari $requiredCycles",
+                              style: const TextStyle(
                                 fontSize: 16,
                                 color: Colors.white,
                               ),
                             )
                           ],
                         ),
-                        SizedBox.square(
-                          dimension: 40,
-                          child: Container(
-                            alignment: Alignment.center,
-                            padding: EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(40),
-                            ),
-                            child: FaIcon(
-                              FontAwesomeIcons.brain,
-                              size: 20,
-                              color: Colors.white,
-                            ),
+                      ),
+                      SizedBox.square(
+                        dimension: 40,
+                        child: Container(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(40),
+                          ),
+                          child: const FaIcon(
+                            FontAwesomeIcons.brain,
+                            size: 20,
+                            color: Colors.white,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
+            ),
 
-              // Main Content
-              Expanded(
-                  child: SingleChildScrollView(
-                      padding: EdgeInsets.all(20),
-                      child: (cycleCount < requiredCycles)
+            // Main Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: ResponsiveContainer(
+                  child: (cycleCount < requiredCycles)
                       ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            phase == "Siap untuk memulai?"
-                                ? "🧘"
-                                : phase == "Tarik Napas"
-                                ? "️⬆️"
-                                : phase == "Tahan Napas"
-                                ? "⏸️"
-                                : "⬇️"
-                            ,
-                            style: TextStyle(
-                              fontSize: 60,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              phase == "Siap untuk memulai?"
+                                  ? "🧘"
+                                  : phase == "Tarik Napas"
+                                      ? "️⬆️"
+                                      : phase == "Tahan Napas"
+                                          ? "⏸️"
+                                          : "⬇️",
+                              style: const TextStyle(
+                                fontSize: 60,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 20,),
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 350),
-                            curve: Curves.easeInOutCubic,
-                            width: currentSize,
-                            height: currentSize,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: phase == "Siap untuk memulai?"
-                                ? Colors.orange
-                                : phase == "Hembuskan Napas"
-                                ? Colors.green
-                                : phase == "Tarik Napas"
-                                ? Colors.blue
-                                : phase == "Tahan Napas"
-                                ? Colors.orange
-                                : Colors.green,
-                            ),
-                            alignment: Alignment.center,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  seconds > 0 ? "${seconds}" : "",
-                                  style: TextStyle(
-                                    fontSize: 32,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  seconds > 0 ? "detik" : "",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                  ),
-                                )
-                              ],
-                            )
-                          ),
-                          SizedBox(height: 20,),
-                          Text(
-                            phase,
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 20,),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              !isRunning ? ElevatedButton(
-                                onPressed: isRunning ? null : _startBreathingCycle,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color(0xff445ffe),
-                                  foregroundColor: Colors.white,
-                                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    FaIcon(
-                                      FontAwesomeIcons.play,
-                                    ),
-                                    SizedBox(width: 8,),
-                                    Text("Mulai"),
-                                  ],
-                                ),
-                              ) : Row(
+                            const SizedBox(height: 20),
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 350),
+                              curve: Curves.easeInOutCubic,
+                              width: currentSize,
+                              height: currentSize,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: phase == "Siap untuk memulai?"
+                                    ? Colors.orange
+                                    : phase == "Hembuskan Napas"
+                                        ? Colors.green
+                                        : phase == "Tarik Napas"
+                                            ? Colors.blue
+                                            : phase == "Tahan Napas"
+                                                ? Colors.orange
+                                                : Colors.green,
+                              ),
+                              alignment: Alignment.center,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  ElevatedButton(
-                                    onPressed: isRunning ? _stopCycle : null,
-                                    style: ElevatedButton.styleFrom(
-                                      foregroundColor: Colors.black,
-                                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        side: BorderSide(
-                                          color: Colors.grey,
-                                          width: 2,
-                                        ),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        FaIcon(
-                                          FontAwesomeIcons.pause,
-                                        ),
-                                        SizedBox(width: 8,),
-                                        Text("Jeda"),
-                                      ],
+                                  Text(
+                                    seconds > 0 ? "$seconds" : "",
+                                    style: const TextStyle(
+                                      fontSize: 32,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  SizedBox(width: 16,),
-                                  ElevatedButton(
-                                    onPressed: isRunning ? _resetCycle : null,
-                                    style: ElevatedButton.styleFrom(
-                                      foregroundColor: Colors.black,
-                                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        side: BorderSide(
-                                          color: Colors.grey,
-                                          width: 2,
-                                        ),
-                                      ),
+                                  Text(
+                                    seconds > 0 ? "detik" : "",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
                                     ),
-                                    child: Row(
-                                      children: [
-                                        FaIcon(
-                                          FontAwesomeIcons.arrowRotateLeft,
-                                        ),
-                                        SizedBox(width: 8,),
-                                        Text("Reset"),
-                                      ],
-                                    ),
-                                  ),
+                                  )
                                 ],
                               ),
-                            ],
-                          ),
-                          SizedBox(height: 20,),
-                          Container(
-                            padding: EdgeInsets.all(20),
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
-                                  blurRadius: 12,
-                                  spreadRadius: 2,
-                                  offset: Offset(0, 6),
-                                ),
-                              ],
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            const SizedBox(height: 20),
+                            Text(
+                              phase,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(
-                                  "Cara Berlatih:",
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                SizedBox(height: 16,),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    for (var entry in guide.asMap().entries) ...[
-                                      Row(
-                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                !isRunning
+                                    ? ElevatedButton(
+                                        onPressed: isRunning ? null : _startBreathingCycle,
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xff445ffe),
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                        ),
+                                        child: const Row(
+                                          children: [
+                                            FaIcon(FontAwesomeIcons.play),
+                                            SizedBox(width: 8),
+                                            Text("Mulai"),
+                                          ],
+                                        ),
+                                      )
+                                    : Row(
                                         children: [
-                                          Container(
-                                            width: 24,
-                                            height: 24,
-                                            decoration: BoxDecoration(
-                                              color: Color(0xfff3e8ff),
-                                              borderRadius: BorderRadius.circular(12),
-                                            ),
-                                            child: Center(
-                                              child: Text(
-                                                "${entry.value["id"]}",
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color(0xff9810fa),
+                                          ElevatedButton(
+                                            onPressed: isRunning ? _stopCycle : null,
+                                            style: ElevatedButton.styleFrom(
+                                              foregroundColor: Colors.black,
+                                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(12),
+                                                side: const BorderSide(
+                                                  color: Colors.grey,
+                                                  width: 2,
                                                 ),
                                               ),
                                             ),
+                                            child: const Row(
+                                              children: [
+                                                FaIcon(FontAwesomeIcons.pause),
+                                                SizedBox(width: 8),
+                                                Text("Jeda"),
+                                              ],
+                                            ),
                                           ),
-                                          SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              entry.value["description"],
-                                              style: TextStyle(fontSize: 16),
+                                          const SizedBox(width: 16),
+                                          ElevatedButton(
+                                            onPressed: isRunning ? _resetCycle : null,
+                                            style: ElevatedButton.styleFrom(
+                                              foregroundColor: Colors.black,
+                                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(12),
+                                                side: const BorderSide(
+                                                  color: Colors.grey,
+                                                  width: 2,
+                                                ),
+                                              ),
+                                            ),
+                                            child: const Row(
+                                              children: [
+                                                FaIcon(FontAwesomeIcons.arrowRotateLeft),
+                                                SizedBox(width: 8),
+                                                Text("Reset"),
+                                              ],
                                             ),
                                           ),
                                         ],
                                       ),
-                                      SizedBox(height: 12),
-                                    ],
-                                  ],
-                                ),
                               ],
                             ),
-                          ),
-                        ],
-                      ) : Padding(
-                        padding: EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            ScaleTransition(
-                              scale: _pulseAnimation,
-                              child: Container(
-                                alignment: Alignment.center,
-                                width: double.infinity,
-                                height: 160,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xff00d477),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: FaIcon(
-                                  FontAwesomeIcons.check,
-                                  size: 52,
-                                  color: Colors.white,
-                                ),
+                            const SizedBox(height: 20),
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.08),
+                                    blurRadius: 12,
+                                    spreadRadius: 2,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
                               ),
-                            ),
-                            SizedBox(height: 40,),
-                            Text(
-                              "Latihan Selesai 🎉",
-                              style: TextStyle(
-                                fontSize: 40,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(height: 8,),
-                            Text(
-                              "Anda telah menyelesaikan latihan Pernapasan 4-7-8. Bagaimana perasaan Anda sekarang?",
-                              style: TextStyle(
-                                fontSize: 20,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            SizedBox(height: 20,),
-
-                            // Button
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 320),
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Select Another Training Button
-                                  GestureDetector(
-                                    onTap: () => {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => MindfulnessKesadaran()),
-                                      ),
-                                    },
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                      decoration: BoxDecoration(
-                                        color: Color(0xff0090ed),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        "Pilih Latihan Lain",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
+                                  const Text(
+                                    "Cara Berlatih:",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
-
-                                  SizedBox(height: 16,),
-
-                                  // Continue to Manajemen Stress button
-                                  GestureDetector(
-                                    onTap: () => {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => MindfulnessKesadaran()),
-                                      ),
-                                    },
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                      decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(8),
-                                          border: Border.all(
-                                            color: Colors.grey,
-                                          )
-                                      ),
-                                      child: Text(
-                                        "Lanjut ke Manajemen Stress",
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w500,
+                                  const SizedBox(height: 16),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      for (var entry in guide.asMap().entries) ...[
+                                        Row(
+                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                          children: [
+                                            Container(
+                                              width: 24,
+                                              height: 24,
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xfff3e8ff),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  "${entry.value["id"]}",
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color(0xff9810fa),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                entry.value["description"],
+                                                style: const TextStyle(fontSize: 16),
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
+                                        const SizedBox(height: 12),
+                                      ],
+                                    ],
                                   ),
                                 ],
                               ),
                             ),
                           ],
+                        )
+                      : Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              ScaleTransition(
+                                scale: _pulseAnimation,
+                                child: Container(
+                                  alignment: Alignment.center,
+                                  width: double.infinity,
+                                  height: 160,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xff00d477),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const FaIcon(
+                                    FontAwesomeIcons.check,
+                                    size: 52,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 40),
+                              const Text(
+                                "Latihan Selesai 🎉",
+                                style: TextStyle(
+                                  fontSize: 40,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                "Anda telah menyelesaikan latihan Pernapasan 4-7-8. Bagaimana perasaan Anda sekarang?",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 20),
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 320),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) => const MindfulnessKesadaran()),
+                                        );
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 12),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xff0090ed),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Text(
+                                          "Pilih Latihan Lain",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) => const MindfulnessKesadaran()),
+                                        );
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 12),
+                                        decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(
+                                              color: Colors.grey,
+                                            )),
+                                        child: const Text(
+                                          "Lanjut ke Manajemen Stress",
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      )
-                  )
+                ),
               ),
-            ],
-          )
+            ),
+          ],
+        ),
       ),
     );
   }

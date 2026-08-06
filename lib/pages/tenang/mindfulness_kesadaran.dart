@@ -1,5 +1,6 @@
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/meditation_section_card.dart';
+import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/tenang/mindfulness_kesadaran/kesadaran_tubuh.dart';
 import 'package:employee_wellness/pages/tenang/mindfulness_kesadaran/momen_sekarang.dart';
 import 'package:employee_wellness/pages/tenang/mindfulness_kesadaran/panca_indra.dart';
@@ -19,22 +20,22 @@ class MindfulnessKesadaran extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
-              Header(),
+              const Header(),
               Container(
-                padding: EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Color(0xff008fed),
-                  borderRadius: BorderRadius.only(
+                  color: const Color(0xff008fed),
+                  borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(20),
                     bottomRight: Radius.circular(20),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withValues(alpha: 0.08),
                       blurRadius: 12,
                       spreadRadius: 2,
-                      offset: Offset(0, 6),
+                      offset: const Offset(0, 6),
                     ),
                   ],
                 ),
@@ -51,12 +52,12 @@ class MindfulnessKesadaran extends StatelessWidget {
                             dimension: 40,
                             child: Container(
                               alignment: Alignment.center,
-                              padding: EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(40),
                               ),
-                              child: FaIcon( // ✅ changed from Icon to FaIcon
+                              child: const FaIcon(
                                 FontAwesomeIcons.arrowLeft,
                                 size: 20,
                                 color: Colors.white,
@@ -64,11 +65,11 @@ class MindfulnessKesadaran extends StatelessWidget {
                             ),
                           ),
                         ),
-                        Column(
+                        const Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Text(
-                              "Mindfulness & Kesadaran",
+                              "Mindfulness",
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w700,
@@ -88,12 +89,12 @@ class MindfulnessKesadaran extends StatelessWidget {
                           dimension: 40,
                           child: Container(
                             alignment: Alignment.center,
-                            padding: EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(40),
                             ),
-                            child: FaIcon( // ✅ changed from Icon to FaIcon
+                            child: const FaIcon(
                               FontAwesomeIcons.brain,
                               size: 20,
                               color: Colors.white,
@@ -108,42 +109,43 @@ class MindfulnessKesadaran extends StatelessWidget {
 
               // Main Content
               Expanded(
-                child: SingleChildScrollView(
-                    padding: EdgeInsets.all(20),
-                    child: Column(
-                      children: [
-                        // 5 Panca Indra
-                        MeditationSectionCard(destination: PancaIndra(), sectionColor: Color(0xff0090ec), icon: FontAwesomeIcons.eye, heading: "5 Panca Indra", description: "Latihan kesadaran menggunakan kelima panca indra", targetText: "⏱️ 5 menit"),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: ResponsiveContainer(
+                      child: Column(
+                        children: [
+                        // Pernapasan
+                        const MeditationSectionCard(destination: Pernapasan(), sectionColor: Color(0xff445ffe), icon: FontAwesomeIcons.wind, heading: "Pernapasan 4-7-8", description: "Teknik pernapasan untuk relaksasi instan.", targetText: "⏱️ 5 menit"),
 
-                        SizedBox(height: 20,),
+                        const SizedBox(height: 20,),
 
-                        // Pernapasan 4-7-8
-                        MeditationSectionCard(destination: Pernapasan(), sectionColor: Color(0xff445ffe), icon: FontAwesomeIcons.wind, heading: "Pernapasan 4-7-8", description: "Teknik pernapasan untuk menenangkan sistem saraf", targetText: "⏱️ 5 menit"),
+                        // Panca Indra
+                        const MeditationSectionCard(destination: PancaIndra(), sectionColor: Color(0xff7541fc), icon: FontAwesomeIcons.eye, heading: "Teknik 5-4-3-2-1", description: "Gunakan panca indra untuk kembali ke momen ini.", targetText: "⏱️ 5 menit"),
 
-                        SizedBox(height: 20,),
+                        const SizedBox(height: 20,),
+
+                        // Momen Sekarang
+                        const MeditationSectionCard(destination: MomenSekarang(), sectionColor: Color(0xfff20868), icon: FontAwesomeIcons.clock, heading: "Momen Sekarang", description: "Latihan hadir sepenuhnya di saat ini.", targetText: "⏱️ 5 menit"),
+
+                        const SizedBox(height: 20,),
 
                         // Kesadaran Tubuh
-                        MeditationSectionCard(destination: KesadaranTubuh(), sectionColor: Color(0xffcb3bbd), icon: FontAwesomeIcons.userCheck, heading: "Kesadaran Tubuh", description: "Scan dan rasakan setiap bagian tubuh", targetText: "⏱️ 7 menit"),
+                        const MeditationSectionCard(destination: KesadaranTubuh(), sectionColor: Color(0xff00bca8), icon: FontAwesomeIcons.userCheck, heading: "Kesadaran Tubuh", description: "Rasakan sensasi tubuh Anda secara mendalam.", targetText: "⏱️ 5 menit"),
 
-                        SizedBox(height: 20,),
+                        const SizedBox(height: 20,),
 
-                        // Kesadaran Tubuh
-                        MeditationSectionCard(destination: MomenSekarang(), sectionColor: Color(0xfffa7200), icon: FontAwesomeIcons.hourglass, heading: "Momen Sekarang", description: "Hadir sepenuhnya di momen ini", targetText: "⏱️ 5 menit"),
-
-                        SizedBox(height: 20,),
-
-                        // Information
+                        // Info Card
                         Container(
-                          padding: EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
+                                color: Colors.black.withValues(alpha: 0.08),
                                 blurRadius: 12,
                                 spreadRadius: 2,
-                                offset: Offset(0, 6),
+                                offset: const Offset(0, 6),
                               ),
                             ],
                           ),
@@ -155,24 +157,20 @@ class MindfulnessKesadaran extends StatelessWidget {
                                     dimension: 60,
                                     child: Container(
                                       alignment: Alignment.center,
-                                      padding: EdgeInsets.all(8),
+                                      padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: Color(0xff00c170),
+                                        color: const Color(0xff00c170),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: FaIcon( // ✅ changed from Icon to FaIcon
-                                        FontAwesomeIcons.circleInfo,
-                                        size: 36,
-                                        color: Colors.white,
-                                      ),
+                                      child: const FaIcon(FontAwesomeIcons.circleInfo, size: 36, color: Colors.white),
                                     ),
                                   ),
-                                  SizedBox(width: 20,),
-                                  Column(
+                                  const SizedBox(width: 20,),
+                                  const Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        "Latihan Mindfulness",
+                                        "Apa itu Mindfulness?",
                                         style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.w500,
@@ -182,17 +180,18 @@ class MindfulnessKesadaran extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 12,),
-                              Text(
-                                "Mindfulness membantu Anda lebih hadir dan sadar di setiap momen. Pilih latihan yang sesuai dengan waktu Anda.",
+                              const SizedBox(height: 12,),
+                              const Text(
+                                "Mindfulness adalah latihan untuk hadir sepenuhnya di saat ini tanpa menghakimi. Ini membantu mengurangi kecemasan dan meningkatkan fokus.",
                               ),
                             ],
                           ),
                         ),
                       ],
-                    )
+                    ),
+                  ),
                 ),
-              )
+              ),
             ],
           )
       ),

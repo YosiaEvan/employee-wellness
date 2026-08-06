@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:employee_wellness/main.dart';
 import 'package:employee_wellness/pages/health_profile.dart';
+import 'package:employee_wellness/pages/settings_page.dart';
 import 'package:employee_wellness/services/user_cache_service.dart';
+import 'package:employee_wellness/services/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -61,6 +63,7 @@ class _HeaderState extends State<Header> with AutomaticKeepAliveClientMixin {
 
   Future<void> logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
+    final loc = AppLocalizations.of(context)!;
 
     try {
       // Clear local storage only (no API call)
@@ -74,7 +77,7 @@ class _HeaderState extends State<Header> with AutomaticKeepAliveClientMixin {
 
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Logout berhasil")),
+        SnackBar(content: Text(loc.translate('logout_success'))),
       );
 
       // Redirect to login and remove all previous routes
@@ -104,6 +107,7 @@ class _HeaderState extends State<Header> with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
+    final loc = AppLocalizations.of(context)!;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -112,82 +116,71 @@ class _HeaderState extends State<Header> with AutomaticKeepAliveClientMixin {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              // Avatar - Show photo from base64 or URL, otherwise show default icon
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: (fotoBase64 != null || fotoUrl != null)
-                    ? Colors.transparent
-                    : Colors.grey.withValues(alpha: 0.80),
-                backgroundImage: fotoUrl != null ? NetworkImage(fotoUrl!) : null,
-                child: fotoBase64 != null
-                    ? ClipOval(
-                        child: Image.memory(
-                          base64Decode(fotoBase64!),
-                          width: 40,
-                          height: 40,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(Icons.person, color: Colors.white, size: 24);
-                          },
-                        ),
-                      )
-                    : (fotoUrl == null
-                        ? const Icon(Icons.person, color: Colors.white, size: 24)
-                        : null),
-              ),
-
-              const SizedBox(width: 10),
-
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    namaLengkap,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w500,
+          // Avatar - Show photo from base64 or URL, otherwise show default icon
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: (fotoBase64 != null || fotoUrl != null)
+                ? Colors.transparent
+                : Colors.grey.withOpacity(0.80),
+            backgroundImage: fotoUrl != null ? NetworkImage(fotoUrl!) : null,
+            child: fotoBase64 != null
+                ? ClipOval(
+                    child: Builder(
+                      builder: (context) {
+                        try {
+                          return Image.memory(
+                            base64Decode(fotoBase64!),
+                            width: 40,
+                            height: 40,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(Icons.person, color: Colors.white, size: 24);
+                            },
+                          );
+                        } catch (e) {
+                          return const Icon(Icons.person, color: Colors.white, size: 24);
+                        }
+                      },
                     ),
-                  ),
-                  const Text(
-                    "Kesehatan & Kebahagiaan Karyawan",
-                    style: TextStyle(
-                      fontSize: 12,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  // Realtime clock - Widget terpisah untuk prevent rebuild parent
-                  const RealtimeClock(),
-                ],
-              ),
-            ],
+                  )
+                : (fotoUrl == null
+                    ? const Icon(Icons.person, color: Colors.white, size: 24)
+                    : null),
           ),
 
+          const SizedBox(width: 10),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  namaLengkap,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  loc.translate('app_subtitle'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                // Realtime clock - Widget terpisah untuk prevent rebuild parent
+                const RealtimeClock(),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 10),
+
           Row(
             children: [
-              // Stack(
-              //   children: [
-              //     IconButton(
-              //       onPressed: () {},
-              //       icon: const Icon(Icons.notifications_outlined),
-              //     ),
-              //     Positioned(
-              //         right: 8,
-              //         top: 8,
-              //         child: Container(
-              //           width: 8,
-              //           height: 8,
-              //           decoration: const BoxDecoration(
-              //             color: Colors.red,
-              //             shape: BoxShape.circle,
-              //           ),
-              //         )
-              //     ),
-              //   ],
-              // ),
-              //
-              // const SizedBox(width: 10),
-
               PopupMenuButton<String>(
                 color: Colors.white,
                 elevation: 4,
@@ -205,33 +198,51 @@ class _HeaderState extends State<Header> with AutomaticKeepAliveClientMixin {
                       // Refresh user data when returning from profile page
                       _loadUserData();
                     });
+                  } else if (value == 'settings') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const SettingsPage()),
+                    );
                   } else if (value == 'logout') {
                     logout(context);
                   }
                 },
                 itemBuilder: (BuildContext context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'profile',
                     child: SizedBox(
                       width: 191,
                       child: Row(
                         children: [
-                          FaIcon(FontAwesomeIcons.circleUser, size: 20, color: Colors.blue),
-                          SizedBox(width: 12),
-                          Text("Profil Kesehatan"),
+                          const FaIcon(FontAwesomeIcons.circleUser, size: 20, color: Colors.blue),
+                          const SizedBox(width: 12),
+                          Text(loc.translate('profile_menu')),
                         ],
                       ),
                     )
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
+                    value: 'settings',
+                    child: SizedBox(
+                      width: 191,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.settings, size: 20, color: Colors.blueGrey),
+                          const SizedBox(width: 12),
+                          Text(loc.translate('settings_title')),
+                        ],
+                      ),
+                    )
+                  ),
+                  PopupMenuItem(
                     value: 'logout',
                     child: SizedBox(
                       width: 191,
                       child: Row(
                         children: [
-                          Icon(Icons.logout, color: Colors.red),
-                          SizedBox(width: 12),
-                          Text("Keluar"),
+                          const Icon(Icons.logout, color: Colors.red),
+                          const SizedBox(width: 12),
+                          Text(loc.translate('logout_button')),
                         ],
                       ),
                     )
@@ -324,18 +335,21 @@ class _RealtimeClockState extends State<RealtimeClock> {
   void _updateClockDisplay(DateTime time) {
     if (!mounted) return;
 
-    // Format hari dalam Bahasa Indonesia
+    final locale = Localizations.localeOf(context).languageCode;
+    final isIndonesian = locale == 'id';
+
+    // Format hari
     final List<String> hariIndonesia = [
-      'Senin',
-      'Selasa',
-      'Rabu',
-      'Kamis',
-      'Jumat',
-      'Sabtu',
-      'Minggu'
+      'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'
+    ];
+    final List<String> dayNamesEnglish = [
+      'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
     ];
 
-    final dayOfWeek = hariIndonesia[time.weekday - 1];
+    final dayOfWeek = isIndonesian 
+        ? hariIndonesia[time.weekday - 1] 
+        : dayNamesEnglish[time.weekday - 1];
+    
     final formattedTime = DateFormat('HH:mm:ss').format(time);
     final formattedDate = DateFormat('dd/MM/yyyy').format(time);
 
@@ -348,6 +362,7 @@ class _RealtimeClockState extends State<RealtimeClock> {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         const Icon(
           Icons.access_time,
