@@ -58,6 +58,7 @@ class ModuleSectionCard extends StatelessWidget {
                 SizedBox.square(
                   dimension: 60,
                   child: Container(
+                    alignment: Alignment.center,
                     padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: sectionColor,
@@ -112,6 +113,7 @@ class ModuleSectionCard extends StatelessWidget {
                       SizedBox.square(
                         dimension: 10,
                         child: Container(
+                          alignment: Alignment.center,
                           padding: EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: sectionColor,
@@ -140,6 +142,7 @@ class ModuleSectionCard extends StatelessWidget {
             top: -4,
             right: -4,
             child: Container(
+              alignment: Alignment.center,
               width: 28,
               height: 28,
               decoration: BoxDecoration(

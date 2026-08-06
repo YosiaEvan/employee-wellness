@@ -45,6 +45,7 @@ class QuickReliefTechniqueCard extends StatelessWidget {
             SizedBox.square(
               dimension: 60,
               child: Container(
+                alignment: Alignment.center,
                 padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: sectionColor,

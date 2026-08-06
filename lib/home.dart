@@ -89,6 +89,7 @@ class _HomePageState extends State<HomePage> {
                                   SizedBox.square(
                                     dimension: 60,
                                     child: Container(
+                                      alignment: Alignment.center,
                                       padding: EdgeInsets.all(8),
                                       decoration: BoxDecoration(
                                         color: Color(0xfff67200),

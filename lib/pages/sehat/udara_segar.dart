@@ -480,6 +480,7 @@ class _UdaraSegarState extends State<UdaraSegar>
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: hariTarikNapas >= 5 ? Color(0xFF4CAF50) : Color(0xff009bf4),
@@ -594,6 +595,7 @@ class _UdaraSegarState extends State<UdaraSegar>
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Color(0xff009bf4),
@@ -690,6 +692,7 @@ class _UdaraSegarState extends State<UdaraSegar>
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Color(0xff1e89fe),

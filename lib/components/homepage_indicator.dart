@@ -85,6 +85,7 @@ class _IndicatorState extends State<Indicator> {
                           SizedBox.square(
                             dimension: 60,
                             child: Container(
+                              alignment: Alignment.center,
                               padding: EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Colors.red,
@@ -278,6 +279,7 @@ class _IndicatorState extends State<Indicator> {
                           SizedBox.square(
                             dimension: 60,
                             child: Container(
+                              alignment: Alignment.center,
                               padding: EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Colors.blue,
@@ -471,6 +473,7 @@ class _IndicatorState extends State<Indicator> {
                           SizedBox.square(
                             dimension: 60,
                             child: Container(
+                              alignment: Alignment.center,
                               padding: EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Colors.green,

@@ -473,6 +473,7 @@ class _HealthProfileState extends State<HealthProfile> {
                                   SizedBox.square(
                                     dimension: 40,
                                     child: Container(
+                                      alignment: Alignment.center,
                                       padding: EdgeInsets.all(8),
                                       decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(12)),
                                       child: FaIcon(FontAwesomeIcons.person, size: 20, color: Colors.white), // ✅ fixed
@@ -550,7 +551,7 @@ class _HealthProfileState extends State<HealthProfile> {
                                                         ? Image.memory(base64Decode(_photoBase64!), height: 200, fit: BoxFit.cover)
                                                         : (_imageFile != null
                                                             ? Image.file(_imageFile!, height: 200, fit: BoxFit.cover)
-                                                            : Container(height: 200, color: Colors.grey.shade200, child: Icon(Icons.person, size: 80, color: Colors.grey.shade400))),
+                                                            : Container(alignment: Alignment.center, height: 200, color: Colors.grey.shade200, child: Icon(Icons.person, size: 80, color: Colors.grey.shade400))),
                                                   ),
                                                 ),
                                                 Positioned(
@@ -648,6 +649,7 @@ class _HealthProfileState extends State<HealthProfile> {
                                   SizedBox.square(
                                     dimension: 40,
                                     child: Container(
+                                      alignment: Alignment.center,
                                       padding: EdgeInsets.all(8),
                                       decoration: BoxDecoration(color: Color(0xff9810fa), borderRadius: BorderRadius.circular(12)),
                                       child: FaIcon(FontAwesomeIcons.ruler, size: 20, color: Colors.white), // ✅ fixed
@@ -719,6 +721,7 @@ class _HealthProfileState extends State<HealthProfile> {
                                   SizedBox.square(
                                     dimension: 40,
                                     child: Container(
+                                      alignment: Alignment.center,
                                       padding: EdgeInsets.all(8),
                                       decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(12)),
                                       child: FaIcon(FontAwesomeIcons.bullseye, size: 20, color: Colors.white), // ✅ fixed
@@ -850,6 +853,7 @@ class _HealthProfileState extends State<HealthProfile> {
                                   SizedBox.square(
                                     dimension: 40,
                                     child: Container(
+                                      alignment: Alignment.center,
                                       padding: EdgeInsets.all(8),
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
@@ -1061,6 +1065,7 @@ class _HealthProfileState extends State<HealthProfile> {
                                   SizedBox.square(
                                     dimension: 40,
                                     child: Container(
+                                      alignment: Alignment.center,
                                       padding: EdgeInsets.all(8),
                                       decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(12)),
                                       child: FaIcon(FontAwesomeIcons.phone, size: 20, color: Colors.white), // ✅ fixed

@@ -125,6 +125,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Color(0xfffb8f00),
@@ -226,6 +227,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Color(0xff00aa61),
@@ -343,6 +345,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Color(0xff008dd4),
@@ -476,6 +479,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Color(0xffbd4aef),
@@ -702,6 +706,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Color(0xffec0865),
@@ -740,6 +745,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                     SizedBox.square(
                                       dimension: 10,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         padding: EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xffec0865),
@@ -766,6 +772,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                     SizedBox.square(
                                       dimension: 10,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         padding: EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xffec0865),
@@ -792,6 +799,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                     SizedBox.square(
                                       dimension: 10,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         padding: EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xffec0865),
@@ -818,6 +826,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                     SizedBox.square(
                                       dimension: 10,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         padding: EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xffec0865),

@@ -165,6 +165,7 @@ class _PernapasanMindfulState extends State<PernapasanMindful> with TickerProvid
                           child: SizedBox.square(
                             dimension: 40,
                             child: Container(
+                              alignment: Alignment.center,
                               padding: EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
@@ -201,6 +202,7 @@ class _PernapasanMindfulState extends State<PernapasanMindful> with TickerProvid
                         SizedBox.square(
                           dimension: 40,
                           child: Container(
+                            alignment: Alignment.center,
                             padding: EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.2),

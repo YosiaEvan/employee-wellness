@@ -92,6 +92,7 @@ class _KesadaranTubuhState extends State<KesadaranTubuh> with TickerProviderStat
                           child: SizedBox.square(
                             dimension: 40,
                             child: Container(
+                              alignment: Alignment.center,
                               padding: EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
@@ -128,6 +129,7 @@ class _KesadaranTubuhState extends State<KesadaranTubuh> with TickerProviderStat
                         SizedBox.square(
                           dimension: 40,
                           child: Container(
+                            alignment: Alignment.center,
                             padding: EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.2),
@@ -294,6 +296,7 @@ class _KesadaranTubuhState extends State<KesadaranTubuh> with TickerProviderStat
                             ScaleTransition(
                               scale: _pulseAnimation,
                               child: Container(
+                                alignment: Alignment.center,
                                 width: double.infinity,
                                 height: 160,
                                 decoration: BoxDecoration(

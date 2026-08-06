@@ -52,6 +52,7 @@ class MeditationSectionCard extends StatelessWidget {
                 SizedBox.square(
                   dimension: 60,
                   child: Container(
+                    alignment: Alignment.center,
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: sectionColor,

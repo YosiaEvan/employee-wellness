@@ -12,6 +12,7 @@ class Register extends StatefulWidget {
 }
 
 class _RegisterState extends State<Register> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController namaController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -23,34 +24,12 @@ class _RegisterState extends State<Register> {
   bool isPrivacyAccepted = false;
 
   Future<void> register() async {
-    // Validation
-    if (namaController.text.trim().isEmpty) {
-      showSnackBar("Nama lengkap harus diisi");
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    if (emailController.text.trim().isEmpty) {
-      showSnackBar("Email harus diisi");
-      return;
-    }
-
-    if (passwordController.text.trim().isEmpty) {
-      showSnackBar("Password harus diisi");
-      return;
-    }
-
-    if (confirmPasswordController.text.trim().isEmpty) {
-      showSnackBar("Konfirmasi password harus diisi");
-      return;
-    }
-
-    if (passwordController.text != confirmPasswordController.text) {
-      showSnackBar("Password dan konfirmasi password tidak sama");
-      return;
-    }
-
-    if (companyTokenController.text.trim().isEmpty) {
-      showSnackBar("Token perusahaan harus diisi");
+    if (!isPrivacyAccepted) {
+      showSnackBar("Anda harus menyetujui Kebijakan Privasi");
       return;
     }
 
@@ -58,34 +37,45 @@ class _RegisterState extends State<Register> {
       isLoading = true;
     });
 
-    // Call register API
-    final result = await AuthRegisterService.register(
-      namaLengkap: namaController.text.trim(),
-      email: emailController.text.trim(),
-      password: passwordController.text.trim(),
-      confirmPassword: confirmPasswordController.text.trim(),
-      tokenPerusahaan: companyTokenController.text.trim(),
-    );
-
-    setState(() {
-      isLoading = false;
-    });
-
-    if (result["success"]) {
-      showSnackBar(result["message"]);
-
-      // Navigate to verify email page and remove all previous routes
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) => VerifyEmail(
-            email: emailController.text.trim(),
-          ),
-        ),
-        (route) => false, // Remove all previous routes
+    try {
+      // Call register API
+      final result = await AuthRegisterService.register(
+        namaLengkap: namaController.text.trim(),
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+        confirmPassword: confirmPasswordController.text.trim(),
+        tokenPerusahaan: companyTokenController.text.trim(),
       );
-    } else {
-      showSnackBar(result["message"]);
+
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
+
+      if (result["success"]) {
+        showSnackBar(result["message"]);
+
+        // Navigate to verify email page and remove all previous routes
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VerifyEmail(
+              email: emailController.text.trim(),
+            ),
+          ),
+          (route) => false, // Remove all previous routes
+        );
+      } else {
+        showSnackBar(result["message"]);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        showSnackBar("Terjadi kesalahan: $e");
+      }
     }
   }
 
@@ -97,8 +87,6 @@ class _RegisterState extends State<Register> {
 
   @override
   Widget build(BuildContext context) {
-    final _formKey = GlobalKey<FormState>();
-    
     return Scaffold(
       backgroundColor: Color(0xFFEDFDF4),
       body: LayoutBuilder(
@@ -116,7 +104,7 @@ class _RegisterState extends State<Register> {
                     CircleAvatar(
                       radius: 40,
                       backgroundColor: const Color(0xFF00C97A),
-                      child: Icon(FontAwesomeIcons.building, size: 40, color: Colors.white),
+                      child: FaIcon(FontAwesomeIcons.building, size: 40, color: Colors.white),
                     ),
 
                     const SizedBox(height: 20),
@@ -177,9 +165,12 @@ class _RegisterState extends State<Register> {
                               TextFormField(
                                 controller: namaController,
                                 decoration: InputDecoration(
-                                  prefixIcon: Icon(
-                                    FontAwesomeIcons.user,
-                                    size: 20,
+                                  prefixIcon: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: FaIcon(
+                                      FontAwesomeIcons.user,
+                                      size: 20,
+                                    ),
                                   ),
                                   labelText: "Nama Lengkap",
                                   border: OutlineInputBorder(
@@ -199,9 +190,12 @@ class _RegisterState extends State<Register> {
                               TextFormField(
                                 controller: emailController,
                                 decoration: InputDecoration(
-                                  prefixIcon: Icon(
-                                    FontAwesomeIcons.envelope,
-                                    size: 20,
+                                  prefixIcon: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: FaIcon(
+                                      FontAwesomeIcons.envelope,
+                                      size: 20,
+                                    ),
                                   ),
                                   labelText: "Email",
                                   border: OutlineInputBorder(
@@ -226,9 +220,12 @@ class _RegisterState extends State<Register> {
                                 controller: passwordController,
                                 obscureText: _obscurePassword,
                                 decoration: InputDecoration(
-                                  prefixIcon: Icon(
-                                    FontAwesomeIcons.lock,
-                                    size: 20,
+                                  prefixIcon: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: FaIcon(
+                                      FontAwesomeIcons.lock,
+                                      size: 20,
+                                    ),
                                   ),
                                   suffixIcon: IconButton(
                                     onPressed: () {
@@ -284,9 +281,12 @@ class _RegisterState extends State<Register> {
                                 controller: confirmPasswordController,
                                 obscureText: _obscureConfirmPassword,
                                 decoration: InputDecoration(
-                                  prefixIcon: Icon(
-                                    FontAwesomeIcons.lock,
-                                    size: 20,
+                                  prefixIcon: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: FaIcon(
+                                      FontAwesomeIcons.lock,
+                                      size: 20,
+                                    ),
                                   ),
                                   suffixIcon: IconButton(
                                     onPressed: () {
@@ -323,9 +323,12 @@ class _RegisterState extends State<Register> {
                               TextFormField(
                                 controller: companyTokenController,
                                 decoration: InputDecoration(
-                                  prefixIcon: Icon(
-                                    FontAwesomeIcons.building,
-                                    size: 20,
+                                  prefixIcon: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: FaIcon(
+                                      FontAwesomeIcons.building,
+                                      size: 20,
+                                    ),
                                   ),
                                   hintText: "Masukan token perusahaan",
                                   labelText: "Token Perusahaan",

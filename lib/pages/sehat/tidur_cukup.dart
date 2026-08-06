@@ -237,6 +237,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                               SizedBox.square(
                                 dimension: 80,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Color(0xff715cff),
@@ -488,6 +489,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Color(0xff715cff),
@@ -671,6 +673,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Color(0xff715cff),
@@ -775,6 +778,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Color(0xff715cff),

@@ -88,17 +88,20 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
 
   /// Auto-start pedometer tracking
   Future<void> _autoStartTracking() async {
-    // Request permission dulu
-    final status = await Permission.activityRecognition.request();
+    // Request permissions for Android 14+ (including Android 16)
+    Map<Permission, PermissionStatus> statuses = await [
+      Permission.activityRecognition,
+      Permission.ignoreBatteryOptimizations,
+    ].request();
 
-    if (status.isGranted) {
+    if (statuses[Permission.activityRecognition]!.isGranted) {
+      // Inisialisasi background tracker jika belum
+      if (!BackgroundStepsTracker.isInitialized) {
+        await BackgroundStepsTracker.initialize();
+      }
       startListening();
     } else {
-      // Tetap coba request ulang
-      await Permission.activityRecognition.request();
-      if (await Permission.activityRecognition.isGranted) {
-        startListening();
-      }
+      print("⚠️ Permission denied for activity recognition");
     }
   }
 
@@ -488,6 +491,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                           SizedBox.square(
                             dimension: 80,
                             child: Container(
+                              alignment: Alignment.center,
                               padding: EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Color(0xff1e89fe),
@@ -639,6 +643,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Color(0xff1e89fe),
@@ -866,6 +871,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Color(0xff1e89fe),
@@ -908,6 +914,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                                     SizedBox.square(
                                       dimension: 10,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         padding: EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xff1e89fe),
@@ -934,6 +941,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                                     SizedBox.square(
                                       dimension: 10,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         padding: EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xff1e89fe),
@@ -960,6 +968,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                                     SizedBox.square(
                                       dimension: 10,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         padding: EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xff1e89fe),
@@ -986,6 +995,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                                     SizedBox.square(
                                       dimension: 10,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         padding: EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xff1e89fe),

@@ -268,6 +268,7 @@ void _checkHealthChallenge() {
                           SizedBox.square(
                             dimension: 80,
                             child: Container(
+                              alignment: Alignment.center,
                               padding: EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Color(0xff00c368),
@@ -385,6 +386,7 @@ void _checkHealthChallenge() {
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Color(0xff00c368),
@@ -487,6 +489,7 @@ void _checkHealthChallenge() {
                                         SizedBox.square(
                                           dimension: 10,
                                           child: Container(
+                                            alignment: Alignment.center,
                                             padding: EdgeInsets.all(8),
                                             decoration: BoxDecoration(
                                               color: Color(0xfffb2c36),
@@ -569,6 +572,7 @@ void _checkHealthChallenge() {
                                         SizedBox.square(
                                           dimension: 10,
                                           child: Container(
+                                            alignment: Alignment.center,
                                             padding: EdgeInsets.all(8),
                                             decoration: BoxDecoration(
                                               color: Color(0xff2b7fff),
@@ -651,6 +655,7 @@ void _checkHealthChallenge() {
                                         SizedBox.square(
                                           dimension: 10,
                                           child: Container(
+                                            alignment: Alignment.center,
                                             padding: EdgeInsets.all(8),
                                             decoration: BoxDecoration(
                                               color: Color(0xff00c950),
@@ -736,6 +741,7 @@ void _checkHealthChallenge() {
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Color(0xff00c368),
@@ -910,6 +916,7 @@ void _checkHealthChallenge() {
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: isChallengeAchieved

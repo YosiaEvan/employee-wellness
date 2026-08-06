@@ -55,6 +55,7 @@ class _TeknikQuickReliefState extends State<TeknikQuickRelief> {
                           child: SizedBox.square(
                             dimension: 40,
                             child: Container(
+                              alignment: Alignment.center,
                               padding: EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
@@ -91,6 +92,7 @@ class _TeknikQuickReliefState extends State<TeknikQuickRelief> {
                         SizedBox.square(
                           dimension: 40,
                           child: Container(
+                            alignment: Alignment.center,
                             padding: EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.2),
@@ -137,6 +139,7 @@ class _TeknikQuickReliefState extends State<TeknikQuickRelief> {
                                     SizedBox.square(
                                       dimension: 60,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         padding: EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xff00c170),

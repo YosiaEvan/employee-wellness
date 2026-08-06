@@ -175,6 +175,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                               SizedBox.square(
                                 dimension: 80,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: jumlahGelas == targetGelas ? Color(0xfff3b751) : Color(0xff00cbf6),
@@ -374,6 +375,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Color(0xff009bf4),
@@ -475,6 +477,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Color(0xff1e89fe),
@@ -517,6 +520,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                     SizedBox.square(
                                       dimension: 10,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         padding: EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xff2b7fff),
@@ -543,6 +547,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                     SizedBox.square(
                                       dimension: 10,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         padding: EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xff2b7fff),
@@ -569,6 +574,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                     SizedBox.square(
                                       dimension: 10,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         padding: EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xff2b7fff),
@@ -595,6 +601,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                     SizedBox.square(
                                       dimension: 10,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         padding: EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xff2b7fff),
@@ -621,6 +628,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                     SizedBox.square(
                                       dimension: 10,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         padding: EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xff2b7fff),
@@ -647,6 +655,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                     SizedBox.square(
                                       dimension: 10,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         padding: EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xff2b7fff),
@@ -690,6 +699,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                               SizedBox.square(
                                 dimension: 60,
                                 child: Container(
+                                  alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Color(0xff4ab3cd),

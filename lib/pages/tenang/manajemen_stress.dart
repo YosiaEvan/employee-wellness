@@ -54,6 +54,7 @@ class _ManajemenStressState extends State<ManajemenStress> {
                           child: SizedBox.square(
                             dimension: 40,
                             child: Container(
+                              alignment: Alignment.center,
                               padding: EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
@@ -90,6 +91,7 @@ class _ManajemenStressState extends State<ManajemenStress> {
                         SizedBox.square(
                           dimension: 40,
                           child: Container(
+                            alignment: Alignment.center,
                             padding: EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.2),
@@ -136,6 +138,7 @@ class _ManajemenStressState extends State<ManajemenStress> {
                                     SizedBox.square(
                                       dimension: 60,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         padding: EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xff00c170),
@@ -192,6 +195,7 @@ class _ManajemenStressState extends State<ManajemenStress> {
                             child: Column(
                               children: [
                                 Container(
+                                  alignment: Alignment.center,
                                   width: 100,
                                   height: 100,
                                   decoration: BoxDecoration(
@@ -325,6 +329,7 @@ class _ManajemenStressState extends State<ManajemenStress> {
                                     SizedBox.square(
                                       dimension: 60,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         padding: EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xff00c170),

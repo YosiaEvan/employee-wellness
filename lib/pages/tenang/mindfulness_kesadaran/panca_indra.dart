@@ -102,6 +102,7 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                           child: SizedBox.square(
                             dimension: 40,
                             child: Container(
+                              alignment: Alignment.center,
                               padding: EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
@@ -138,6 +139,7 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                         SizedBox.square(
                           dimension: 40,
                           child: Container(
+                            alignment: Alignment.center,
                             padding: EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.2),
@@ -173,6 +175,7 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                                     ScaleTransition(
                                       scale: _pulseAnimation,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         width: 140,
                                         height: 140,
                                         decoration: BoxDecoration(
@@ -209,6 +212,7 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                                     ScaleTransition(
                                       scale: _pulseAnimation,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         width: 140,
                                         height: 140,
                                         decoration: BoxDecoration(
@@ -245,6 +249,7 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                                     ScaleTransition(
                                       scale: _pulseAnimation,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         width: 140,
                                         height: 140,
                                         decoration: BoxDecoration(
@@ -281,6 +286,7 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                                     ScaleTransition(
                                       scale: _pulseAnimation,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         width: 140,
                                         height: 140,
                                         decoration: BoxDecoration(
@@ -317,6 +323,7 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                                     ScaleTransition(
                                       scale: _pulseAnimation,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         width: 140,
                                         height: 140,
                                         decoration: BoxDecoration(
@@ -354,6 +361,7 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                                     ScaleTransition(
                                       scale: _pulseAnimation,
                                       child: Container(
+                                        alignment: Alignment.center,
                                         width: 160,
                                         height: 160,
                                         decoration: BoxDecoration(

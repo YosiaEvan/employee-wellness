@@ -32,12 +32,15 @@ class BackgroundStepsTracker {
     try {
       print('🚀 Initializing background steps tracker...');
 
-      // Request permission
-      final permissionStatus = await Permission.activityRecognition.request();
+      // Request permissions (Activity Recognition and Battery Optimization)
+      Map<Permission, PermissionStatus> statuses = await [
+        Permission.activityRecognition,
+        Permission.ignoreBatteryOptimizations,
+      ].request();
 
-      if (!permissionStatus.isGranted) {
+      if (statuses[Permission.activityRecognition] != PermissionStatus.granted) {
         print('❌ Activity recognition permission denied');
-        return false;
+        // Tetap lanjut jika ignoreBatteryOptimizations diberikan, atau beri tahu user
       }
 
       // Get current date
@@ -159,7 +162,16 @@ class BackgroundStepsTracker {
 
       // Update step count
       final calculatedSteps = rawSteps - _baselineSteps;
-      if (calculatedSteps >= 0) {
+      
+      // Handle sensor reset (reboot)
+      if (calculatedSteps < 0) {
+        print('⚠️ Sensor reset detected (likely reboot). Resetting baseline.');
+        _baselineSteps = rawSteps - _todaySteps;
+        if (_baselineSteps < 0) _baselineSteps = rawSteps; // Fallback
+        
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('baseline_steps_$_currentDate', _baselineSteps);
+      } else {
         _todaySteps = calculatedSteps;
       }
 

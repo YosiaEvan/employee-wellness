@@ -40,6 +40,7 @@ class SehatHomepage extends StatelessWidget {
                     child: SizedBox.square(
                       dimension: 40,
                       child: Container(
+                        alignment: Alignment.center,
                         padding: EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.2),
@@ -66,6 +67,7 @@ class SehatHomepage extends StatelessWidget {
                     child: SizedBox.square(
                       dimension: 40,
                       child: Container(
+                        alignment: Alignment.center,
                         padding: EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.2),
@@ -182,6 +184,7 @@ class SehatHomepage extends StatelessWidget {
               SizedBox.square(
                 dimension: 60,
                 child: Container(
+                  alignment: Alignment.center,
                   padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: Color(0xff00c170),

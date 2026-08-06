@@ -205,6 +205,7 @@ class _PernapasanState extends State<Pernapasan> with SingleTickerProviderStateM
                           child: SizedBox.square(
                             dimension: 40,
                             child: Container(
+                              alignment: Alignment.center,
                               padding: EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
@@ -241,6 +242,7 @@ class _PernapasanState extends State<Pernapasan> with SingleTickerProviderStateM
                         SizedBox.square(
                           dimension: 40,
                           child: Container(
+                            alignment: Alignment.center,
                             padding: EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.2),
@@ -482,6 +484,7 @@ class _PernapasanState extends State<Pernapasan> with SingleTickerProviderStateM
                             ScaleTransition(
                               scale: _pulseAnimation,
                               child: Container(
+                                alignment: Alignment.center,
                                 width: double.infinity,
                                 height: 160,
                                 decoration: BoxDecoration(
