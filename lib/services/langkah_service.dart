@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
+import 'local_database_service.dart';
 
 /// Service untuk tracking Jalan 10.000 Langkah dengan Offline Queue
 class LangkahService {
@@ -9,24 +10,43 @@ class LangkahService {
   static const String _initialStepsKey = 'initial_steps';
   static const String _pendingQueueKey = 'pending_langkah_queue'; // Queue untuk data yang belum terkirim
 
-  /// GET - Ambil data langkah hari ini dari API
+  /// GET - Ambil data langkah hari ini dari API (offline-first)
   static Future<Map<String, dynamic>> getStatusLangkah() async {
     try {
-      print("📤 Get Status Langkah Request:");
-      print("URL: /user/langkah");
-      print("🔐 Using Bearer token (auto-refresh if expired)");
+      // 1. Baca dari SQLite lokal dulu
+      final tanggal = LocalDatabaseService.todayStr();
+      final local = await LocalDatabaseService.instance.getLangkah(tanggal);
+      if (local != null) {
+        final totalSteps = local['total_steps'] ?? 0;
+        return {
+          "success": true,
+          "hari_ini": {
+            'jumlah_langkah': totalSteps,
+            'target_langkah': 10000,
+            'persentase': (totalSteps / 10000 * 100).clamp(0, 100),
+            'sudah_selesai': totalSteps >= 10000,
+            'kalori_terbakar': local['kalori_terbakar'],
+          },
+          "minggu_ini": {},
+        };
+      }
 
+      // 2. Tidak ada lokal -> ambil dari server
       final response = await ApiService.get("/user/langkah");
-
-      print("📥 Get Status Langkah Response: ${response.statusCode}");
-      print("Body: ${response.body}");
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-
+        final hariIni = responseData['hari_ini'];
+        if (hariIni != null) {
+          await LocalDatabaseService.instance.upsertLangkah(
+            tanggal: tanggal,
+            totalSteps: (hariIni['jumlah_langkah'] ?? 0),
+            kaloriTerbakar: hariIni['kalori_terbakar'],
+          );
+        }
         return {
           "success": true,
-          "hari_ini": responseData['hari_ini'],
+          "hari_ini": hariIni,
           "minggu_ini": responseData['minggu_ini'],
         };
       } else {
@@ -226,12 +246,18 @@ class LangkahService {
     };
   }
 
-  /// Update langkah hari ini (save ke queue, tidak langsung POST)
+  /// Update langkah hari ini (save ke queue + SQLite, tidak langsung POST)
   static Future<Map<String, dynamic>> updateLangkahLocal({
     required int jumlahLangkah,
     String? tanggal,
   }) async {
     final date = tanggal ?? DateTime.now().toIso8601String().split('T')[0];
+
+    // Simpan ke SQLite (source of truth offline)
+    await LocalDatabaseService.instance.upsertLangkah(
+      tanggal: date,
+      totalSteps: jumlahLangkah,
+    );
 
     // Simpan ke queue untuk di-sync nanti
     await saveDailyRecordToQueue(

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import '../database/steps_database.dart';
+import 'local_database_service.dart';
 import 'sehat_kpi_service.dart';
 
 /// Service untuk mengelola sinkronisasi data langkah dari lokal ke server
@@ -29,6 +30,13 @@ class StepsSyncService {
 
       await _db.insertOrUpdateSteps(
         userId: userId,
+        tanggal: tanggal,
+        totalSteps: totalSteps,
+      );
+
+      // Juga simpan ke SQLite (LocalDatabaseService) agar data langkah
+      // tersedia offline di satu tempat.
+      await LocalDatabaseService.instance.upsertLangkah(
         tanggal: tanggal,
         totalSteps: totalSteps,
       );
@@ -117,6 +125,8 @@ class StepsSyncService {
           // Mark as synced in local DB
           await _db.markAsSynced(userId: userId, tanggal: tanggal);
         }
+        // Tandai juga di SQLite
+        await LocalDatabaseService.instance.markSyncedByDate('langkah', tanggal);
         print('✅ Synced successfully: $tanggal');
         return true;
       } else {

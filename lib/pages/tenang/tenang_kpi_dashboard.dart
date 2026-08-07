@@ -270,22 +270,6 @@ class _TenangKPIDashboardState extends State<TenangKPIDashboard> with AutoRefres
     final progressPersen = (ringkasan['progress_persen'] ?? 0).toDouble();
     final mingguKe = periode['minggu_ke'];
 
-    Map<String, dynamic> getAktivitas(String nama) {
-      try {
-        return aktivitas.firstWhere(
-          (a) => a['nama'].toString().toLowerCase().contains(nama.toLowerCase()),
-          orElse: () => {'tercapai': 0, 'target_per_minggu': 0},
-        );
-      } catch (e) {
-        return {'tercapai': 0, 'target_per_minggu': 0};
-      }
-    }
-
-    final meditasi = getAktivitas('Meditasi');
-    final mindfulness = getAktivitas('Mindfulness');
-    final stress = getAktivitas('Stress');
-    final cekStres = getAktivitas('Cek Stres');
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -307,24 +291,20 @@ class _TenangKPIDashboardState extends State<TenangKPIDashboard> with AutoRefres
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildWeeklyPoinItem('Meditasi', meditasi['tercapai'] ?? 0, meditasi['target_per_minggu'] ?? 1, FontAwesomeIcons.spa, const Color(0xFF7141FC)),
-              _buildWeeklyPoinItem('Mindfulness', mindfulness['tercapai'] ?? 0, mindfulness['target_per_minggu'] ?? 1, FontAwesomeIcons.brain, const Color(0xFF008FED)),
-              _buildWeeklyPoinItem('Stress', stress['tercapai'] ?? 0, stress['target_per_minggu'] ?? 1, FontAwesomeIcons.faceSmileBeam, const Color(0xFFF20868)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildWeeklyPoinItem('Cek Stres', cekStres['tercapai'] ?? 0, cekStres['target_per_minggu'] ?? 7, FontAwesomeIcons.chartSimple, Colors.amber),
-              if (ringkasan['total_menit'] != null)
-                _buildWeeklyPoinItem('Menit', ringkasan['total_menit'] ?? 0, 0, FontAwesomeIcons.clock, Colors.teal),
-              if (ringkasan['rata_stress'] != null)
-                _buildWeeklyPoinItem('Avg Stress', (ringkasan['rata_stress'] as num).toInt(), 5, FontAwesomeIcons.gaugeHigh, Colors.purple),
-            ],
+          Wrap(
+            spacing: 10,
+            runSpacing: 12,
+            children: aktivitas.map((item) {
+              final kode = item['aktivitas']?.toString() ?? '';
+              final style = _tenangPointStyle(kode);
+              return _buildWeeklyPoinItem(
+                item['nama']?.toString() ?? kode,
+                (item['tercapai'] as num?)?.toInt() ?? 0,
+                (item['target_per_minggu'] as num?)?.toInt() ?? 0,
+                style.icon,
+                style.color,
+              );
+            }).toList(),
           ),
           const SizedBox(height: 16),
           Container(
@@ -350,6 +330,25 @@ class _TenangKPIDashboardState extends State<TenangKPIDashboard> with AutoRefres
         ],
       ),
     );
+  }
+
+  ({FaIconData icon, Color color}) _tenangPointStyle(String kode) {
+    switch (kode) {
+      case 'tahan_emosi':
+        return (icon: FontAwesomeIcons.handHoldingHeart, color: const Color(0xFF7141FC));
+      case 'ekspresi_sehat':
+        return (icon: FontAwesomeIcons.music, color: const Color(0xFFF20868));
+      case 'harmoni_keluarga':
+        return (icon: FontAwesomeIcons.houseUser, color: Colors.amber);
+      case 'akui_emosi':
+        return (icon: FontAwesomeIcons.comments, color: const Color(0xff00a896));
+      case 'kendali_diri':
+        return (icon: FontAwesomeIcons.shieldHalved, color: const Color(0xFF2C7EFF));
+      case 'koneksi_sosial':
+        return (icon: FontAwesomeIcons.users, color: const Color(0xff00c368));
+      default:
+        return (icon: FontAwesomeIcons.heartPulse, color: const Color(0xFF2C7EFF));
+    }
   }
 
   Widget _buildWeeklyPoinItem(String label, int poin, int maxPoin, FaIconData icon, Color color) {
@@ -378,23 +377,6 @@ class _TenangKPIDashboardState extends State<TenangKPIDashboard> with AutoRefres
 
     final aktivitas = dailyKPI!['aktivitas'] as List<dynamic>? ?? [];
 
-    Map<String, dynamic> getAktivitas(String nama) {
-      try {
-        return aktivitas.firstWhere(
-          (a) => a['kode'].toString().toLowerCase() == nama.toLowerCase(),
-          orElse: () => {'selesai': false},
-        );
-      } catch (e) {
-        return {'selesai': false};
-      }
-    }
-
-    final meditasi = getAktivitas('meditasi');
-    final mindfulness = getAktivitas('mindfulness');
-    final manajemenStress = getAktivitas('manajemen_stress');
-    final waktuMeditasi = getAktivitas('waktu_meditasi');
-    final cekStres = getAktivitas('cek_stres');
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -413,60 +395,38 @@ class _TenangKPIDashboardState extends State<TenangKPIDashboard> with AutoRefres
         children: [
           const Text('Aktivitas Hari Ini', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
-          _buildTodayItem('Meditasi', meditasi['selesai'] ?? false, FontAwesomeIcons.spa, const Color(0xFF7141FC)),
-          _buildTodayItem('Mindfulness', mindfulness['selesai'] ?? false, FontAwesomeIcons.brain, const Color(0xFF008FED)),
-          _buildTodayItem('Manajemen Stress', manajemenStress['selesai'] ?? false, FontAwesomeIcons.faceSmileBeam, const Color(0xFFF20868)),
-          _buildTodayItem(
-            'Waktu Meditasi',
-            waktuMeditasi['selesai'] ?? false,
-            FontAwesomeIcons.clock,
-            Colors.teal,
-            subtitle: '${waktuMeditasi['tercapai'] ?? 0}/${waktuMeditasi['target_harian'] ?? 10} menit',
-          ),
-          _buildTodayItem(
-            'Cek Stres',
-            cekStres['selesai'] ?? false,
-            FontAwesomeIcons.chartSimple,
-            Colors.amber,
-            subtitle: cekStres['stress_level'] != null ? 'Level: ${cekStres['stress_level']}/5' : null,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTodayItem(String label, bool done, FaIconData icon, Color color, {String? subtitle}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: done ? color.withValues(alpha: 0.2) : Colors.grey.shade200,
-              shape: BoxShape.circle,
-            ),
-            child: FaIcon(icon, color: done ? color : Colors.grey, size: 16),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: done ? Colors.black87 : Colors.grey),
-                ),
-                if (subtitle != null)
-                  Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-              ],
-            ),
-          ),
-          FaIcon(
-            done ? FontAwesomeIcons.circleCheck : FontAwesomeIcons.circle,
-            color: done ? const Color(0xFF2C7EFF) : Colors.grey.shade300,
-            size: 20,
-          ),
+          ...aktivitas.map((item) {
+            final kode = item['aktivitas']?.toString() ?? item['kode']?.toString() ?? '';
+            final selesai = item['selesai'] == true || (item['tercapai'] as num?)?.toInt() == 1;
+            final style = _tenangPointStyle(kode);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: selesai ? style.color.withValues(alpha: 0.2) : Colors.grey.shade200,
+                      shape: BoxShape.circle,
+                    ),
+                    child: FaIcon(style.icon, color: selesai ? style.color : Colors.grey, size: 16),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      item['nama']?.toString() ?? kode,
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: selesai ? Colors.black87 : Colors.grey),
+                    ),
+                  ),
+                  FaIcon(
+                    selesai ? FontAwesomeIcons.circleCheck : FontAwesomeIcons.circle,
+                    color: selesai ? const Color(0xFF2C7EFF) : Colors.grey.shade300,
+                    size: 20,
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );

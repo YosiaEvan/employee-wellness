@@ -6,6 +6,7 @@ import '../config/api_config.dart';
 import 'auth_storage.dart';
 import 'api_service.dart';
 import 'background_steps_tracker.dart';
+import 'local_database_service.dart';
 import 'offline_steps_service.dart';
 
 /// Service untuk Authentication dengan auto-refresh token
@@ -196,6 +197,14 @@ class AuthService {
         print("✅ Offline steps data cleared");
       } catch (e) {
         print("⚠️ Could not clear offline steps: $e");
+      }
+
+      // Clear data SQLite lokal (semua fitur offline-first)
+      try {
+        await LocalDatabaseService.instance.clearAll();
+        print("✅ Local SQLite data cleared");
+      } catch (e) {
+        print("⚠️ Could not clear local database: $e");
       }
 
       // Clear all auth storage (token, credentials, etc)

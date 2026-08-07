@@ -39,7 +39,7 @@ class HijauService {
 
   static Future<Map<String, dynamic>> recordGreenActivity({
     required String activityType, required String description,
-    double? carbonSaved, int? points,
+    double? carbonSaved, int? points, String? category,
   }) async {
     try {
       final token = await _getToken();
@@ -54,12 +54,26 @@ class HijauService {
           "activity_type": activityType,
           "description": description,
           "date": DateTime.now().toIso8601String(),
+          if (category != null) "kategori": category,
+          if (points != null) "points": points,
+          if (carbonSaved != null) "carbon_saved": carbonSaved,
         }),
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         return {"success": true, "data": jsonDecode(response.body)};
       }
-      return {"success": false};
+      String message = "Gagal mencatat aktivitas";
+      try {
+        final body = jsonDecode(response.body);
+        if (body is Map && body['message'] != null) {
+          message = body['message'].toString();
+        }
+      } catch (_) {}
+      return {
+        "success": false,
+        "statusCode": response.statusCode,
+        "message": message,
+      };
     } catch (e) {
       return {"success": false, "message": "Error: $e"};
     }

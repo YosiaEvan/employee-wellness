@@ -10,6 +10,15 @@ class HijauKPIDashboard extends StatefulWidget {
   State<HijauKPIDashboard> createState() => _HijauKPIDashboardState();
 }
 
+/// Daftar 5 aktivitas HIJAU 360° (kode kanonik backend).
+const List<({String kode, String label, FaIconData icon, Color color})> _hijauItems = [
+  (kode: 'hemat_air', label: 'Hemat Air', icon: FontAwesomeIcons.droplet, color: Color(0xff0ea5e9)),
+  (kode: 'hemat_listrik', label: 'Listrik', icon: FontAwesomeIcons.bolt, color: Color(0xff059669)),
+  (kode: 'gaya_hidup_hijau', label: 'Hijau', icon: FontAwesomeIcons.leaf, color: Color(0xff16a34a)),
+  (kode: 'ajak_orang_lain', label: 'Ajak', icon: FontAwesomeIcons.userPlus, color: Color(0xfff59e0b)),
+  (kode: 'ubah_kebiasaan', label: 'Kebiasaan', icon: FontAwesomeIcons.arrowsRotate, color: Color(0xff10b981)),
+];
+
 class _HijauKPIDashboardState extends State<HijauKPIDashboard> {
   bool isLoading = true;
   Map<String, dynamic>? dailyKPI;
@@ -149,6 +158,7 @@ class _HijauKPIDashboardState extends State<HijauKPIDashboard> {
     final progressPersen = (ringkasan['progress_persen'] ?? 0).toDouble();
     final bulan = _getBulanIndonesia(periode['bulan']);
     final tahun = periode['tahun'];
+    final maksPoin = ringkasan['maks_poin_bulan'];
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -203,7 +213,7 @@ class _HijauKPIDashboardState extends State<HijauKPIDashboard> {
             Row(
               children: [
                 const Text('Total poin: ', style: TextStyle(color: Colors.white70, fontSize: 14)),
-                Text('${ringkasan['total_poin']}', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                Text('${ringkasan['total_poin']} / $maksPoin', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
               ],
             ),
           ],
@@ -233,10 +243,10 @@ class _HijauKPIDashboardState extends State<HijauKPIDashboard> {
     final progressPersen = (ringkasan['progress_persen'] ?? 0).toDouble();
     final mingguKe = periode['minggu_ke'];
 
-    Map<String, dynamic> getAktivitas(String nama) {
+    Map<String, dynamic> getAktivitas(String kode) {
       try {
         return aktivitas.firstWhere(
-          (a) => a['nama'].toString().toLowerCase().contains(nama.toLowerCase()),
+          (a) => (a['aktivitas'] ?? a['kode']).toString() == kode,
           orElse: () => {'tercapai': 0, 'target_per_minggu': 0},
         );
       } catch (e) {
@@ -244,10 +254,8 @@ class _HijauKPIDashboardState extends State<HijauKPIDashboard> {
       }
     }
 
-    final transportasi = getAktivitas('Transportasi');
-    final plastik = getAktivitas('Plastik');
-    final listrik = getAktivitas('Listrik');
-    final daurUlang = getAktivitas('Daur Ulang');
+    final firstRow = _hijauItems.take(3).toList();
+    final secondRow = _hijauItems.skip(3).toList();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -270,16 +278,28 @@ class _HijauKPIDashboardState extends State<HijauKPIDashboard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildWeeklyPoinItem('Transportasi', transportasi['tercapai'] ?? 0, transportasi['target_per_minggu'] ?? 5, FontAwesomeIcons.bicycle, Colors.green),
-              _buildWeeklyPoinItem('Plastik', plastik['tercapai'] ?? 0, plastik['target_per_minggu'] ?? 5, FontAwesomeIcons.recycle, Colors.teal),
-              _buildWeeklyPoinItem('Listrik', listrik['tercapai'] ?? 0, listrik['target_per_minggu'] ?? 5, FontAwesomeIcons.bolt, Colors.amber),
+              for (final item in firstRow)
+                _buildWeeklyPoinItem(
+                  item.label,
+                  getAktivitas(item.kode)['tercapai'] ?? 0,
+                  getAktivitas(item.kode)['target_per_minggu'] ?? 1,
+                  item.icon,
+                  item.color,
+                ),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildWeeklyPoinItem('Daur Ulang', daurUlang['tercapai'] ?? 0, daurUlang['target_per_minggu'] ?? 5, FontAwesomeIcons.trashArrowUp, Colors.blue),
+              for (final item in secondRow)
+                _buildWeeklyPoinItem(
+                  item.label,
+                  getAktivitas(item.kode)['tercapai'] ?? 0,
+                  getAktivitas(item.kode)['target_per_minggu'] ?? 1,
+                  item.icon,
+                  item.color,
+                ),
               if (ringkasan['total_poin'] != null)
                 _buildWeeklyPoinItem('Poin', ringkasan['total_poin'] ?? 0, 0, FontAwesomeIcons.star, Colors.orange),
             ],
@@ -327,18 +347,13 @@ class _HijauKPIDashboardState extends State<HijauKPIDashboard> {
     Map<String, dynamic> getAktivitas(String kode) {
       try {
         return aktivitas.firstWhere(
-          (a) => a['kode'].toString().toLowerCase() == kode.toLowerCase(),
+          (a) => (a['kode'] ?? a['aktivitas']).toString() == kode,
           orElse: () => {'selesai': false},
         );
       } catch (e) {
         return {'selesai': false};
       }
     }
-
-    final transportasi = getAktivitas('transportasi');
-    final plastik = getAktivitas('plastik');
-    final listrik = getAktivitas('listrik');
-    final daurUlang = getAktivitas('daur_ulang');
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -358,10 +373,8 @@ class _HijauKPIDashboardState extends State<HijauKPIDashboard> {
         children: [
           const Text('Aktivitas Hari Ini', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
-          _buildTodayItem('Transportasi Hijau', transportasi['selesai'] ?? false, FontAwesomeIcons.bicycle, Colors.green),
-          _buildTodayItem('Kurangi Plastik', plastik['selesai'] ?? false, FontAwesomeIcons.recycle, Colors.teal),
-          _buildTodayItem('Hemat Listrik', listrik['selesai'] ?? false, FontAwesomeIcons.bolt, Colors.amber),
-          _buildTodayItem('Daur Ulang', daurUlang['selesai'] ?? false, FontAwesomeIcons.trashArrowUp, Colors.blue),
+          for (final item in _hijauItems)
+            _buildTodayItem(item.label, getAktivitas(item.kode)['selesai'] ?? false, item.icon, item.color),
         ],
       ),
     );

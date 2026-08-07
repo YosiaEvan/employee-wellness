@@ -18,7 +18,7 @@ void main() async {
   final isLoggedIn = await AuthService.isLoggedIn();
   if (isLoggedIn) {
     print('🚀 User is logged in, initializing background services...');
-    await BackgroundStepsTracker.initialize();
+    await BackgroundStepsTracker.initialize(requestPermission: false);
     await BackgroundTaskService.instance.registerPeriodicSync();
     await BackgroundTaskService.instance.registerCleanupTask();
     await StepsSyncService.instance.autoSync();

@@ -81,8 +81,8 @@ class OfflineStepsService {
   /// Cek apakah ada koneksi internet
   static Future<bool> hasInternetConnection() async {
     try {
-      var connectivityResult = await Connectivity().checkConnectivity();
-      return connectivityResult != ConnectivityResult.none;
+      var connectivityResults = await Connectivity().checkConnectivity();
+      return !connectivityResults.contains(ConnectivityResult.none);
     } catch (e) {
       print('❌ Error checking connectivity: $e');
       return false;
@@ -97,7 +97,10 @@ class OfflineStepsService {
 
       print('🔄 Syncing steps for $tanggal: $totalSteps steps');
 
-      final result = await SehatKPIService.updateSteps(totalSteps);
+      final result = await SehatKPIService.updateStepsWithDate(
+        tanggal: tanggal,
+        totalSteps: totalSteps,
+      );
 
       if (result['success'] == true) {
         // Mark as synced

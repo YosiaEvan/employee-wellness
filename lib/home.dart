@@ -1,6 +1,7 @@
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/homepage_indicator.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
+import 'package:employee_wellness/components/wellness_score_card.dart';
 import 'package:employee_wellness/pages/health_profile.dart';
 import 'package:employee_wellness/services/profile_check_service.dart';
 import 'package:employee_wellness/services/app_localizations.dart';
@@ -143,6 +144,8 @@ class _HomePageState extends State<HomePage> {
                             child: CircularProgressIndicator(color: Color(0xfff67200)),
                           ),
                         ),
+
+                      const WellnessScoreCard(),
   
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),

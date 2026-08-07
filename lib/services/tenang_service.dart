@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../models/tenang_model.dart';
 import 'api_service.dart';
 import 'auth_storage.dart';
+import 'local_database_service.dart';
 
 /// Konstanta kategori & sub-kategori agar tidak typo di seluruh kode
 class TenangKategori {
@@ -65,15 +66,28 @@ class TenangService {
   // =====================================================
 
   /// Catat sesi yang sudah selesai.
-  /// Dipanggil dari tiap halaman sesi saat [_onSessionComplete].
+  /// Offline-first: disimpan ke SQLite dulu, lalu disinkronkan ke backend.
   static Future<Map<String, dynamic>> recordSession({
     required String kategori,
     required String subKategori,
     required int durasiDetik,
   }) async {
-    try {
-      final userId = await _getUserId();
+    final userId = await _getUserId();
+    final selesaiAt = DateTime.now().toUtc().toIso8601String();
+    final tanggal = LocalDatabaseService.todayStr();
 
+    // 1. Simpan ke SQLite lokal dulu
+    final rowId = await LocalDatabaseService.instance.insert('tenang_sessions', {
+      'tanggal': tanggal,
+      'kategori': kategori,
+      'sub_kategori': subKategori,
+      'durasi_detik': durasiDetik,
+      'selesai_at': selesaiAt,
+      'synced': 0,
+    });
+
+    // 2. Coba push ke server
+    try {
       final response = await ApiService.post(
         '/user/tenang/sessions',
         body: {
@@ -81,9 +95,12 @@ class TenangService {
           'kategori': kategori,
           'sub_kategori': subKategori,
           'durasi_detik': durasiDetik,
-          'selesai_at': DateTime.now().toUtc().toIso8601String(),
+          'selesai_at': selesaiAt,
         },
-      );      if (response.statusCode == 200 || response.statusCode == 201) {
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await LocalDatabaseService.instance.markSyncedByDate('tenang_sessions', tanggal);
         final body = jsonDecode(response.body);
         return {
           'success': true,
@@ -92,9 +109,16 @@ class TenangService {
         };
       }
 
+      // Ditolak server -> batalkan catatan lokal
+      await LocalDatabaseService.instance.delete('tenang_sessions', where: 'id = ?', whereArgs: [rowId]);
       return _errorFromStatus(response.statusCode, response.body);
     } catch (e) {
-      return _networkError(e);
+      // Offline -> tetap dianggap berhasil (tersimpan di SQLite)
+      return {
+        'success': true,
+        'message': 'Tersimpan offline, akan disinkronkan saat online',
+        'offline': true,
+      };
     }
   }
 
@@ -143,32 +167,52 @@ class TenangService {
   // STRESS CHECK-IN
   // =====================================================
 
-  /// Catat level stres user (dari slider di ManajemenStress)
+  /// Catat level stres user (dari slider di ManajemenStress).
+  /// Offline-first: disimpan ke SQLite dulu, lalu disinkronkan ke backend.
   static Future<Map<String, dynamic>> recordStressLevel({
     required int stressLevel,
   }) async {
-    try {
-      final userId = await _getUserId();
+    final userId = await _getUserId();
+    final createdAt = DateTime.now().toUtc().toIso8601String();
+    final tanggal = LocalDatabaseService.todayStr();
 
+    // 1. Simpan ke SQLite lokal dulu
+    final rowId = await LocalDatabaseService.instance.insert('stress_checkin', {
+      'tanggal': tanggal,
+      'stress_level': stressLevel,
+      'created_at': createdAt,
+      'synced': 0,
+    });
+
+    // 2. Coba push ke server
+    try {
       final response = await ApiService.post(
         '/user/tenang/stress-checkin',
         body: {
           'user_id': userId,
           'stress_level': stressLevel,
-          'created_at': DateTime.now().toUtc().toIso8601String(),
+          'created_at': createdAt,
         },
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        await LocalDatabaseService.instance.markSyncedByDate('stress_checkin', tanggal);
         return {
           'success': true,
           'message': 'Level stres berhasil dicatat',
         };
       }
 
+      // Ditolak server -> batalkan catatan lokal
+      await LocalDatabaseService.instance.delete('stress_checkin', where: 'id = ?', whereArgs: [rowId]);
       return _errorFromStatus(response.statusCode, response.body);
     } catch (e) {
-      return _networkError(e);
+      // Offline -> tetap dianggap berhasil (tersimpan di SQLite)
+      return {
+        'success': true,
+        'message': 'Tersimpan offline, akan disinkronkan saat online',
+        'offline': true,
+      };
     }
   }
 

@@ -148,6 +148,7 @@ class _SmartFoodSearchState extends State<SmartFoodSearch> {
                       idFoodNutrition: foodData['id'] ?? 0,
                       jenisMakan: jenisMakan,
                       porsi: porsi,
+                      foodDetail: foodData,
                     );
 
                     // Hide loading snackbar
