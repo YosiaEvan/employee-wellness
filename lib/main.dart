@@ -1,5 +1,6 @@
 import 'package:employee_wellness/home.dart';
 import 'package:employee_wellness/register.dart';
+import 'package:employee_wellness/forgot_password.dart';
 import 'package:employee_wellness/services/auth_service.dart';
 import 'package:employee_wellness/services/background_steps_tracker.dart';
 import 'package:employee_wellness/services/background_task_service.dart';
@@ -243,7 +244,10 @@ class _LoginPageState extends State<LoginPage> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const ForgotPassword()),
+                            ),
                             child: Text(loc.translate('forgot_password'), style: const TextStyle(color: Color(0xFF30B762), fontSize: 16)),
                           ),
                         ),
