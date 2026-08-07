@@ -1,22 +1,29 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'steps_sync_service.dart';
+import 'langkah_service.dart';
 
-/// Service untuk tracking langkah di background dengan SQLite database
+/// Service untuk tracking langkah di background dengan sinkronisasi terpusat
 class BackgroundStepsTracker {
-  static StreamSubscription<StepCount>? _stepCountStream;
-  static StreamSubscription<PedestrianStatus>? _pedestrianStatusStream;
+  static StreamSubscription<StepCount>? _stepCountSubscription;
+  static StreamSubscription<PedestrianStatus>? _pedestrianStatusSubscription;
 
-  static int _todaySteps = 0;
-  static int _baselineSteps = 0; // Baseline untuk hari ini
+  static final ValueNotifier<int> stepsNotifier = ValueNotifier<int>(0);
+  static final ValueNotifier<String> statusNotifier = ValueNotifier<String>('Initializing...');
+
+  static int _baselineSteps = 0;
   static String _currentDate = '';
-  static Timer? _syncTimer;
   static Timer? _saveTimer;
   static bool _isInitialized = false;
 
   static final StepsSyncService _syncService = StepsSyncService.instance;
+
+  static bool get isInitialized => _isInitialized;
+  static int get todaySteps => stepsNotifier.value;
+  static String get currentDate => _currentDate;
 
   // =====================================================
   // INITIALIZE TRACKER
@@ -31,95 +38,98 @@ class BackgroundStepsTracker {
 
     try {
       print('🚀 Initializing background steps tracker...');
+      statusNotifier.value = 'Requesting permissions...';
 
-      // Request permissions (Activity Recognition and Battery Optimization)
-      Map<Permission, PermissionStatus> statuses = await [
-        Permission.activityRecognition,
-        Permission.ignoreBatteryOptimizations,
-      ].request();
-
-      if (statuses[Permission.activityRecognition] != PermissionStatus.granted) {
-        print('❌ Activity recognition permission denied');
-        // Tetap lanjut jika ignoreBatteryOptimizations diberikan, atau beri tahu user
+      // 1. Request permissions
+      bool hasPermission = await _requestPermissions();
+      if (!hasPermission) {
+        statusNotifier.value = 'Permission denied';
+        print('❌ Activity recognition permission not granted');
+        return false;
       }
 
-      // Get current date
+      // 2. Set current date
       _currentDate = DateTime.now().toIso8601String().split('T')[0];
 
-      // Load today's steps from local database
-      await _loadTodaySteps();
+      // 3. Load today's steps from local storage
+      await _loadStoredData();
 
-      // Start listening to pedometer
+      // 4. Start listening to pedometer
       await _startListening();
 
-      // Start periodic save timer (every 2 minutes)
+      // 5. Start periodic save timer
       _startPeriodicSave();
 
-      // Start periodic sync timer (every 30 minutes)
-      _startPeriodicSync();
-
-      // Run initial sync
-      _syncService.autoSync();
-
       _isInitialized = true;
-      print('✅ Background steps tracker initialized');
-      print('📊 Today: $_currentDate, Steps: $_todaySteps');
-
+      print('✅ Background steps tracker initialized. Today: $_currentDate, Steps: ${stepsNotifier.value}');
       return true;
     } catch (e) {
+      statusNotifier.value = 'Error: $e';
       print('❌ Error initializing tracker: $e');
       return false;
     }
   }
 
-  /// Load today's steps from database
-  static Future<void> _loadTodaySteps() async {
+  static Future<bool> _requestPermissions() async {
+    // Android 10+ needs ACTIVITY_RECOGNITION
+    final status = await Permission.activityRecognition.request();
+    if (status.isGranted) return true;
+    
+    // Check again in case it was already granted
+    return await Permission.activityRecognition.isGranted;
+  }
+
+  static Future<void> _loadStoredData() async {
     try {
-      final localData = await _syncService.getLocalSteps(_currentDate);
-
-      if (localData != null) {
-        _todaySteps = localData['total_steps'] ?? 0;
-        print('📊 Loaded stored steps for today: $_todaySteps');
-      } else {
-        _todaySteps = 0;
-        print('📊 No stored steps for today, starting from 0');
-      }
-
-      // Load baseline from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
-      _baselineSteps = prefs.getInt('baseline_steps_$_currentDate') ?? 0;
+      
+      // Load saved steps for today
+      int savedSteps = await LangkahService.getTodaySteps();
+      stepsNotifier.value = savedSteps;
 
+      // Load baseline
+      _baselineSteps = prefs.getInt('baseline_steps_$_currentDate') ?? 0;
+      
+      print('📊 Loaded steps: $savedSteps, baseline: $_baselineSteps');
     } catch (e) {
-      print('❌ Error loading today steps: $e');
-      _todaySteps = 0;
-      _baselineSteps = 0;
+      print('❌ Error loading stored data: $e');
     }
   }
 
-  /// Start listening to pedometer
   static Future<void> _startListening() async {
     try {
-      // Cancel existing streams
-      await _stepCountStream?.cancel();
-      await _pedestrianStatusStream?.cancel();
+      await _stepCountSubscription?.cancel();
+      await _pedestrianStatusSubscription?.cancel();
 
-      // Listen to step count
-      _stepCountStream = Pedometer.stepCountStream.listen(
+      statusNotifier.value = 'Connecting to sensors...';
+
+      // Start Step Count Stream
+      _stepCountSubscription = Pedometer.stepCountStream.listen(
         _onStepCount,
-        onError: _onStepCountError,
+        onError: (error) {
+          print('❌ Pedometer error: $error');
+          statusNotifier.value = 'Error: $error';
+        },
         cancelOnError: false,
       );
 
-      // Listen to pedestrian status
-      _pedestrianStatusStream = Pedometer.pedestrianStatusStream.listen(
-        _onPedestrianStatusChanged,
-        onError: _onPedestrianStatusError,
+      // Start Pedestrian Status Stream
+      _pedestrianStatusSubscription = Pedometer.pedestrianStatusStream.listen(
+        (PedestrianStatus event) {
+          statusNotifier.value = event.status;
+          print('🚶 Status: ${event.status}');
+        },
+        onError: (error) {
+          print('❌ Status error: $error');
+          // Don't overwrite main status if it's just pedestrian status error
+        },
         cancelOnError: false,
       );
 
-      print('✅ Started listening to pedometer');
+      print('✅ Pedometer streams active');
     } catch (e) {
-      print('❌ Error starting pedometer: $e');
+      statusNotifier.value = 'Sensor init failed';
+      print('❌ Error starting listeners: $e');
     }
   }
 
@@ -129,129 +139,96 @@ class BackgroundStepsTracker {
 
   static void _onStepCount(StepCount event) async {
     try {
-      final currentDate = DateTime.now().toIso8601String().split('T')[0];
+      final now = DateTime.now().toIso8601String().split('T')[0];
       final rawSteps = event.steps;
 
-      // Check if date changed (new day)
-      if (currentDate != _currentDate) {
-        print('📅 New day detected: $currentDate');
-
-        // Save yesterday's final steps
-        await _saveStepsToDatabase();
-
-        // Reset for new day
-        _currentDate = currentDate;
+      // 1. Handle New Day
+      if (now != _currentDate) {
+        print('📅 Day changed: $now');
+        await _saveStepsToDatabase(); // Save last day data
+        
+        _currentDate = now;
         _baselineSteps = rawSteps;
-        _todaySteps = 0;
-
-        // Save baseline
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setInt('baseline_steps_$_currentDate', _baselineSteps);
-
-        print('🔄 Reset for new day, baseline: $_baselineSteps');
-        return;
-      }
-
-      // Calculate today's steps (raw steps - baseline)
-      if (_baselineSteps == 0) {
-        // First time today, set baseline
-        _baselineSteps = rawSteps - _todaySteps;
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setInt('baseline_steps_$_currentDate', _baselineSteps);
-      }
-
-      // Update step count
-      final calculatedSteps = rawSteps - _baselineSteps;
-      
-      // Handle sensor reset (reboot)
-      if (calculatedSteps < 0) {
-        print('⚠️ Sensor reset detected (likely reboot). Resetting baseline.');
-        _baselineSteps = rawSteps - _todaySteps;
-        if (_baselineSteps < 0) _baselineSteps = rawSteps; // Fallback
+        stepsNotifier.value = 0;
         
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt('baseline_steps_$_currentDate', _baselineSteps);
-      } else {
-        _todaySteps = calculatedSteps;
+        await LangkahService.resetLocalData();
+        return;
       }
 
-      print('👣 Steps: $_todaySteps (raw: $rawSteps, baseline: $_baselineSteps)');
+      // 2. Set Baseline if not set (resilient logic)
+      // If _baselineSteps is 0, or rawSteps is less than baseline (reboot)
+      if (_baselineSteps <= 0 || rawSteps < _baselineSteps) {
+        _baselineSteps = rawSteps - stepsNotifier.value;
+        if (_baselineSteps < 0) _baselineSteps = rawSteps;
+        
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('baseline_steps_$_currentDate', _baselineSteps);
+        print('📏 Baseline set/reset: $_baselineSteps (raw: $rawSteps, saved: ${stepsNotifier.value})');
+      }
+
+      // 3. Calculate Steps
+      int calculatedSteps = rawSteps - _baselineSteps;
+
+      // 4. Update memory if sensor is ahead, OR adapt baseline if memory is ahead
+      if (calculatedSteps > stepsNotifier.value) {
+        stepsNotifier.value = calculatedSteps;
+        // Periodic save to shared preferences via LangkahService
+        await LangkahService.saveTodaySteps(stepsNotifier.value);
+      } else if (stepsNotifier.value > calculatedSteps) {
+        // Jika data di memori (dari API/Prefs) lebih besar dari sensor,
+        // sesuaikan baseline agar hitungan sensor melanjutkan data yang ada.
+        _baselineSteps = rawSteps - stepsNotifier.value;
+        if (_baselineSteps < 0) _baselineSteps = rawSteps;
+        
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('baseline_steps_$_currentDate', _baselineSteps);
+        print('📏 Baseline adjusted to match memory: $_baselineSteps (Target: ${stepsNotifier.value})');
+      }
 
     } catch (e) {
       print('❌ Error in _onStepCount: $e');
     }
   }
 
-  static void _onStepCountError(error) {
-    print('❌ Step count error: $error');
-  }
-
-  static void _onPedestrianStatusChanged(PedestrianStatus event) {
-    print('🚶 Pedestrian status: ${event.status}');
-  }
-
-  static void _onPedestrianStatusError(error) {
-    print('❌ Pedestrian status error: $error');
-  }
-
   // =====================================================
   // SAVE & SYNC
   // =====================================================
 
-  /// Simpan langkah ke database lokal
   static Future<void> _saveStepsToDatabase() async {
-    try {
-      if (_todaySteps <= 0) {
-        print('⚠️ Skipping save: steps is 0');
-        return;
-      }
+    if (stepsNotifier.value <= 0) return;
 
+    try {
+      await LangkahService.saveTodaySteps(stepsNotifier.value);
       await _syncService.saveStepsLocally(
         tanggal: _currentDate,
-        totalSteps: _todaySteps,
+        totalSteps: stepsNotifier.value,
       );
-
-      print('💾 Saved $_todaySteps steps to database');
     } catch (e) {
-      print('❌ Error saving steps: $e');
+      print('❌ Save error: $e');
     }
   }
 
-  /// Start periodic save (every 2 minutes)
   static void _startPeriodicSave() {
     _saveTimer?.cancel();
-
     _saveTimer = Timer.periodic(const Duration(minutes: 2), (timer) async {
-      print('⏰ Periodic save triggered');
       await _saveStepsToDatabase();
     });
   }
-
-  /// Start periodic sync (every 30 minutes)
-  static void _startPeriodicSync() {
-    _syncTimer?.cancel();
-
-    _syncTimer = Timer.periodic(const Duration(minutes: 30), (timer) async {
-      print('⏰ Periodic sync triggered');
-      await _syncService.autoSync();
-    });
-  }
-
-  // =====================================================
-  // GETTERS
-  // =====================================================
-
-  static int get todaySteps => _todaySteps;
-  static String get currentDate => _currentDate;
-  static bool get isInitialized => _isInitialized;
 
   // =====================================================
   // MANUAL ACTIONS
   // =====================================================
 
-  /// Save current steps immediately
-  static Future<void> saveNow() async {
-    await _saveStepsToDatabase();
+  /// Get sync statistics
+  static Future<Map<String, dynamic>> getStatistics() async {
+    return await _syncService.getSyncStatistics();
+  }
+
+  /// Get unsynced count
+  static Future<int> getUnsyncedCount() async {
+    return await _syncService.getUnsyncedCount();
   }
 
   /// Force sync now (manual trigger)
@@ -270,71 +247,25 @@ class BackgroundStepsTracker {
     }
   }
 
-  /// Get sync statistics
-  static Future<Map<String, dynamic>> getStatistics() async {
-    return await _syncService.getSyncStatistics();
-  }
-
-  /// Get unsynced count
-  static Future<int> getUnsyncedCount() async {
-    return await _syncService.getUnsyncedCount();
+  /// Update langkah dari sumber eksternal (misal API)
+  static void updateStepsExternally(int steps) {
+    if (steps > stepsNotifier.value) {
+      stepsNotifier.value = steps;
+      print('📊 Steps updated externally: $steps');
+    }
   }
 
   // =====================================================
   // STOP TRACKER
   // =====================================================
 
-  /// Stop tracking (untuk logout)
   static Future<void> stop() async {
-    try {
-      // Save current steps before stopping
-      await _saveStepsToDatabase();
-
-      // Cancel streams
-      await _stepCountStream?.cancel();
-      await _pedestrianStatusStream?.cancel();
-
-      // Cancel timers
-      _syncTimer?.cancel();
-      _saveTimer?.cancel();
-
-      // Reset variables
-      _stepCountStream = null;
-      _pedestrianStatusStream = null;
-      _syncTimer = null;
-      _saveTimer = null;
-      _todaySteps = 0;
-      _baselineSteps = 0;
-      _isInitialized = false;
-
-      print('✅ Background steps tracker stopped');
-    } catch (e) {
-      print('❌ Error stopping tracker: $e');
-    }
-  }
-
-  // =====================================================
-  // CLEANUP
-  // =====================================================
-
-  /// Clear all user data (for logout)
-  static Future<void> clearAllData() async {
-    try {
-      await _syncService.clearAllUserData();
-
-      // Clear SharedPreferences baseline
-      final prefs = await SharedPreferences.getInstance();
-      final keys = prefs.getKeys();
-      for (var key in keys) {
-        if (key.startsWith('baseline_steps_')) {
-          await prefs.remove(key);
-        }
-      }
-
-      print('✅ All steps data cleared');
-    } catch (e) {
-      print('❌ Error clearing data: $e');
-    }
+    await _saveStepsToDatabase();
+    await _stepCountSubscription?.cancel();
+    await _pedestrianStatusSubscription?.cancel();
+    _saveTimer?.cancel();
+    _isInitialized = false;
+    statusNotifier.value = 'Stopped';
+    print('🛑 Tracker stopped');
   }
 }
-

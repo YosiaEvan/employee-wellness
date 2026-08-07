@@ -21,15 +21,8 @@ class Jalan10000Langkah extends StatefulWidget {
 
 class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshMixin<Jalan10000Langkah> {
   int _totalSteps = 0;
-  Stream<StepCount>? _stepCountStream;
-  StreamSubscription<StepCount>? _subscription;
   double progressValue = 0;
   int _remainingSteps = 10000;
-  int _initialSteps = 0;
-
-  // Timer untuk sync periodik ke API
-  Timer? _syncTimer;
-  DateTime? _lastSyncTime;
 
   // Yesterday's steps notification
   int? _yesterdaySteps;
@@ -41,10 +34,30 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
     super.initState();
     _initializeSteps();
     _loadYesterdaySteps();
-    // Auto-start tracking di background
+    // Gunakan listener dari tracker terpusat
+    BackgroundStepsTracker.stepsNotifier.addListener(_onTrackerUpdate);
+    // Pastikan tracker aktif
     _autoStartTracking();
-    // Auto-refresh langkah dari API secara berkala
-    startAutoRefresh(refresh: _initializeSteps);
+  }
+
+  void _onTrackerUpdate() {
+    if (mounted) {
+      setState(() {
+        _totalSteps = BackgroundStepsTracker.todaySteps;
+        progressValue = _totalSteps / 10000;
+        _remainingSteps = 10000 - _totalSteps;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    BackgroundStepsTracker.stepsNotifier.removeListener(_onTrackerUpdate);
+    // Save data hari ini ke queue sebelum dispose
+    if (_totalSteps > 0) {
+      _saveCurrentDayToQueue();
+    }
+    super.dispose();
   }
 
   /// Load data langkah kemarin untuk notifikasi
@@ -67,114 +80,47 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
             _showYesterdayNotification = true;
             _isLoadingYesterday = false;
           });
-
           print('📊 Yesterday steps loaded: $steps');
         } else {
-          setState(() {
-            _isLoadingYesterday = false;
-          });
+          setState(() => _isLoadingYesterday = false);
         }
       } else {
-        setState(() {
-          _isLoadingYesterday = false;
-        });
+        setState(() => _isLoadingYesterday = false);
       }
     } catch (e) {
       print('❌ Error loading yesterday steps: $e');
-      setState(() {
-        _isLoadingYesterday = false;
-      });
+      if (mounted) setState(() => _isLoadingYesterday = false);
     }
   }
 
   /// Auto-start pedometer tracking
   Future<void> _autoStartTracking() async {
-    // Request permissions for Android 14+ (including Android 16)
-    Map<Permission, PermissionStatus> statuses = await [
-      Permission.activityRecognition,
-      Permission.ignoreBatteryOptimizations,
-    ].request();
-
-    if (statuses[Permission.activityRecognition]!.isGranted) {
-      // Inisialisasi background tracker jika belum
-      if (!BackgroundStepsTracker.isInitialized) {
-        await BackgroundStepsTracker.initialize();
-      }
-      startListening();
-    } else {
-      print("⚠️ Permission denied for activity recognition");
+    if (!BackgroundStepsTracker.isInitialized) {
+      await BackgroundStepsTracker.initialize();
     }
+    // Update data awal dari tracker
+    _onTrackerUpdate();
   }
 
-  /// Load steps from background tracker and merge with current
-  Future<void> _syncWithBackgroundTracker() async {
-    try {
-      if (BackgroundStepsTracker.isInitialized) {
-        final bgSteps = BackgroundStepsTracker.todaySteps;
-        if (bgSteps > _totalSteps) {
-          print('📊 Background tracker has more steps: $bgSteps > $_totalSteps');
-          setState(() {
-            _totalSteps = bgSteps;
-            progressValue = _totalSteps / 10000;
-            _remainingSteps = 10000 - _totalSteps;
-          });
-          await LangkahService.saveTodaySteps(_totalSteps);
-        }
-      }
-    } catch (e) {
-      print('❌ Error syncing with background tracker: $e');
-    }
-  }
-
-  /// Initialize steps dengan cek apakah hari sudah berganti
+  /// Initialize steps
   Future<void> _initializeSteps() async {
-    // Cek apakah hari sudah berganti
-    final shouldReset = await LangkahService.shouldResetToday();
-
-    if (shouldReset) {
-
-      // PENTING: Simpan data kemarin ke queue sebelum reset
-      final yesterdaySteps = await LangkahService.getTodaySteps();
-      if (yesterdaySteps > 0) {
-        final yesterday = DateTime.now().subtract(Duration(days: 1));
-        final yesterdayDate = yesterday.toIso8601String().split('T')[0];
-
-        await LangkahService.saveDailyRecordToQueue(
-          tanggal: yesterdayDate,
-          jumlahLangkah: yesterdaySteps,
-        );
-      }
-
-      // Reset local data untuk hari baru
-      await LangkahService.resetLocalData();
-      await LangkahService.saveLastSyncDate();
-
-      setState(() {
-        _totalSteps = 0;
-        _initialSteps = 0;
-        progressValue = 0;
-        _remainingSteps = 10000;
-      });
-    } else {
-      // Load data dari local storage
-      final savedSteps = await LangkahService.getTodaySteps();
-      final savedInitial = await LangkahService.getInitialSteps();
-
-      setState(() {
-        _totalSteps = savedSteps;
-        _initialSteps = savedInitial;
-        progressValue = _totalSteps / 10000;
-        _remainingSteps = 10000 - _totalSteps;
-      });
-    }
+    // Load data awal dari storage
+    final savedSteps = await LangkahService.getTodaySteps();
+    setState(() {
+      _totalSteps = savedSteps;
+      progressValue = _totalSteps / 10000;
+      _remainingSteps = 10000 - _totalSteps;
+    });
 
     // Sync with background tracker data
-    _syncWithBackgroundTracker();
+    if (BackgroundStepsTracker.todaySteps > _totalSteps) {
+       _onTrackerUpdate();
+    }
 
     // Load data dari API untuk sinkronisasi
     _loadFromAPI();
 
-    // Coba sync pending records (background)
+    // Coba sync pending records
     _attemptBackgroundSync();
   }
 
@@ -195,6 +141,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
         });
 
         await LangkahService.saveTodaySteps(_totalSteps);
+        BackgroundStepsTracker.updateStepsExternally(_totalSteps);
       }
     }
   }
@@ -202,83 +149,16 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
   /// Attempt to sync pending records in background (silent)
   Future<void> _attemptBackgroundSync() async {
     try {
-      final result = await LangkahService.syncPendingRecords();
-
-      if (result['synced'] > 0) {
-      }
-
-      if (result['failed'] > 0) {
-      }
+      await LangkahService.syncPendingRecords();
     } catch (e) {
-      // Silent fail, tidak ganggu user
+      // Silent fail
     }
   }
 
-  void startListening() {
-
-    _stepCountStream = Pedometer.stepCountStream;
-    _subscription = _stepCountStream!.listen(
-      (StepCount stepCount) async {
-        // Jika ini pertama kali, simpan sebagai initial steps
-        if (_initialSteps == 0) {
-          // Jika sudah ada total steps dari sync (background tracker),
-          // hitung initial steps backwards
-          if (_totalSteps > 0) {
-            _initialSteps = stepCount.steps - _totalSteps;
-          } else {
-            _initialSteps = stepCount.steps;
-          }
-          await LangkahService.saveInitialSteps(_initialSteps);
-        }
-
-        // Calculate steps hari ini
-        final todaySteps = stepCount.steps - _initialSteps;
-
-        // Only update if higher than current (prevent going backwards)
-        if (todaySteps > _totalSteps) {
-          setState(() {
-            _totalSteps = todaySteps;
-            progressValue = _totalSteps / 10000;
-            _remainingSteps = 10000 - _totalSteps;
-          });
-
-          // Save to local storage
-          await LangkahService.saveTodaySteps(_totalSteps);
-
-          // Auto-sync ke API setiap 30 detik
-          _autoSyncToAPI();
-        }
-      },
-      onError: (error) {
-        print('❌ Pedometer error: $error');
-      }
-    );
-
-    // Start timer untuk periodic sync (setiap 30 detik)
-    _syncTimer = Timer.periodic(Duration(seconds: 30), (timer) {
-      _syncToAPI();
-    });
-  }
-
-  /// Auto-sync dengan debounce
-  void _autoSyncToAPI() {
-    final now = DateTime.now();
-
-    // Sync hanya jika sudah 30 detik sejak last sync
-    if (_lastSyncTime == null ||
-        now.difference(_lastSyncTime!).inSeconds >= 30) {
-      _syncToAPI();
-      _lastSyncTime = now;
-    }
-  }
-
-  /// Sync ke API (sekarang save ke queue untuk background sync)
+  /// Sync data ke API
   Future<void> _syncToAPI() async {
     if (_totalSteps > 0) {
-      // Save ke LangkahService queue untuk sync
       await LangkahService.updateLangkahLocal(jumlahLangkah: _totalSteps);
-
-      // Juga save ke StepsDatabase agar BackgroundStepsTracker punya data terbaru
       try {
         await StepsSyncService.instance.saveStepsLocally(
           tanggal: DateTime.now().toIso8601String().split('T')[0],
@@ -291,25 +171,8 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
   }
 
   void stopListening() async {
-    _subscription?.cancel();
-    _syncTimer?.cancel();
-
     // Sync terakhir sebelum stop
     await _syncToAPI();
-
-  }
-
-  @override
-  void dispose() {
-    stopListening();
-    _syncTimer?.cancel();
-
-    // Save data hari ini ke queue sebelum dispose
-    if (_totalSteps > 0) {
-      _saveCurrentDayToQueue();
-    }
-
-    super.dispose();
   }
 
   /// Save current day data to queue
@@ -590,35 +453,47 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                     SizedBox(height: 20,),
 
                     // Status Info - Auto Tracking
-                    Container(
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Color(0xffe0e0e0),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          FaIcon(
-                            FontAwesomeIcons.circleCheck,
-                            size: 20,
-                            color: Colors.green,
-                          ),
-                          SizedBox(width: 8,),
-                          Text(
-                            "Tracking berjalan otomatis di background",
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.green,
-                              fontWeight: FontWeight.w500,
+                    ValueListenableBuilder<String>(
+                      valueListenable: BackgroundStepsTracker.statusNotifier,
+                      builder: (context, status, _) {
+                        bool isWalking = status == 'walking';
+                        bool isError = status.toLowerCase().contains('error') || status.toLowerCase().contains('denied');
+
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: isError ? Colors.red[50] : Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isError ? Colors.red[200]! : const Color(0xffe0e0e0),
+                              width: 1,
                             ),
                           ),
-                        ],
-                      ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              FaIcon(
+                                isError 
+                                    ? FontAwesomeIcons.circleExclamation 
+                                    : (isWalking ? FontAwesomeIcons.personWalking : FontAwesomeIcons.circleCheck),
+                                size: 20,
+                                color: isError ? Colors.red : (isWalking ? Colors.blue : Colors.green),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  isError ? "Error: $status" : "Status: $status (Tracking Aktif)",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: isError ? Colors.red : (isWalking ? Colors.blue : Colors.green),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
                     ),
 
                     SizedBox(height: 20,),
@@ -917,16 +792,16 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                                       dimension: 10,
                                       child: Container(
                                         alignment: Alignment.center,
-                                        padding: EdgeInsets.all(8),
+                                        padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xff1e89fe),
                                           borderRadius: BorderRadius.circular(12),
                                         ),
-                                        child: Text(""),
+                                        child: const Text(""),
                                       ),
                                     ),
                                     SizedBox(width: 8,),
-                                    Expanded(
+                                    const Expanded(
                                       child: Text(
                                         "Parkir kendaraan lebih jauh dari tujuan",
                                         overflow: TextOverflow.ellipsis,
@@ -950,16 +825,16 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                                       dimension: 10,
                                       child: Container(
                                         alignment: Alignment.center,
-                                        padding: EdgeInsets.all(8),
+                                        padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xff1e89fe),
                                           borderRadius: BorderRadius.circular(12),
                                         ),
-                                        child: Text(""),
+                                        child: const Text(""),
                                       ),
                                     ),
                                     SizedBox(width: 8,),
-                                    Expanded(
+                                    const Expanded(
                                       child: Text(
                                         "Gunakan tangga daripada lift",
                                         overflow: TextOverflow.ellipsis,
@@ -983,16 +858,16 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                                       dimension: 10,
                                       child: Container(
                                         alignment: Alignment.center,
-                                        padding: EdgeInsets.all(8),
+                                        padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xff1e89fe),
                                           borderRadius: BorderRadius.circular(12),
                                         ),
-                                        child: Text(""),
+                                        child: const Text(""),
                                       ),
                                     ),
                                     SizedBox(width: 8,),
-                                    Expanded(
+                                    const Expanded(
                                       child: Text(
                                         "Jalan-jalan saat istirahat makan siang",
                                         overflow: TextOverflow.ellipsis,
@@ -1016,16 +891,16 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                                       dimension: 10,
                                       child: Container(
                                         alignment: Alignment.center,
-                                        padding: EdgeInsets.all(8),
+                                        padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Color(0xff1e89fe),
                                           borderRadius: BorderRadius.circular(12),
                                         ),
-                                        child: Text(""),
+                                        child: const Text(""),
                                       ),
                                     ),
                                     SizedBox(width: 8,),
-                                    Expanded(
+                                    const Expanded(
                                       child: Text(
                                         "Ajak rekan kerja jalan bersama",
                                         overflow: TextOverflow.ellipsis,
@@ -1040,191 +915,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                         ],
                       ),
                     ),
-
                     SizedBox(height: 20,),
-
-                    // CTA
-                    // Container(
-                    //   padding: EdgeInsets.all(20),
-                    //   width: double.infinity,
-                    //   decoration: BoxDecoration(
-                    //       color: Color(0xfffef3ca),
-                    //       borderRadius: BorderRadius.circular(20),
-                    //       boxShadow: [
-                    //         BoxShadow(
-                    //           color: Colors.grey.withOpacity(0.4),
-                    //           spreadRadius: 2,
-                    //           blurRadius: 8,
-                    //           offset: Offset(2, 4),
-                    //         ),
-                    //       ],
-                    //       border: Border.all(
-                    //         color: Color(0xffffdf20),
-                    //         width: 2,
-                    //         style: BorderStyle.solid,
-                    //       )
-                    //   ),
-                    //   child: Column(
-                    //     children: [
-                    //       SizedBox.square(
-                    //         dimension: 80,
-                    //         child: Container(
-                    //           padding: EdgeInsets.all(8),
-                    //           alignment: Alignment.center,
-                    //           decoration: BoxDecoration(
-                    //             color: Color(0xffffe09d),
-                    //             borderRadius: BorderRadius.circular(40),
-                    //           ),
-                    //           child: Text(
-                    //             "🙋‍♂️",
-                    //             style: TextStyle(
-                    //               fontSize: 40,
-                    //             ),
-                    //             textAlign: TextAlign.center,
-                    //           ),
-                    //         ),
-                    //       ),
-                    //       SizedBox(height: 12,),
-                    //       Column(
-                    //         children: [
-                    //           Text(
-                    //             "Siap untuk berjemur?",
-                    //             style: TextStyle(
-                    //               fontSize: 20,
-                    //               fontWeight: FontWeight.bold,
-                    //             ),
-                    //           ),
-                    //           Text(
-                    //             "Konfirmasi aktivitas berjemur Anda hari ini",
-                    //             style: TextStyle(
-                    //               fontSize: 16,
-                    //             ),
-                    //           ),
-                    //         ],
-                    //       ),
-                    //       SizedBox(height: 20,),
-                    //       isSunbathe ? Column(
-                    //         children: [
-                    //           Text(
-                    //             "Tubuhmu berterima kasih atas sinar energi alami ini!",
-                    //             style: TextStyle(
-                    //               fontSize: 16,
-                    //             ),
-                    //           ),
-                    //           SizedBox(height: 12,),
-                    //           Text(
-                    //             "⭐⭐⭐⭐⭐",
-                    //             style: TextStyle(
-                    //               fontSize: 16,
-                    //             ),
-                    //           ),
-                    //           SizedBox(height: 12,),
-                    //           Container(
-                    //             padding: EdgeInsets.all(16),
-                    //             decoration: BoxDecoration(
-                    //                 color: Color(0xffdbfce7),
-                    //                 borderRadius: BorderRadius.circular(20),
-                    //                 border: Border.all(
-                    //                   color: Color(0xff7bf1a8),
-                    //                   width: 2,
-                    //                   style: BorderStyle.solid,
-                    //                 )
-                    //             ),
-                    //             child: Column(
-                    //               children: [
-                    //                 Row(
-                    //                   mainAxisSize: MainAxisSize.min,
-                    //                   children: [
-                    //                     FaIcon(
-                    //                       FontAwesomeIcons.circleCheck,
-                    //                       size: 20,
-                    //                       color: Color(0xff00a63e),
-                    //                     ),
-                    //                     SizedBox(width: 8,),
-                    //                     Text(
-                    //                       "Selamat!",
-                    //                       style: TextStyle(
-                    //                         fontSize: 20,
-                    //                         fontWeight: FontWeight.bold,
-                    //                         color: Color(0xff00a63e),
-                    //                       ),
-                    //                     )
-                    //                   ],
-                    //                 ),
-                    //                 SizedBox(height: 12,),
-                    //                 Text(
-                    //                   "Kamu mendapatkan 1 poin kesehatan",
-                    //                   style: TextStyle(
-                    //                     fontSize: 16,
-                    //                     color: Color(0xff00a63e),
-                    //                   ),
-                    //                 ),
-                    //               ],
-                    //             ),
-                    //           ),
-                    //           SizedBox(height: 20,),
-                    //           Container(
-                    //             decoration: BoxDecoration(
-                    //                 gradient: LinearGradient(
-                    //                   colors: [Color(0xff00c951), Color(0xff00bba6)],
-                    //                   begin: Alignment.centerLeft,
-                    //                   end: Alignment.centerRight,
-                    //                 ),
-                    //                 borderRadius: BorderRadius.circular(20)
-                    //             ),
-                    //             child: ElevatedButton(
-                    //                 onPressed: () {},
-                    //                 style: ElevatedButton.styleFrom(
-                    //                   padding: EdgeInsets.all(16),
-                    //                   backgroundColor: Colors.transparent,
-                    //                   shadowColor: Colors.transparent,
-                    //                   shape: RoundedRectangleBorder(
-                    //                     borderRadius: BorderRadius.circular(20),
-                    //                   ),
-                    //                 ),
-                    //                 child: Text(
-                    //                   "Lanjut ke Jalan 10.000 Langkah",
-                    //                   style: TextStyle(
-                    //                     fontSize: 20,
-                    //                     fontWeight: FontWeight.bold,
-                    //                     color: Colors.white,
-                    //                   ),
-                    //                 )
-                    //             ),
-                    //           )
-                    //         ],
-                    //       ) : Container(
-                    //         decoration: BoxDecoration(
-                    //             gradient: LinearGradient(
-                    //               colors: [Color(0xfff0b000), Color(0xffff6a00)],
-                    //               begin: Alignment.centerLeft,
-                    //               end: Alignment.centerRight,
-                    //             ),
-                    //             borderRadius: BorderRadius.circular(20)
-                    //         ),
-                    //         child: ElevatedButton(
-                    //             onPressed: sunbathe,
-                    //             style: ElevatedButton.styleFrom(
-                    //               padding: EdgeInsets.all(16),
-                    //               backgroundColor: Colors.transparent,
-                    //               shadowColor: Colors.transparent,
-                    //               shape: RoundedRectangleBorder(
-                    //                 borderRadius: BorderRadius.circular(20),
-                    //               ),
-                    //             ),
-                    //             child: Text(
-                    //               "☀️ Saya Sudah Berjemur",
-                    //               style: TextStyle(
-                    //                 fontSize: 20,
-                    //                 fontWeight: FontWeight.bold,
-                    //                 color: Colors.white,
-                    //               ),
-                    //             )
-                    //         ),
-                    //       )
-                    //     ],
-                    //   ),
-                    // ),
                   ],
                 ),
               ),
