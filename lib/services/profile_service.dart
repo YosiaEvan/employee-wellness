@@ -1,15 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
+import 'auth_storage.dart';
 
 /// Service untuk User Profile
 class ProfileService {
   // Helper untuk get token
-  static Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString("token");
-  }
+  static Future<String?> _getToken() => AuthStorage.getToken();
 
   // GET - Get user profile
   static Future<Map<String, dynamic>> getProfile() async {
@@ -39,8 +36,7 @@ class ProfileService {
           "data": data,
         };
       } else if (response.statusCode == 401) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.remove("token");
+        await AuthStorage.clearToken();
 
         return {
           "success": false,

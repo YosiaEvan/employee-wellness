@@ -8,6 +8,8 @@ class AuthStorage {
   static const String _keyPassword = 'user_password';
   static const String _keyToken = 'auth_token';
   static const String _keyRememberMe = 'remember_me';
+  static const String _keyUserId = 'user_id';
+  static const String _keyUserEmail = 'email';
 
   /// Save credentials (encrypted)
   static Future<void> saveCredentials({
@@ -56,6 +58,16 @@ class AuthStorage {
     await prefs.setString(_keyToken, token);
   }
 
+  /// Save user session info (dipakai langkah offline & KPI).
+  static Future<void> saveUserSession({
+    String? userId,
+    String? email,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (userId != null) await prefs.setString(_keyUserId, userId);
+    if (email != null) await prefs.setString(_keyUserEmail, email);
+  }
+
   /// Get token
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -70,6 +82,8 @@ class AuthStorage {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyToken);
     await prefs.remove(_keyRememberMe);
+    await prefs.remove(_keyUserId);
+    await prefs.remove(_keyUserEmail);
   }
 
   /// Clear token only (keep credentials)

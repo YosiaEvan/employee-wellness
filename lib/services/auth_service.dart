@@ -6,6 +6,7 @@ import '../config/api_config.dart';
 import 'auth_storage.dart';
 import 'api_service.dart';
 import 'background_steps_tracker.dart';
+import 'step_foreground_service.dart';
 import 'local_database_service.dart';
 import 'offline_steps_service.dart';
 
@@ -63,6 +64,12 @@ class AuthService {
 
             // Save token
             await AuthStorage.saveToken(token);
+
+            // Save session info untuk kebutuhan offline & KPI
+            await AuthStorage.saveUserSession(
+              userId: user?['id']?.toString(),
+              email: user?['email']?.toString() ?? email,
+            );
 
             // Save credentials for auto-refresh
             if (rememberMe) {
@@ -189,6 +196,14 @@ class AuthService {
         print("✅ Background tracker stopped");
       } catch (e) {
         print("⚠️ Could not stop background tracker: $e");
+      }
+
+      // Stop foreground service (pelacak langkah latar belakang)
+      try {
+        await StepForegroundService.stop();
+        print("✅ Step foreground service stopped");
+      } catch (e) {
+        print("⚠️ Could not stop step foreground service: $e");
       }
 
       // Clear offline steps data

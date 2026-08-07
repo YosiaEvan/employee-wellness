@@ -6,20 +6,24 @@ import 'package:employee_wellness/services/background_steps_tracker.dart';
 import 'package:employee_wellness/services/background_task_service.dart';
 import 'package:employee_wellness/services/offline_steps_service.dart';
 import 'package:employee_wellness/services/steps_sync_service.dart';
+import 'package:employee_wellness/services/step_foreground_service.dart';
 import 'package:employee_wellness/services/language_provider.dart';
 import 'package:employee_wellness/services/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await StepForegroundService.initialize();
   await BackgroundTaskService.instance.initialize();
   final isLoggedIn = await AuthService.isLoggedIn();
   if (isLoggedIn) {
     print('🚀 User is logged in, initializing background services...');
     await BackgroundStepsTracker.initialize(requestPermission: false);
+    await StepForegroundService.start();
     await BackgroundTaskService.instance.registerPeriodicSync();
     await BackgroundTaskService.instance.registerCleanupTask();
     await StepsSyncService.instance.autoSync();
@@ -86,6 +90,17 @@ class _LoginPageState extends State<LoginPage> {
   // Declare errorIcon for snackbar
   IconData? errorIcon; // ✅ added
 
+  /// Minta ijin notifikasi (wajib Android 13+ agar foreground service
+  /// dapat menampilkan notifikasi "Pelacak Langkah Aktif").
+  Future<void> _requestNotificationPermission() async {
+    try {
+      final status = await Permission.notification.request();
+      print('🔔 Notification permission: $status');
+    } catch (e) {
+      print('⚠️ Error requesting notification permission: $e');
+    }
+  }
+
   Future<void> login() async {
     print("🔵 Login button pressed");
     final loc = AppLocalizations.of(context)!;
@@ -112,6 +127,8 @@ class _LoginPageState extends State<LoginPage> {
     if (result["success"]) {
       await BackgroundStepsTracker.initialize();
       await OfflineStepsService.autoSyncOnAppStart();
+      await _requestNotificationPermission();
+      await StepForegroundService.start();
       if (!mounted) return;
       await Navigator.pushReplacement(
         context,

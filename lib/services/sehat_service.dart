@@ -1,13 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
+import 'auth_storage.dart';
 
 class SehatService {
-  static Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString("token");
-  }
+  static Future<String?> _getToken() => AuthStorage.getToken();
 
   static Future<Map<String, dynamic>> _request(
     String method,
