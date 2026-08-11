@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class HijauTaskCard extends StatelessWidget {
@@ -35,14 +35,14 @@ class HijauTaskCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             spreadRadius: 0,
             offset: const Offset(0, 4),
           ),
         ],
         border: isCompleted 
-          ? Border.all(color: sectionColor.withOpacity(0.5), width: 2)
+          ? Border.all(color: sectionColor.withValues(alpha: 0.5), width: 2)
           : null,
       ),
       child: Column(
@@ -56,7 +56,7 @@ class HijauTaskCard extends StatelessWidget {
                 child: Container(
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: sectionColor.withOpacity(0.1),
+                    color: sectionColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: FaIcon(icon, size: 24, color: sectionColor),
@@ -78,7 +78,7 @@ class HijauTaskCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.1),
+                        color: Colors.orange.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -114,9 +114,9 @@ class HijauTaskCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.05),
+                color: Colors.blue.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue.withOpacity(0.1)),
+                border: Border.all(color: Colors.blue.withValues(alpha: 0.1)),
               ),
               child: Row(
                 children: [

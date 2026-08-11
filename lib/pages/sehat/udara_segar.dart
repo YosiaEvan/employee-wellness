@@ -443,7 +443,7 @@ class _UdaraSegarState extends State<UdaraSegar>
                                                     sudahTarikNapas
                                                         ? "Selesai Hari Ini"
                                                         : cycleCount > 0
-                                                            ? "Lanjutkan (${cycleCount}/${requiredCycles})"
+                                                            ? "Lanjutkan ($cycleCount/$requiredCycles)"
                                                             : "Mulai Latihan",
                                                     style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
                                                   ),

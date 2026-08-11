@@ -1,4 +1,4 @@
-import 'package:employee_wellness/components/auto_refresh_mixin.dart';
+﻿import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
@@ -132,36 +132,36 @@ void _checkHealthChallenge() {
     isChallengeAchieved = false;
   }
 
-  print("🎯 Health Challenge Check (Weekly Data):");
-  print("   - Hari makan berminyak: $hariMakanBerminyak / 7");
-  print("   - Hari makan bergula: $hariMakanBergula / 7");
-  print("   - Hari tanpa minyak: $hariTanpaMinyak / 7");
-  print("   - Hari tanpa gula: $hariTanpaGula / 7");
-  print("   - Challenge achieved: $isChallengeAchieved (target: 2 hari tanpa minyak & 2 hari tanpa gula)");
+  debugPrint("ðŸŽ¯ Health Challenge Check (Weekly Data):");
+  debugPrint("   - Hari makan berminyak: $hariMakanBerminyak / 7");
+  debugPrint("   - Hari makan bergula: $hariMakanBergula / 7");
+  debugPrint("   - Hari tanpa minyak: $hariTanpaMinyak / 7");
+  debugPrint("   - Hari tanpa gula: $hariTanpaGula / 7");
+  debugPrint("   - Challenge achieved: $isChallengeAchieved (target: 2 hari tanpa minyak & 2 hari tanpa gula)");
 }
 
   Future<void> addFoodFromDatabase(Map<String, dynamic> result) async {
-    print("\n🍽️ addFoodFromDatabase() called");
-    print("   Result success: ${result["success"]}");
+    debugPrint("\nðŸ½ï¸ addFoodFromDatabase() called");
+    debugPrint("   Result success: ${result["success"]}");
 
     // Set loading state untuk visual feedback
     if (mounted) {
-      print("   Setting isLoading = true");
+      debugPrint("   Setting isLoading = true");
       setState(() {
         isLoading = true;
       });
     }
 
-    print("   Calling loadTodayFood()...");
+    debugPrint("   Calling loadTodayFood()...");
     // Force reload data dari API (bypass any cache)
     await loadTodayFood();
 
-    print("   loadTodayFood() completed, forcing UI rebuild...");
+    debugPrint("   loadTodayFood() completed, forcing UI rebuild...");
     // Extra safety: Force rebuild UI setelah data loaded
     if (mounted) {
       setState(() {
         // Trigger complete rebuild
-        print("   ✅ setState() called - UI should rebuild now");
+        debugPrint("   âœ… setState() called - UI should rebuild now");
       });
     }
 
@@ -173,11 +173,11 @@ void _checkHealthChallenge() {
     // Small delay untuk memastikan UI sudah rebuild
     await Future.delayed(const Duration(milliseconds: 100));
 
-    print("   Preparing success notification...");
-    print("   Current state after refresh:");
-    print("   - totalCalories: $totalCalories");
-    print("   - totalItem: $totalItem");
-    print("   - foods.length: ${foods.length}");
+    debugPrint("   Preparing success notification...");
+    debugPrint("   Current state after refresh:");
+    debugPrint("   - totalCalories: $totalCalories");
+    debugPrint("   - totalItem: $totalItem");
+    debugPrint("   - foods.length: ${foods.length}");
 
     // Show success notification dengan data terbaru
     if (result["success"]) {
@@ -190,18 +190,18 @@ void _checkHealthChallenge() {
               children: [
                 Row(
                   children: [
-                    FaIcon(FontAwesomeIcons.check, color: Colors.white, size: 16), // ✅ removed const
+                    FaIcon(FontAwesomeIcons.check, color: Colors.white, size: 16), // âœ… removed const
                     const SizedBox(width: 8),
                     Expanded(child: Text(result['message'] ?? 'Berhasil menambahkan')),
                   ],
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '📊 Total Kalori: ${totalCalories.toStringAsFixed(1)} kkal',
+                  'ðŸ“Š Total Kalori: ${totalCalories.toStringAsFixed(1)} kkal',
                   style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  '✅ Total Makanan: $totalItem item',
+                  'âœ… Total Makanan: $totalItem item',
                   style: const TextStyle(fontSize: 12),
                 ),
               ],
@@ -223,8 +223,8 @@ void _checkHealthChallenge() {
       }
     }
 
-    print("✅ addFoodFromDatabase() completed!");
-    print("═══════════════════════════════════════\n");
+    debugPrint("âœ… addFoodFromDatabase() completed!");
+    debugPrint("â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\n");
   }
 
   @override
@@ -258,7 +258,7 @@ void _checkHealthChallenge() {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -276,7 +276,7 @@ void _checkHealthChallenge() {
                                 color: Color(0xff00c368),
                                 borderRadius: BorderRadius.circular(40),
                               ),
-                              child: FaIcon( // ✅ removed const
+                              child: FaIcon( // âœ… removed const
                                 FontAwesomeIcons.fireFlameCurved,
                                 size: 36,
                                 color: Colors.white,
@@ -285,7 +285,7 @@ void _checkHealthChallenge() {
                           ),
                           SizedBox(height: 20,),
                           Text(
-                            "${totalCalories.toStringAsFixed(2)}",
+                            totalCalories.toStringAsFixed(2),
                             style: TextStyle(
                               fontSize: 60,
                               fontWeight: FontWeight.bold,
@@ -310,7 +310,7 @@ void _checkHealthChallenge() {
                           ),
                           SizedBox(height: 20,),
                           Text(
-                            "${progress}% dari target",
+                            "$progress% dari target",
                             style: TextStyle(
                               fontSize: 20,
                             ),
@@ -341,7 +341,7 @@ void _checkHealthChallenge() {
                                     SizedBox(width: 8,),
                                     Flexible(
                                       child: Text(
-                                        "${remainingCalories} kalori lagi",
+                                        "$remainingCalories kalori lagi",
                                         style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
@@ -354,7 +354,7 @@ void _checkHealthChallenge() {
                                 ),
                                 SizedBox(height: 8,),
                                 Text(
-                                  "Target: ${targetCalories} kalori",
+                                  "Target: $targetCalories kalori",
                                   style: TextStyle(
                                     color: Color(0xff00c368),
                                     fontSize: 16,
@@ -377,7 +377,7 @@ void _checkHealthChallenge() {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -397,7 +397,7 @@ void _checkHealthChallenge() {
                                     color: Color(0xff00c368),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon( // ✅ removed const
+                                  child: FaIcon( // âœ… removed const
                                     FontAwesomeIcons.arrowTrendUp,
                                     size: 36,
                                     color: Colors.white,
@@ -436,7 +436,7 @@ void _checkHealthChallenge() {
                               ),
                             ),
                           )
-                          : Container(
+                          : SizedBox(
                             width: double.infinity,
                             height: 250,
                             child: Stack(
@@ -732,7 +732,7 @@ void _checkHealthChallenge() {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -752,7 +752,7 @@ void _checkHealthChallenge() {
                                     color: Color(0xff00c368),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon( // ✅ removed const
+                                  child: FaIcon( // âœ… removed const
                                     FontAwesomeIcons.arrowTrendUp,
                                     size: 36,
                                     color: Colors.white,
@@ -785,7 +785,7 @@ void _checkHealthChallenge() {
                                       ),
                                       child: Row(
                                         children: [
-                                          FaIcon( // ✅ removed const
+                                          FaIcon( // âœ… removed const
                                             FontAwesomeIcons.plus,
                                             size: 16,
                                             color: Colors.white,
@@ -813,7 +813,7 @@ void _checkHealthChallenge() {
                               children: [
                                 // Sarapan
                                 if (daftarMakanan['sarapan']?.isNotEmpty ?? false) ...[
-                                  _buildMealCategoryHeader('🌅 Sarapan', daftarMakanan['sarapan']!.length),
+                                  _buildMealCategoryHeader('ðŸŒ… Sarapan', daftarMakanan['sarapan']!.length),
                                   SizedBox(height: 12),
                                   ..._buildFoodList(daftarMakanan['sarapan']!),
                                   SizedBox(height: 20),
@@ -821,7 +821,7 @@ void _checkHealthChallenge() {
 
                                 // Makan Siang
                                 if (daftarMakanan['makan_siang']?.isNotEmpty ?? false) ...[
-                                  _buildMealCategoryHeader('☀️ Makan Siang', daftarMakanan['makan_siang']!.length),
+                                  _buildMealCategoryHeader('â˜€ï¸ Makan Siang', daftarMakanan['makan_siang']!.length),
                                   SizedBox(height: 12),
                                   ..._buildFoodList(daftarMakanan['makan_siang']!),
                                   SizedBox(height: 20),
@@ -829,7 +829,7 @@ void _checkHealthChallenge() {
 
                                 // Makan Malam
                                 if (daftarMakanan['makan_malam']?.isNotEmpty ?? false) ...[
-                                  _buildMealCategoryHeader('🌙 Makan Malam', daftarMakanan['makan_malam']!.length),
+                                  _buildMealCategoryHeader('ðŸŒ™ Makan Malam', daftarMakanan['makan_malam']!.length),
                                   SizedBox(height: 12),
                                   ..._buildFoodList(daftarMakanan['makan_malam']!),
                                   SizedBox(height: 20),
@@ -837,7 +837,7 @@ void _checkHealthChallenge() {
 
                                 // Snack
                                 if (daftarMakanan['snack']?.isNotEmpty ?? false) ...[
-                                  _buildMealCategoryHeader('🍪 Snack', daftarMakanan['snack']!.length),
+                                  _buildMealCategoryHeader('ðŸª Snack', daftarMakanan['snack']!.length),
                                   SizedBox(height: 12),
                                   ..._buildFoodList(daftarMakanan['snack']!),
                                 ],
@@ -929,7 +929,7 @@ void _checkHealthChallenge() {
                                       : Color(0xff1e89fe),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon( // ✅ removed const
+                                  child: FaIcon( // âœ… removed const
                                     isChallengeAchieved
                                       ? FontAwesomeIcons.trophy
                                       : FontAwesomeIcons.lightbulb,
@@ -945,7 +945,7 @@ void _checkHealthChallenge() {
                                   children: [
                                     Text(
                                       isChallengeAchieved
-                                        ? "🎉 Anda Hebat!"
+                                        ? "ðŸŽ‰ Anda Hebat!"
                                         : "Tantangan Sehat",
                                       style: TextStyle(
                                         fontSize: 20,
@@ -985,7 +985,7 @@ void _checkHealthChallenge() {
                               ),
                               child: Column(
                                 children: [
-                                  FaIcon( // ✅ removed const
+                                  FaIcon( // âœ… removed const
                                     FontAwesomeIcons.solidCircleCheck,
                                     size: 48,
                                     color: Color(0xFF4CAF50),
@@ -1074,7 +1074,7 @@ void _checkHealthChallenge() {
                                     children: [
                                       Row(
                                         children: [
-                                          FaIcon( // ✅ removed const
+                                          FaIcon( // âœ… removed const
                                             hariTanpaMinyak >= 2
                                               ? FontAwesomeIcons.solidCircleCheck
                                               : FontAwesomeIcons.circle,
@@ -1086,7 +1086,7 @@ void _checkHealthChallenge() {
                                           SizedBox(width: 8),
                                           Expanded(
                                             child: Text(
-                                              "🎯 Target 2 Hari Tanpa Minyak",
+                                              "ðŸŽ¯ Target 2 Hari Tanpa Minyak",
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
@@ -1144,7 +1144,7 @@ void _checkHealthChallenge() {
                                     children: [
                                       Row(
                                         children: [
-                                          FaIcon( // ✅ removed const
+                                          FaIcon( // âœ… removed const
                                             hariTanpaGula >= 2
                                               ? FontAwesomeIcons.solidCircleCheck
                                               : FontAwesomeIcons.circle,
@@ -1156,7 +1156,7 @@ void _checkHealthChallenge() {
                                           SizedBox(width: 8),
                                           Expanded(
                                             child: Text(
-                                              "🎯 Target 2 Hari Tanpa Gula",
+                                              "ðŸŽ¯ Target 2 Hari Tanpa Gula",
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
@@ -1254,8 +1254,6 @@ void _checkHealthChallenge() {
   Widget _buildSmartSearchDialog() {
     return StatefulBuilder(
       builder: (context, setDialogState) {
-        String selectedJenisMakan = 'sarapan';
-
         return Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Container(
@@ -1277,7 +1275,7 @@ void _checkHealthChallenge() {
                             color: const Color(0xFF00C368),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: FaIcon( // ✅ removed const
+                          child: FaIcon( // âœ… removed const
                             FontAwesomeIcons.utensils,
                             color: Colors.white,
                             size: 20,
@@ -1294,7 +1292,7 @@ void _checkHealthChallenge() {
                       ],
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close), // ✅ changed from FaIcon(Icons.close)
+                      icon: const Icon(Icons.close), // âœ… changed from FaIcon(Icons.close)
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -1306,26 +1304,26 @@ void _checkHealthChallenge() {
                 Expanded(
                   child: SmartFoodSearch(
                     onFoodSelected: (result) async {
-                      print("\n╔════════════════════════════════════════╗");
-                      print("║   🎯 CALLBACK TRIGGERED                ║");
-                      print("╚════════════════════════════════════════╝");
-                      print("Result Success: ${result["success"]}");
-                      print("Message: ${result["message"]}");
-                      print("Data: ${result["data"]}");
+                      debugPrint("\nâ•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—");
+                      debugPrint("â•‘   ðŸŽ¯ CALLBACK TRIGGERED                â•‘");
+                      debugPrint("â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•");
+                      debugPrint("Result Success: ${result["success"]}");
+                      debugPrint("Message: ${result["message"]}");
+                      debugPrint("Data: ${result["data"]}");
 
                       // Capture messenger BEFORE closing dialog (context akan invalid setelah pop)
                       final messenger = ScaffoldMessenger.of(context);
 
                       // Close bottom sheet first
-                      print("\n[1/8] Closing bottom sheet...");
+                      debugPrint("\n[1/8] Closing bottom sheet...");
                       Navigator.pop(context);
 
                       // Wait for animation
-                      print("[2/8] Waiting 300ms for animation...");
+                      debugPrint("[2/8] Waiting 300ms for animation...");
                       await Future.delayed(const Duration(milliseconds: 300));
 
                       // Show loading feedback
-                      print("[3/8] Showing loading snackbar...");
+                      debugPrint("[3/8] Showing loading snackbar...");
                       messenger.showSnackBar(
                         const SnackBar(
                           content: Row(
@@ -1348,7 +1346,7 @@ void _checkHealthChallenge() {
                       );
 
                       // Set loading state
-                      print("[4/8] Setting isLoading = true...");
+                      debugPrint("[4/8] Setting isLoading = true...");
                       if (mounted) {
                         setState(() {
                           isLoading = true;
@@ -1356,17 +1354,17 @@ void _checkHealthChallenge() {
                       }
 
                       // Wait for database commit
-                      print("[5/8] Waiting 1000ms for database commit...");
+                      debugPrint("[5/8] Waiting 1000ms for database commit...");
                       await Future.delayed(const Duration(milliseconds: 1000));
 
                       // NOW FETCH DATA - THIS IS THE CRITICAL PART
-                      print("[6/8] ⭐ CALLING loadTodayFood() NOW ⭐");
-                      print("      This should trigger GET request to API...");
+                      debugPrint("[6/8] â­ CALLING loadTodayFood() NOW â­");
+                      debugPrint("      This should trigger GET request to API...");
                       await loadTodayFood();
-                      print("      loadTodayFood() completed!");
+                      debugPrint("      loadTodayFood() completed!");
 
                       // Force rebuilds
-                      print("[7/8] Forcing UI rebuilds...");
+                      debugPrint("[7/8] Forcing UI rebuilds...");
                       if (mounted) {
                         setState(() {});
                         await Future.delayed(const Duration(milliseconds: 50));
@@ -1376,15 +1374,15 @@ void _checkHealthChallenge() {
                       }
 
                       // Hide loading and show success
-                      print("[8/8] Showing success notification...");
+                      debugPrint("[8/8] Showing success notification...");
                       messenger.hideCurrentSnackBar();
 
                       if (mounted) {
                         if (result["success"]) {
-                          print("\n✅ SUCCESS - Current State:");
-                          print("   Total Calories: $totalCalories kkal");
-                          print("   Total Items: $totalItem");
-                          print("   Foods Count: ${foods.length}");
+                          debugPrint("\nâœ… SUCCESS - Current State:");
+                          debugPrint("   Total Calories: $totalCalories kkal");
+                          debugPrint("   Total Items: $totalItem");
+                          debugPrint("   Foods Count: ${foods.length}");
 
                           messenger.showSnackBar(
                             SnackBar(
@@ -1401,11 +1399,11 @@ void _checkHealthChallenge() {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '📊 Total Kalori: ${totalCalories.toStringAsFixed(1)} kkal',
+                                    'ðŸ“Š Total Kalori: ${totalCalories.toStringAsFixed(1)} kkal',
                                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                                   ),
                                   Text(
-                                    '✅ Total Makanan: $totalItem item',
+                                    'âœ… Total Makanan: $totalItem item',
                                     style: const TextStyle(fontSize: 12),
                                   ),
                                 ],
@@ -1538,7 +1536,7 @@ void _checkHealthChallenge() {
             const SizedBox(height: 8),
             Row(
               children: [
-                FaIcon(FontAwesomeIcons.fire, size: 14, color: Colors.red), // ✅ removed const
+                FaIcon(FontAwesomeIcons.fire, size: 14, color: Colors.red), // âœ… removed const
                 const SizedBox(width: 6),
                 Text(
                   "${totalKalori.toStringAsFixed(1)} kkal",

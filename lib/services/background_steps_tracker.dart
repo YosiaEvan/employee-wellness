@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:pedometer/pedometer.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -43,10 +44,10 @@ class BackgroundStepsTracker {
         PermissionStatus.permanentlyDenied => StepPermissionStatus.permanentlyDenied,
         _ => StepPermissionStatus.denied,
       };
-      print('👣 Activity recognition permission: $_permissionStatus');
+      debugPrint('ðŸ‘£ Activity recognition permission: $_permissionStatus');
       return _permissionStatus;
     } catch (e) {
-      print('❌ Error requesting activity recognition permission: $e');
+      debugPrint('âŒ Error requesting activity recognition permission: $e');
       _permissionStatus = StepPermissionStatus.denied;
       return _permissionStatus;
     }
@@ -57,7 +58,7 @@ class BackgroundStepsTracker {
     try {
       return await Permission.activityRecognition.isGranted;
     } catch (e) {
-      print('❌ Error checking activity recognition permission: $e');
+      debugPrint('âŒ Error checking activity recognition permission: $e');
       return false;
     }
   }
@@ -80,7 +81,7 @@ class BackgroundStepsTracker {
     }
 
     try {
-      print('🚀 Initializing background steps tracker...');
+      debugPrint('ðŸš€ Initializing background steps tracker...');
 
       _currentDate = DateTime.now().toIso8601String().split('T')[0];
       await _loadTodaySteps();
@@ -88,7 +89,7 @@ class BackgroundStepsTracker {
       if (requestPermission) {
         final status = await requestStepPermission();
         if (status != StepPermissionStatus.granted) {
-          print('❌ Activity recognition permission not granted, tracking paused');
+          debugPrint('âŒ Activity recognition permission not granted, tracking paused');
           _isInitialized = true;
           _isListening = false;
           return false;
@@ -96,7 +97,7 @@ class BackgroundStepsTracker {
       } else {
         final granted = await isStepPermissionGranted();
         if (!granted) {
-          print('❌ Activity recognition permission not granted, tracking paused');
+          debugPrint('âŒ Activity recognition permission not granted, tracking paused');
           _isInitialized = true;
           _isListening = false;
           return false;
@@ -115,12 +116,12 @@ class BackgroundStepsTracker {
       _syncService.autoSync();
 
       _isInitialized = true;
-      print('✅ Background steps tracker initialized');
-      print('📊 Today: $_currentDate, Steps: $_todaySteps');
+      debugPrint('âœ… Background steps tracker initialized');
+      debugPrint('ðŸ“Š Today: $_currentDate, Steps: $_todaySteps');
 
       return true;
     } catch (e) {
-      print('❌ Error initializing tracker: $e');
+      debugPrint('âŒ Error initializing tracker: $e');
       _isInitialized = true;
       return false;
     }
@@ -143,7 +144,7 @@ class BackgroundStepsTracker {
       _startPeriodicSync();
       return true;
     } catch (e) {
-      print('❌ Error ensuring tracking: $e');
+      debugPrint('âŒ Error ensuring tracking: $e');
       return false;
     }
   }
@@ -155,10 +156,10 @@ class BackgroundStepsTracker {
 
       if (localData != null) {
         _todaySteps = localData['total_steps'] ?? 0;
-        print('📊 Loaded stored steps for today: $_todaySteps');
+        debugPrint('ðŸ“Š Loaded stored steps for today: $_todaySteps');
       } else {
         _todaySteps = 0;
-        print('📊 No stored steps for today, starting from 0');
+        debugPrint('ðŸ“Š No stored steps for today, starting from 0');
       }
 
       // Load baseline/accumulated dari SharedPreferences
@@ -167,9 +168,9 @@ class BackgroundStepsTracker {
       _accumulatedSteps = prefs.getInt('accumulated_steps_$_currentDate') ?? 0;
       _lastRawSteps = prefs.getInt('last_raw_steps_$_currentDate') ?? -1;
 
-      print('📊 Baseline: $_baselineSteps, Accumulated: $_accumulatedSteps');
+      debugPrint('ðŸ“Š Baseline: $_baselineSteps, Accumulated: $_accumulatedSteps');
     } catch (e) {
-      print('❌ Error loading today steps: $e');
+      debugPrint('âŒ Error loading today steps: $e');
       _todaySteps = 0;
       _baselineSteps = 0;
       _accumulatedSteps = 0;
@@ -185,7 +186,7 @@ class BackgroundStepsTracker {
       await prefs.setInt('accumulated_steps_$_currentDate', _accumulatedSteps);
       await prefs.setInt('last_raw_steps_$_currentDate', _lastRawSteps);
     } catch (e) {
-      print('❌ Error saving baseline: $e');
+      debugPrint('âŒ Error saving baseline: $e');
     }
   }
 
@@ -213,9 +214,9 @@ class BackgroundStepsTracker {
       );
 
       _isListening = true;
-      print('✅ Started listening to pedometer');
+      debugPrint('âœ… Started listening to pedometer');
     } catch (e) {
-      print('❌ Error starting pedometer: $e');
+      debugPrint('âŒ Error starting pedometer: $e');
       _isListening = false;
     }
   }
@@ -231,7 +232,7 @@ class BackgroundStepsTracker {
 
       // Check if date changed (new day)
       if (currentDate != _currentDate) {
-        print('📅 New day detected: $currentDate');
+        debugPrint('ðŸ“… New day detected: $currentDate');
 
         // Save yesterday's final steps
         await _saveStepsToDatabase();
@@ -245,13 +246,13 @@ class BackgroundStepsTracker {
 
         await _saveBaseline();
 
-        print('🔄 Reset for new day, baseline: $_baselineSteps');
+        debugPrint('ðŸ”„ Reset for new day, baseline: $_baselineSteps');
         return;
       }
 
       // Deteksi sensor reset (reboot) saat app hidup
       if (_lastRawSteps > rawSteps) {
-        print('⚠️ Sensor reset detected (raw decreased). Preserving accumulated steps.');
+        debugPrint('âš ï¸ Sensor reset detected (raw decreased). Preserving accumulated steps.');
         _accumulatedSteps = _todaySteps;
         _baselineSteps = rawSteps;
         await _saveBaseline();
@@ -283,23 +284,23 @@ class BackgroundStepsTracker {
         _todaySteps = _accumulatedSteps + delta;
       }
 
-      print('👣 Steps: $_todaySteps (raw: $rawSteps, baseline: $_baselineSteps, acc: $_accumulatedSteps)');
+      debugPrint('ðŸ‘£ Steps: $_todaySteps (raw: $rawSteps, baseline: $_baselineSteps, acc: $_accumulatedSteps)');
 
     } catch (e) {
-      print('❌ Error in _onStepCount: $e');
+      debugPrint('âŒ Error in _onStepCount: $e');
     }
   }
 
-  static void _onStepCountError(error) {
-    print('❌ Step count error: $error');
+  static void _onStepCountError(Object error) {
+    debugPrint('âŒ Step count error: $error');
   }
 
   static void _onPedestrianStatusChanged(PedestrianStatus event) {
-    print('🚶 Pedestrian status: ${event.status}');
+    debugPrint('ðŸš¶ Pedestrian status: ${event.status}');
   }
 
-  static void _onPedestrianStatusError(error) {
-    print('❌ Pedestrian status error: $error');
+  static void _onPedestrianStatusError(Object error) {
+    debugPrint('âŒ Pedestrian status error: $error');
   }
 
   // =====================================================
@@ -310,7 +311,7 @@ class BackgroundStepsTracker {
   static Future<void> _saveStepsToDatabase() async {
     try {
       if (_todaySteps <= 0) {
-        print('⚠️ Skipping save: steps is 0');
+        debugPrint('âš ï¸ Skipping save: steps is 0');
         return;
       }
 
@@ -322,9 +323,9 @@ class BackgroundStepsTracker {
       // Persist last raw steps agar deteksi reboot tetap akurat saat app restart
       await _saveBaseline();
 
-      print('💾 Saved $_todaySteps steps to database');
+      debugPrint('ðŸ’¾ Saved $_todaySteps steps to database');
     } catch (e) {
-      print('❌ Error saving steps: $e');
+      debugPrint('âŒ Error saving steps: $e');
     }
   }
 
@@ -333,7 +334,7 @@ class BackgroundStepsTracker {
     _saveTimer?.cancel();
 
     _saveTimer = Timer.periodic(const Duration(minutes: 2), (timer) async {
-      print('⏰ Periodic save triggered');
+      debugPrint('â° Periodic save triggered');
       await _saveStepsToDatabase();
     });
   }
@@ -343,7 +344,7 @@ class BackgroundStepsTracker {
     _syncTimer?.cancel();
 
     _syncTimer = Timer.periodic(const Duration(minutes: 30), (timer) async {
-      print('⏰ Periodic sync triggered');
+      debugPrint('â° Periodic sync triggered');
       await _syncService.autoSync();
     });
   }
@@ -422,9 +423,9 @@ class BackgroundStepsTracker {
       _isInitialized = false;
       _isListening = false;
 
-      print('✅ Background steps tracker stopped');
+      debugPrint('âœ… Background steps tracker stopped');
     } catch (e) {
-      print('❌ Error stopping tracker: $e');
+      debugPrint('âŒ Error stopping tracker: $e');
     }
   }
 
@@ -448,9 +449,9 @@ class BackgroundStepsTracker {
         }
       }
 
-      print('✅ All steps data cleared');
+      debugPrint('âœ… All steps data cleared');
     } catch (e) {
-      print('❌ Error clearing data: $e');
+      debugPrint('âŒ Error clearing data: $e');
     }
   }
 }

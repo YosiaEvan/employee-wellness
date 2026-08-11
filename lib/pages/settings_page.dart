@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -57,8 +57,8 @@ class _SettingsPageState extends State<SettingsPage> {
         SnackBar(
           content: Text(
             value
-                ? '✅ Pelacak langkah latar belakang AKTIF'
-                : '⏸️ Pelacak langkah latar belakang dimatikan',
+                ? 'âœ… Pelacak langkah latar belakang AKTIF'
+                : 'â¸ï¸ Pelacak langkah latar belakang dimatikan',
           ),
           backgroundColor: value ? const Color(0xFF00C368) : Colors.grey,
           duration: const Duration(seconds: 2),
@@ -145,7 +145,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           secondary: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF00C368).withOpacity(0.1),
+                              color: const Color(0xFF00C368).withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: const FaIcon(FontAwesomeIcons.shoePrints, color: Color(0xFF00C368)),
@@ -165,7 +165,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                           ),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          activeColor: const Color(0xFF00C368),
+                          activeThumbColor: const Color(0xFF00C368),
                         ),
                         const Divider(height: 1, color: Color(0xFFF0F0F0)),
                         Padding(
@@ -242,7 +242,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               style: const TextStyle(fontSize: 14)
                             ),
                             contentPadding: EdgeInsets.zero,
-                            activeColor: Colors.green,
+                            activeThumbColor: Colors.green,
                           ),
                         ],
                       ),
@@ -286,7 +286,7 @@ class _SettingsPageState extends State<SettingsPage> {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.green.withOpacity(0.1) : Colors.grey.withOpacity(0.05),
+          color: isSelected ? Colors.green.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.05),
           shape: BoxShape.circle,
         ),
         child: FaIcon(

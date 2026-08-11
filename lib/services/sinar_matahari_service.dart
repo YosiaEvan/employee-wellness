@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'api_service.dart';
@@ -34,7 +35,7 @@ class SinarMatahariService {
       unawaited(_mergeFromServer());
       return _buildFromLocal();
     } catch (e) {
-      print("❌ Cek Berjemur Error: $e");
+      debugPrint("âŒ Cek Berjemur Error: $e");
       return {"success": false, "sudah_berjemur": false};
     }
   }
@@ -81,7 +82,7 @@ class SinarMatahariService {
       }
     } catch (e) {
       // Offline -> tetap dianggap berhasil (tersimpan di SQLite)
-      print("❌ Catat Berjemur Error (offline): $e");
+      debugPrint("âŒ Catat Berjemur Error (offline): $e");
       return {
         "success": true,
         "message": "Tersimpan offline, akan disinkronkan saat online",
@@ -160,7 +161,7 @@ class SinarMatahariService {
         };
       }
     } catch (e) {
-      print("❌ Cek Berjemur (server) Error: $e");
+      debugPrint("âŒ Cek Berjemur (server) Error: $e");
     }
     return null;
   }
@@ -196,7 +197,7 @@ class SinarMatahariService {
         }
       }
     } catch (e) {
-      print("❌ Error caching server sinar matahari: $e");
+      debugPrint("âŒ Error caching server sinar matahari: $e");
     }
   }
 
@@ -209,7 +210,7 @@ class SinarMatahariService {
         await _cacheServer(server);
       }
     } catch (e) {
-      print("❌ Error merging sinar matahari from server: $e");
+      debugPrint("âŒ Error merging sinar matahari from server: $e");
     }
   }
 }

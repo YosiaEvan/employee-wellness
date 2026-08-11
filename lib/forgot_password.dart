@@ -149,6 +149,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
         showSnackBar(loc.translate('reset_success'));
         // Kembali ke halaman login setelah sukses
         Future.delayed(const Duration(seconds: 1), () {
+          if (!mounted) return;
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const LoginPage()),

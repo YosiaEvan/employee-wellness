@@ -133,10 +133,10 @@ class ProfileService {
         body: jsonEncode({
           "name": name,
           "phone": phone,
-          if (address != null) "address": address,
-          if (birthDate != null) "birth_date": birthDate,
-          if (gender != null) "gender": gender,
-          if (avatar != null) "avatar": avatar,
+          "address": ?address,
+          "birth_date": ?birthDate,
+          "gender": ?gender,
+          "avatar": ?avatar,
         }),
       );
 
@@ -196,13 +196,13 @@ class ProfileService {
           "Authorization": "Bearer $token",
         },
         body: jsonEncode({
-          if (name != null) "name": name,
-          if (phone != null) "phone": phone,
-          if (address != null) "address": address,
-          if (birthDate != null) "birth_date": birthDate,
-          if (gender != null) "gender": gender,
-          if (avatar != null) "avatar": avatar,
-          if (bio != null) "bio": bio,
+          "name": ?name,
+          "phone": ?phone,
+          "address": ?address,
+          "birth_date": ?birthDate,
+          "gender": ?gender,
+          "avatar": ?avatar,
+          "bio": ?bio,
         }),
       );
 

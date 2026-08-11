@@ -1,14 +1,16 @@
-import 'package:employee_wellness/home.dart';
+﻿import 'package:employee_wellness/home.dart';
 import 'package:employee_wellness/register.dart';
 import 'package:employee_wellness/forgot_password.dart';
 import 'package:employee_wellness/services/auth_service.dart';
 import 'package:employee_wellness/services/background_steps_tracker.dart';
 import 'package:employee_wellness/services/background_task_service.dart';
 import 'package:employee_wellness/services/offline_steps_service.dart';
+import 'package:employee_wellness/services/offline_sync_service.dart';
 import 'package:employee_wellness/services/steps_sync_service.dart';
 import 'package:employee_wellness/services/step_foreground_service.dart';
 import 'package:employee_wellness/services/language_provider.dart';
 import 'package:employee_wellness/services/app_localizations.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -17,16 +19,21 @@ import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await StepForegroundService.initialize();
-  await BackgroundTaskService.instance.initialize();
+  if (!kIsWeb) {
+    await StepForegroundService.initialize();
+    await BackgroundTaskService.instance.initialize();
+  }
   final isLoggedIn = await AuthService.isLoggedIn();
   if (isLoggedIn) {
-    print('🚀 User is logged in, initializing background services...');
-    await BackgroundStepsTracker.initialize(requestPermission: false);
-    await StepForegroundService.start();
-    await BackgroundTaskService.instance.registerPeriodicSync();
-    await BackgroundTaskService.instance.registerCleanupTask();
+    debugPrint('ðŸš€ User is logged in, initializing background services...');
     await StepsSyncService.instance.autoSync();
+    await OfflineSyncService.autoSyncOnAppStart();
+    if (!kIsWeb) {
+      await BackgroundStepsTracker.initialize(requestPermission: false);
+      await StepForegroundService.start();
+      await BackgroundTaskService.instance.registerPeriodicSync();
+      await BackgroundTaskService.instance.registerCleanupTask();
+    }
   }
   runApp(
     ChangeNotifierProvider(
@@ -85,24 +92,24 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
   bool _obscurePassword = true;
-  bool _rememberMe = true;
+  final bool _rememberMe = true;
 
   // Declare errorIcon for snackbar
-  IconData? errorIcon; // ✅ added
+  IconData? errorIcon; // âœ… added
 
   /// Minta ijin notifikasi (wajib Android 13+ agar foreground service
   /// dapat menampilkan notifikasi "Pelacak Langkah Aktif").
   Future<void> _requestNotificationPermission() async {
     try {
       final status = await Permission.notification.request();
-      print('🔔 Notification permission: $status');
+      debugPrint('ðŸ”” Notification permission: $status');
     } catch (e) {
-      print('⚠️ Error requesting notification permission: $e');
+      debugPrint('âš ï¸ Error requesting notification permission: $e');
     }
   }
 
   Future<void> login() async {
-    print("🔵 Login button pressed");
+    debugPrint("ðŸ”µ Login button pressed");
     final loc = AppLocalizations.of(context)!;
     if (emailController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -125,10 +132,13 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => isLoading = false);
 
     if (result["success"]) {
-      await BackgroundStepsTracker.initialize();
       await OfflineStepsService.autoSyncOnAppStart();
-      await _requestNotificationPermission();
-      await StepForegroundService.start();
+      await OfflineSyncService.autoSyncOnAppStart();
+      if (!kIsWeb) {
+        await BackgroundStepsTracker.initialize();
+        await _requestNotificationPermission();
+        await StepForegroundService.start();
+      }
       if (!mounted) return;
       await Navigator.pushReplacement(
         context,
@@ -150,9 +160,9 @@ class _LoginPageState extends State<LoginPage> {
         );
       }
     } else {
-      print("❌ Login FAILED: ${result['message']}");
+      debugPrint("âŒ Login FAILED: ${result['message']}");
       String errorMessage = result["message"] ?? loc.translate('login_failed');
-      errorIcon = Icons.error_outline; // ✅ now defined
+      errorIcon = Icons.error_outline; // âœ… now defined
       Color errorColor = Colors.red;
 
       if (errorMessage.toLowerCase().contains("email atau password salah") ||
@@ -165,12 +175,13 @@ class _LoginPageState extends State<LoginPage> {
         errorIcon = Icons.wifi_off;
       }
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(errorIcon, color: Colors.white), // ✅ now valid
+              Icon(errorIcon, color: Colors.white), // âœ… now valid
               const SizedBox(width: 12),
               Expanded(
                 child: Text(errorMessage, style: const TextStyle(fontSize: 14)),
@@ -205,7 +216,7 @@ class _LoginPageState extends State<LoginPage> {
                 const CircleAvatar(
                   radius: 40,
                   backgroundColor: Color(0xFF00C97A),
-                  child: FaIcon(FontAwesomeIcons.building, size: 40, color: Colors.white), // ✅ already FaIcon
+                  child: FaIcon(FontAwesomeIcons.building, size: 40, color: Colors.white), // âœ… already FaIcon
                 ),
                 const SizedBox(height: 20),
                 Text(loc.translate('app_title'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
@@ -221,7 +232,7 @@ class _LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 10,
                           offset: const Offset(0, 5),
                         ),

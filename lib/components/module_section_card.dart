@@ -1,4 +1,4 @@
-import 'package:employee_wellness/services/app_localizations.dart';
+﻿import 'package:employee_wellness/services/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -43,7 +43,7 @@ class ModuleSectionCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 12,
               spreadRadius: 2,
               offset: const Offset(0, 6),
@@ -66,7 +66,7 @@ class ModuleSectionCard extends StatelessWidget {
                       color: sectionColor,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: FaIcon( // 🔥 sudah benar
+                    child: FaIcon( // ðŸ”¥ sudah benar
                       icon,
                       size: 36,
                       color: Colors.white,

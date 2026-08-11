@@ -58,8 +58,8 @@ class SehatService {
     String? allergies, String? chronicDiseases, String? medications,
   }) =>
       _request('POST', '/user/profile-health', body: {
-        if (height != null) 'tinggi_badan': height,
-        if (weight != null) 'berat_badan': weight,
+        'tinggi_badan': ?height,
+        'berat_badan': ?weight,
       });
 
   static Future<Map<String, dynamic>> getStepHistory({String? startDate, String? endDate}) {

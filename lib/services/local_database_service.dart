@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -9,7 +10,7 @@ class LocalDatabaseService {
 
   static Database? _database;
 
-  static const int _version = 2;
+  static const int _version = 3;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -110,6 +111,19 @@ class LocalDatabaseService {
             updated_at TEXT NOT NULL
           )
         ''');
+        await db.execute('''
+          CREATE TABLE aktivitas_poin (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            modul TEXT NOT NULL,
+            aktivitas TEXT NOT NULL,
+            kategori TEXT,
+            tanggal TEXT NOT NULL,
+            poin INTEGER NOT NULL DEFAULT 1,
+            deskripsi TEXT,
+            carbon_saved REAL,
+            synced INTEGER NOT NULL DEFAULT 0
+          )
+        ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -119,7 +133,26 @@ class LocalDatabaseService {
             await db.execute(
                 'ALTER TABLE makanan ADD COLUMN bergula INTEGER NOT NULL DEFAULT 0');
           } catch (e) {
-            print('⚠️ Migration warning: $e');
+            debugPrint('âš ï¸ Migration warning: $e');
+          }
+        }
+        if (oldVersion < 3) {
+          try {
+            await db.execute('''
+              CREATE TABLE aktivitas_poin (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                modul TEXT NOT NULL,
+                aktivitas TEXT NOT NULL,
+                kategori TEXT,
+                tanggal TEXT NOT NULL,
+                poin INTEGER NOT NULL DEFAULT 1,
+                deskripsi TEXT,
+                carbon_saved REAL,
+                synced INTEGER NOT NULL DEFAULT 0
+              )
+            ''');
+          } catch (e) {
+            debugPrint('âš ï¸ Migration warning: $e');
           }
         }
       },
@@ -307,6 +340,7 @@ class LocalDatabaseService {
     await db.execute('DELETE FROM makanan');
     await db.execute('DELETE FROM tenang_sessions');
     await db.execute('DELETE FROM stress_checkin');
+    await db.execute('DELETE FROM aktivitas_poin');
     await db.execute('DELETE FROM cache');
   }
 }

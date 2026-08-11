@@ -52,6 +52,7 @@ class _VerifyEmailState extends State<VerifyEmail> {
 
         // Navigate to login page after successful verification
         Future.delayed(const Duration(seconds: 1), () {
+          if (!mounted) return;
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const LoginPage()),

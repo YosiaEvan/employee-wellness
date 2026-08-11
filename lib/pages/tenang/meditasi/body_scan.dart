@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
@@ -124,7 +124,7 @@ class _BodyScanState extends State<BodyScan> with TickerProviderStateMixin {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 12,
                     spreadRadius: 2,
                     offset: Offset(0, 6),
@@ -144,7 +144,7 @@ class _BodyScanState extends State<BodyScan> with TickerProviderStateMixin {
                             alignment: Alignment.center,
                             padding: EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(40),
                             ),
                             child: FaIcon(FontAwesomeIcons.arrowLeft, size: 20, color: Colors.white),
@@ -164,7 +164,7 @@ class _BodyScanState extends State<BodyScan> with TickerProviderStateMixin {
                           alignment: Alignment.center,
                           padding: EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(40),
                           ),
                           child: FaIcon(FontAwesomeIcons.brain, size: 20, color: Colors.white),
@@ -198,7 +198,7 @@ class _BodyScanState extends State<BodyScan> with TickerProviderStateMixin {
                               ),
                             ),
                             SizedBox(height: 40),
-                            Text("Sesi Selesai 🎉", style: TextStyle(fontSize: 40, fontWeight: FontWeight.w500)),
+                            Text("Sesi Selesai ðŸŽ‰", style: TextStyle(fontSize: 40, fontWeight: FontWeight.w500)),
                             SizedBox(height: 8),
                             Text(
                               "Selamat! Anda telah menyelesaikan sesi Body Scan. Bagaimana perasaan Anda sekarang?",
@@ -273,7 +273,7 @@ class _BodyScanState extends State<BodyScan> with TickerProviderStateMixin {
                                 Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text("🧘", style: TextStyle(fontSize: 100)),
+                                    Text("ðŸ§˜", style: TextStyle(fontSize: 100)),
                                     SizedBox(height: 8),
                                     Text(timerText, style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
                                     SizedBox(height: 4),
@@ -334,7 +334,7 @@ class _BodyScanState extends State<BodyScan> with TickerProviderStateMixin {
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withValues(alpha: 0.08),
                                   blurRadius: 12,
                                   spreadRadius: 2,
                                   offset: Offset(0, 6),

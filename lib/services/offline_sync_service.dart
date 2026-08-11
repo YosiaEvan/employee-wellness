@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -16,7 +17,7 @@ class OfflineSyncService {
       final results = await Connectivity().checkConnectivity();
       return !results.contains(ConnectivityResult.none);
     } catch (e) {
-      print('❌ Error checking connectivity: $e');
+      debugPrint('âŒ Error checking connectivity: $e');
       return false;
     }
   }
@@ -50,6 +51,7 @@ class OfflineSyncService {
       _syncTable('tenang_sessions'),
       _syncTable('stress_checkin'),
       _syncTable('langkah'),
+      _syncTable('aktivitas_poin'),
     ]);
 
     for (final r in results) {
@@ -87,7 +89,7 @@ class OfflineSyncService {
 
       return {'total': pending.length, 'synced': synced, 'failed': failed};
     } catch (e) {
-      print('❌ Error syncing table $table: $e');
+      debugPrint('âŒ Error syncing table $table: $e');
       return {'total': 0, 'synced': 0, 'failed': 0};
     }
   }
@@ -99,6 +101,7 @@ class OfflineSyncService {
         case 'minum':
           final res = await ApiService.post('/user/minum', body: {
             'waktu_minum': row['waktu_minum'],
+            'tanggal': row['tanggal'],
           });
           return _resolve(res.statusCode);
 
@@ -106,18 +109,21 @@ class OfflineSyncService {
           final res = await ApiService.post('/user/tidur', body: {
             'waktu_tidur': row['waktu_tidur'],
             'waktu_bangun': row['waktu_bangun'],
+            'tanggal': row['tanggal'],
           });
           return _resolve(res.statusCode);
 
         case 'sinar_matahari':
           final res = await ApiService.post('/user/sinar-matahari', body: {
             'waktu_selesai': row['waktu_selesai'],
+            'tanggal': row['tanggal'],
           });
           return _resolve(res.statusCode);
 
         case 'tarik_napas':
           final res = await ApiService.post('/user/tarik-napas', body: {
             'waktu_selesai': row['waktu_selesai'],
+            'tanggal': row['tanggal'],
           });
           return _resolve(res.statusCode);
 
@@ -126,6 +132,28 @@ class OfflineSyncService {
             'id_food_nutrition': row['id_food_nutrition'],
             'jenis_makan': row['jenis_makan'],
             'porsi': row['porsi'],
+            'tanggal': row['tanggal'],
+          });
+          return _resolve(res.statusCode);
+
+        case 'aktivitas_poin':
+          if (row['modul'] == 'hijau') {
+            final res = await ApiService.post('/user/hijau', body: {
+              'activity_type': row['aktivitas'],
+              'description': row['deskripsi'],
+              'date': row['tanggal'],
+              if (row['kategori'] != null) 'kategori': row['kategori'],
+              'points': row['poin'],
+              if (row['carbon_saved'] != null)
+                'carbon_saved': row['carbon_saved'],
+            });
+            return _resolve(res.statusCode);
+          }
+          final res = await ApiService.post('/user/aktivitas', body: {
+            'modul': row['modul'],
+            'aktivitas': row['aktivitas'],
+            'tanggal': row['tanggal'],
+            if (row['deskripsi'] != null) 'deskripsi': row['deskripsi'],
           });
           return _resolve(res.statusCode);
 
@@ -160,7 +188,7 @@ class OfflineSyncService {
           return false;
       }
     } catch (e) {
-      print('❌ Error pushing row ($table): $e');
+      debugPrint('âŒ Error pushing row ($table): $e');
       return false;
     }
   }
@@ -173,7 +201,7 @@ class OfflineSyncService {
   static bool _resolve(int statusCode) {
     if (_isSuccess(statusCode)) return true;
     if (statusCode >= 400 && statusCode < 500) {
-      print('⚠️ Pending record ditolak server (status $statusCode), dilewati');
+      debugPrint('âš ï¸ Pending record ditolak server (status $statusCode), dilewati');
       return true;
     }
     return false;
@@ -186,16 +214,16 @@ class OfflineSyncService {
   /// Jalankan sinkronisasi otomatis saat aplikasi dibuka / login
   static Future<void> autoSyncOnAppStart() async {
     try {
-      print('🔄 Running offline sync on app start...');
+      debugPrint('ðŸ”„ Running offline sync on app start...');
       if (await hasInternet()) {
         final result = await syncAllPending();
-        print(
-            '📊 Sync result: ${result['message']} (synced: ${result['synced_count']}, failed: ${result['failed_count']})');
+        debugPrint(
+            'ðŸ“Š Sync result: ${result['message']} (synced: ${result['synced_count']}, failed: ${result['failed_count']})');
       } else {
-        print('⚠️ No internet connection, skipping auto sync');
+        debugPrint('âš ï¸ No internet connection, skipping auto sync');
       }
     } catch (e) {
-      print('❌ Error in offline auto sync: $e');
+      debugPrint('âŒ Error in offline auto sync: $e');
     }
   }
 

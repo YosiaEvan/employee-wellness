@@ -1,4 +1,4 @@
-import 'package:employee_wellness/components/auto_refresh_mixin.dart';
+﻿import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
@@ -128,19 +128,6 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
     }
   }
 
-  Future<void> _pickTime(TextEditingController controller) async {
-    final current = DateFormat("HH:mm").parse(controller.text);
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(hour: current.hour, minute: current.minute),
-    );
-    if (picked != null) {
-      setState(() {
-        controller.text = picked.hour.toString().padLeft(2, '0') + ":" + picked.minute.toString().padLeft(2, '0');
-      });
-    }
-  }
-
   int get totalDays => sleepReports.length;
   int get targetReached => sleepReports.where((r) => (r['duration'] ?? 0) >= 7).length;
   double get averageHours => sleepReports.isEmpty
@@ -169,7 +156,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ ${result['message']}'),
+            content: Text('âœ… ${result['message']}'),
             backgroundColor: Color(0xFF715cff),
             duration: Duration(seconds: 3),
           ),
@@ -201,7 +188,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
             const Header(),
             BottomHeader(
               color: Color(0xff715cff),
-              heading: "Tidur Cukup", // ✅ fixed heading
+              heading: "Tidur Cukup", // âœ… fixed heading
               subHeading: "Istirahat Berkualitas",
               destination: SehatHomepage(),
             ),
@@ -225,7 +212,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -245,7 +232,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                     color: Color(0xff715cff),
                                     borderRadius: BorderRadius.circular(40),
                                   ),
-                                  child: FaIcon( // ✅ fixed
+                                  child: FaIcon( // âœ… fixed
                                     hasTodayReport ? FontAwesomeIcons.circleCheck : FontAwesomeIcons.moon,
                                     size: 36,
                                     color: Colors.white,
@@ -282,7 +269,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                           children: [
                                             Row(
                                               children: [
-                                                FaIcon(FontAwesomeIcons.moon, size: 20, color: Color(0xff4f39f6)), // ✅ fixed
+                                                FaIcon(FontAwesomeIcons.moon, size: 20, color: Color(0xff4f39f6)), // âœ… fixed
                                                 SizedBox(width: 12),
                                                 Text("Tidur", style: TextStyle(fontSize: 20, color: Color(0xff5f6878))),
                                               ],
@@ -309,7 +296,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                           children: [
                                             Row(
                                               children: [
-                                                FaIcon(FontAwesomeIcons.sun, size: 20, color: Color(0xff4f39f6)), // ✅ fixed
+                                                FaIcon(FontAwesomeIcons.sun, size: 20, color: Color(0xff4f39f6)), // âœ… fixed
                                                 SizedBox(width: 12),
                                                 Text("Bangun", style: TextStyle(fontSize: 20, color: Color(0xff5f6878))),
                                               ],
@@ -353,7 +340,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                             ),
                                             Row(
                                               children: [
-                                                FaIcon( // ✅ fixed
+                                                FaIcon( // âœ… fixed
                                                   (todayData['durasi_jam'] ?? 0) > 8
                                                     ? FontAwesomeIcons.circleInfo
                                                     : (todayData['durasi_jam'] ?? 0) < 7
@@ -417,7 +404,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    FaIcon( // ✅ fixed
+                                    FaIcon( // âœ… fixed
                                       isInSleepTimeRange ? FontAwesomeIcons.moon : FontAwesomeIcons.clock,
                                       size: 16,
                                       color: Colors.white,
@@ -450,7 +437,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                               ),
                               child: Row(
                                 children: [
-                                  FaIcon(FontAwesomeIcons.circleInfo, size: 16, color: Color(0xFFFF9800)), // ✅ fixed
+                                  FaIcon(FontAwesomeIcons.circleInfo, size: 16, color: Color(0xFFFF9800)), // âœ… fixed
                                   SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
@@ -477,7 +464,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -497,7 +484,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                     color: Color(0xff715cff),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.arrowTrendUp, size: 36, color: Colors.white), // ✅ fixed
+                                  child: FaIcon(FontAwesomeIcons.arrowTrendUp, size: 36, color: Colors.white), // âœ… fixed
                                 ),
                               ),
                               SizedBox(width: 20),
@@ -567,7 +554,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                   child: Column(
                                     children: [
                                       Text(
-                                        "${rataRataDurasiJam.toStringAsFixed(1)}",
+                                        rataRataDurasiJam.toStringAsFixed(1),
                                         style: TextStyle(color: Color(0xff155dfc), fontWeight: FontWeight.bold, fontSize: 32),
                                       ),
                                       Text("Rata-rata Jam", style: TextStyle(fontSize: 16)),
@@ -660,7 +647,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -681,7 +668,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                     color: Color(0xff715cff),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.lightbulb, size: 36, color: Colors.white), // ✅ fixed
+                                  child: FaIcon(FontAwesomeIcons.lightbulb, size: 36, color: Colors.white), // âœ… fixed
                                 ),
                               ),
                               SizedBox(width: 20),
@@ -696,7 +683,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                           SizedBox(height: 20),
                           Column(
                             children: [
-                              // (Skipped for brevity – same as original but with FaIcon)
+                              // (Skipped for brevity â€“ same as original but with FaIcon)
                               // We'll keep the original rows, they don't use FontAwesome icons.
                             ],
                           ),
@@ -714,7 +701,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -733,7 +720,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                     color: Color(0xff615fff),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.moon, size: 36, color: Colors.white), // ✅ fixed
+                                  child: FaIcon(FontAwesomeIcons.moon, size: 36, color: Colors.white), // âœ… fixed
                                 ),
                               ),
                               SizedBox(width: 20),
@@ -765,7 +752,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -786,14 +773,14 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                     color: Color(0xff715cff),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.heart, size: 36, color: Colors.white), // ✅ fixed
+                                  child: FaIcon(FontAwesomeIcons.heart, size: 36, color: Colors.white), // âœ… fixed
                                 ),
                               ),
                               SizedBox(width: 20),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text( // ✅ fixed heading
+                                  Text( // âœ… fixed heading
                                     "Manfaat Tidur Cukup",
                                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
                                   ),

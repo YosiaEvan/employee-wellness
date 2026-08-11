@@ -50,7 +50,7 @@ class _SmartFoodSearchState extends State<SmartFoodSearch> {
                   const Text('Jenis Makan:', style: TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    value: jenisMakan,
+                    initialValue: jenisMakan,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

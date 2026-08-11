@@ -1,4 +1,4 @@
-import 'package:employee_wellness/components/header.dart';
+﻿import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/tenang/manajemen_stress/teknik_quick_relief.dart';
 import 'package:employee_wellness/services/tenang_service.dart';
@@ -36,7 +36,7 @@ class _ManajemenStressState extends State<ManajemenStress> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withValues(alpha: 0.08),
                       blurRadius: 12,
                       spreadRadius: 2,
                       offset: Offset(0, 6),
@@ -58,7 +58,7 @@ class _ManajemenStressState extends State<ManajemenStress> {
                               alignment: Alignment.center,
                               padding: EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(40),
                               ),
                               child: const FaIcon(
@@ -95,7 +95,7 @@ class _ManajemenStressState extends State<ManajemenStress> {
                             alignment: Alignment.center,
                             padding: EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(40),
                             ),
                             child: const FaIcon(
@@ -126,7 +126,7 @@ class _ManajemenStressState extends State<ManajemenStress> {
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withValues(alpha: 0.08),
                                   blurRadius: 12,
                                   spreadRadius: 2,
                                   offset: Offset(0, 6),
@@ -187,7 +187,7 @@ class _ManajemenStressState extends State<ManajemenStress> {
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withValues(alpha: 0.08),
                                   blurRadius: 12,
                                   spreadRadius: 2,
                                   offset: Offset(0, 6),
@@ -317,7 +317,7 @@ class _ManajemenStressState extends State<ManajemenStress> {
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withValues(alpha: 0.08),
                                   blurRadius: 12,
                                   spreadRadius: 2,
                                   offset: Offset(0, 6),

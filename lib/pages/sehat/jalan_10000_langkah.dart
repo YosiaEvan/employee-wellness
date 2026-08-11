@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
@@ -22,12 +22,10 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
   int _totalSteps = 0;
   double progressValue = 0;
   int _remainingSteps = 10000;
-  int _initialSteps = 0;
 
   // Timer untuk sync periodik ke API
   Timer? _syncTimer;
   Timer? _pollTimer;
-  DateTime? _lastSyncTime;
 
   // Status ijin Activity Recognition
   bool _permissionDenied = false;
@@ -38,7 +36,6 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
   // Yesterday's steps notification
   int? _yesterdaySteps;
   bool _showYesterdayNotification = false;
-  bool _isLoadingYesterday = true;
 
   @override
   void initState() {
@@ -54,10 +51,6 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
   /// Load data langkah kemarin untuk notifikasi
   Future<void> _loadYesterdaySteps() async {
     try {
-      setState(() {
-        _isLoadingYesterday = true;
-      });
-
       final syncService = StepsSyncService.instance;
       final yesterdayData = await syncService.getYesterdaySteps();
 
@@ -69,25 +62,13 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
           setState(() {
             _yesterdaySteps = steps;
             _showYesterdayNotification = true;
-            _isLoadingYesterday = false;
           });
 
-          print('📊 Yesterday steps loaded: $steps');
-        } else {
-          setState(() {
-            _isLoadingYesterday = false;
-          });
+          debugPrint('ðŸ“Š Yesterday steps loaded: $steps');
         }
-      } else {
-        setState(() {
-          _isLoadingYesterday = false;
-        });
       }
     } catch (e) {
-      print('❌ Error loading yesterday steps: $e');
-      setState(() {
-        _isLoadingYesterday = false;
-      });
+      debugPrint('âŒ Error loading yesterday steps: $e');
     }
   }
 
@@ -122,10 +103,10 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
               status == StepPermissionStatus.permanentlyDenied;
           _trackingActive = false;
         });
-        print("⚠️ Permission denied for activity recognition");
+        debugPrint("âš ï¸ Permission denied for activity recognition");
       }
     } catch (e) {
-      print("❌ Error requesting activity recognition permission: $e");
+      debugPrint("âŒ Error requesting activity recognition permission: $e");
       if (mounted) {
         setState(() {
           _permissionDenied = true;
@@ -142,7 +123,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
     try {
       await openAppSettings();
     } catch (e) {
-      print("❌ Error opening app settings: $e");
+      debugPrint("âŒ Error opening app settings: $e");
     }
   }
 
@@ -183,7 +164,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
       }
       final bgSteps = BackgroundStepsTracker.todaySteps;
       if (bgSteps > _totalSteps) {
-        print('📊 Background tracker has more steps: $bgSteps > $_totalSteps');
+        debugPrint('ðŸ“Š Background tracker has more steps: $bgSteps > $_totalSteps');
         if (mounted) {
           setState(() {
             _totalSteps = bgSteps;
@@ -196,7 +177,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
         if (mounted) setState(() => _trackingActive = true);
       }
     } catch (e) {
-      print('❌ Error syncing with background tracker: $e');
+      debugPrint('âŒ Error syncing with background tracker: $e');
     }
   }
 
@@ -239,18 +220,15 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
 
       setState(() {
         _totalSteps = 0;
-        _initialSteps = 0;
         progressValue = 0;
         _remainingSteps = 10000;
       });
     } else {
       // Load data dari local storage
       final savedSteps = await LangkahService.getTodaySteps();
-      final savedInitial = await LangkahService.getInitialSteps();
 
       setState(() {
         _totalSteps = savedSteps;
-        _initialSteps = savedInitial;
         progressValue = _totalSteps / 10000;
         _remainingSteps = 10000 - _totalSteps;
       });
@@ -309,18 +287,6 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
     startPolling();
   }
 
-  /// Auto-sync dengan debounce
-  void _autoSyncToAPI() {
-    final now = DateTime.now();
-
-    // Sync hanya jika sudah 30 detik sejak last sync
-    if (_lastSyncTime == null ||
-        now.difference(_lastSyncTime!).inSeconds >= 30) {
-      _syncToAPI();
-      _lastSyncTime = now;
-    }
-  }
-
   /// Sync ke API (sekarang save ke queue untuk background sync)
   Future<void> _syncToAPI() async {
     if (_totalSteps > 0) {
@@ -334,7 +300,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
           totalSteps: _totalSteps,
         );
       } catch (e) {
-        print('⚠️ Failed to sync to StepsDatabase: $e');
+        debugPrint('âš ï¸ Failed to sync to StepsDatabase: $e');
       }
     }
   }
@@ -475,7 +441,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withOpacity(0.3),
+            color: Colors.green.withValues(alpha: 0.3),
             spreadRadius: 2,
             blurRadius: 8,
             offset: const Offset(0, 4),
@@ -487,7 +453,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const FaIcon(
@@ -523,7 +489,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                 Text(
                   'Langkah Kemarin',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 13,
                   ),
                 ),
@@ -531,7 +497,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                 Row(
                   children: [
                     Text(
-                      '${_yesterdaySteps!.toStringAsFixed(0)}',
+                      _yesterdaySteps!.toStringAsFixed(0),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 28,
@@ -553,7 +519,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                 Text(
                   yesterdayFormatted,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 11,
                   ),
                 ),
@@ -626,7 +592,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -782,7 +748,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -839,7 +805,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                             child: Row(
                               children: [
                                 Text(
-                                  "❤️",
+                                  "â¤ï¸",
                                   style: TextStyle(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 20,
@@ -872,7 +838,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                             child: Row(
                               children: [
                                 Text(
-                                  "🔥",
+                                  "ðŸ”¥",
                                   style: TextStyle(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 20,
@@ -905,7 +871,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                             child: Row(
                               children: [
                                 Text(
-                                  "🦴",
+                                  "ðŸ¦´",
                                   style: TextStyle(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 20,
@@ -938,7 +904,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                             child: Row(
                               children: [
                                 Text(
-                                  "😊",
+                                  "ðŸ˜Š",
                                   style: TextStyle(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 20,
@@ -971,7 +937,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                             child: Row(
                               children: [
                                 Text(
-                                  "🧠",
+                                  "ðŸ§ ",
                                   style: TextStyle(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 20,
@@ -1005,7 +971,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -1203,7 +1169,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                     //       borderRadius: BorderRadius.circular(20),
                     //       boxShadow: [
                     //         BoxShadow(
-                    //           color: Colors.grey.withOpacity(0.4),
+                    //           color: Colors.grey.withValues(alpha: 0.4),
                     //           spreadRadius: 2,
                     //           blurRadius: 8,
                     //           offset: Offset(2, 4),
@@ -1227,7 +1193,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                     //             borderRadius: BorderRadius.circular(40),
                     //           ),
                     //           child: Text(
-                    //             "🙋‍♂️",
+                    //             "ðŸ™‹â€â™‚ï¸",
                     //             style: TextStyle(
                     //               fontSize: 40,
                     //             ),
@@ -1264,7 +1230,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                     //           ),
                     //           SizedBox(height: 12,),
                     //           Text(
-                    //             "⭐⭐⭐⭐⭐",
+                    //             "â­â­â­â­â­",
                     //             style: TextStyle(
                     //               fontSize: 16,
                     //             ),
@@ -1364,7 +1330,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                     //               ),
                     //             ),
                     //             child: Text(
-                    //               "☀️ Saya Sudah Berjemur",
+                    //               "â˜€ï¸ Saya Sudah Berjemur",
                     //               style: TextStyle(
                     //                 fontSize: 20,
                     //                 fontWeight: FontWeight.bold,

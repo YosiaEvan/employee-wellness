@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'api_service.dart';
@@ -34,7 +35,7 @@ class TarikNapasService {
       unawaited(_mergeFromServer());
       return _buildFromLocal();
     } catch (e) {
-      print("❌ Cek Tarik Napas Error: $e");
+      debugPrint("âŒ Cek Tarik Napas Error: $e");
       return {"success": false, "sudah_tarik_napas": false};
     }
   }
@@ -81,7 +82,7 @@ class TarikNapasService {
       }
     } catch (e) {
       // Offline -> tetap dianggap berhasil (tersimpan di SQLite)
-      print("❌ Catat Tarik Napas Error (offline): $e");
+      debugPrint("âŒ Catat Tarik Napas Error (offline): $e");
       return {
         "success": true,
         "message": "Tersimpan offline, akan disinkronkan saat online",
@@ -160,7 +161,7 @@ class TarikNapasService {
         };
       }
     } catch (e) {
-      print("❌ Cek Tarik Napas (server) Error: $e");
+      debugPrint("âŒ Cek Tarik Napas (server) Error: $e");
     }
     return null;
   }
@@ -196,7 +197,7 @@ class TarikNapasService {
         }
       }
     } catch (e) {
-      print("❌ Error caching server tarik napas: $e");
+      debugPrint("âŒ Error caching server tarik napas: $e");
     }
   }
 
@@ -209,7 +210,7 @@ class TarikNapasService {
         await _cacheServer(server);
       }
     } catch (e) {
-      print("❌ Error merging tarik napas from server: $e");
+      debugPrint("âŒ Error merging tarik napas from server: $e");
     }
   }
 }

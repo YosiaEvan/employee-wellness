@@ -1,4 +1,4 @@
-import 'package:audioplayers/audioplayers.dart';
+﻿import 'package:audioplayers/audioplayers.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/tenang/manajemen_stress.dart';
@@ -77,7 +77,7 @@ class _StrategiCopingState extends State<StrategiCoping> with TickerProviderStat
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 12,
                     spreadRadius: 2,
                     offset: Offset(0, 6),
@@ -97,7 +97,7 @@ class _StrategiCopingState extends State<StrategiCoping> with TickerProviderStat
                             alignment: Alignment.center,
                             padding: EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(40),
                             ),
                             child: FaIcon(FontAwesomeIcons.arrowLeft, size: 20, color: Colors.white),
@@ -117,7 +117,7 @@ class _StrategiCopingState extends State<StrategiCoping> with TickerProviderStat
                           alignment: Alignment.center,
                           padding: EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(40),
                           ),
                           child: FaIcon(FontAwesomeIcons.brain, size: 20, color: Colors.white),
@@ -144,7 +144,7 @@ class _StrategiCopingState extends State<StrategiCoping> with TickerProviderStat
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withValues(alpha: 0.08),
                                   blurRadius: 12,
                                   spreadRadius: 2,
                                   offset: Offset(0, 6),
@@ -192,7 +192,7 @@ class _StrategiCopingState extends State<StrategiCoping> with TickerProviderStat
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withValues(alpha: 0.08),
                                   blurRadius: 12,
                                   spreadRadius: 2,
                                   offset: Offset(0, 6),
@@ -270,7 +270,7 @@ class _StrategiCopingState extends State<StrategiCoping> with TickerProviderStat
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withValues(alpha: 0.08),
                                   blurRadius: 12,
                                   spreadRadius: 2,
                                   offset: Offset(0, 6),
@@ -348,7 +348,7 @@ class _StrategiCopingState extends State<StrategiCoping> with TickerProviderStat
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withValues(alpha: 0.08),
                                   blurRadius: 12,
                                   spreadRadius: 2,
                                   offset: Offset(0, 6),
@@ -460,7 +460,7 @@ class _StrategiCopingState extends State<StrategiCoping> with TickerProviderStat
                               ),
                             ),
                             SizedBox(height: 40),
-                            Text("Sesi Selesai 🎉", style: TextStyle(fontSize: 40, fontWeight: FontWeight.w500)),
+                            Text("Sesi Selesai ðŸŽ‰", style: TextStyle(fontSize: 40, fontWeight: FontWeight.w500)),
                             SizedBox(height: 8),
                             Text(
                               "Anda sudah mempelajari berbagai teknik dan strategi manajemen stres. Praktikkan secara rutin untuk hasil optimal!",

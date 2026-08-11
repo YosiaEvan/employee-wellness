@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'api_service.dart';
@@ -8,7 +9,7 @@ import 'offline_sync_service.dart';
 /// Data disimpan ke SQLite lokal terlebih dahulu, lalu disinkronkan ke backend.
 class MinumAirService {
   static const int targetGelas = 8;
-  static const Duration intervalMinum = Duration(minutes: 15);
+  static const Duration intervalMinum = Duration(minutes: 45);
 
   static final LocalDatabaseService _db = LocalDatabaseService.instance;
 
@@ -37,7 +38,7 @@ class MinumAirService {
       unawaited(_mergeFromServer());
       return _buildStatusFromLocal(todayRows);
     } catch (e) {
-      print("❌ Get Status Minum Error: $e");
+      debugPrint("âŒ Get Status Minum Error: $e");
       return {"success": false};
     }
   }
@@ -59,7 +60,7 @@ class MinumAirService {
     try {
       final response = await ApiService.post(
         "/user/minum",
-        body: {"waktu_minum": waktuMinum},
+        body: {"waktu_minum": waktuMinum, "tanggal": tanggal},
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -85,7 +86,7 @@ class MinumAirService {
       }
     } catch (e) {
       // Offline -> tetap dianggap berhasil (tersimpan di SQLite)
-      print("❌ Catat Minum Error (offline): $e");
+      debugPrint("âŒ Catat Minum Error (offline): $e");
       return {
         "success": true,
         "message": "Tersimpan offline, akan disinkronkan saat online",
@@ -206,7 +207,7 @@ class MinumAirService {
         };
       }
     } catch (e) {
-      print("❌ Get Status Minum (server) Error: $e");
+      debugPrint("âŒ Get Status Minum (server) Error: $e");
     }
     return null;
   }
@@ -242,7 +243,7 @@ class MinumAirService {
         }
       }
     } catch (e) {
-      print("❌ Error caching server minum: $e");
+      debugPrint("âŒ Error caching server minum: $e");
     }
   }
 
@@ -255,12 +256,12 @@ class MinumAirService {
         await _cacheServerMinum(server);
       }
     } catch (e) {
-      print("❌ Error merging minum from server: $e");
+      debugPrint("âŒ Error merging minum from server: $e");
     }
   }
 
   static const Map<String, dynamic> _aturan = {
     'target_harian': targetGelas,
-    'interval_menit': 15,
+    'interval_menit': 45,
   };
 }

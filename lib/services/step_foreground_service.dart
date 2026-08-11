@@ -1,6 +1,6 @@
+﻿import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 import 'background_steps_tracker.dart';
 
 /// Service latar depan untuk pelacakan langkah.
@@ -16,10 +16,21 @@ class StepForegroundService {
   static const int notificationId = 112233;
   static bool _configured = false;
 
+  /// Foreground service hanya didukung Android/iOS. Di platform lain (mis.
+  /// web) seluruh method dibuat no-op agar tidak crash.
+  static bool get _supported =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+
   /// Daftarkan service (panggil SEKALI saat aplikasi dimulai).
   static Future<void> initialize() async {
     if (_configured) return;
     _configured = true;
+    if (!_supported) {
+      debugPrint('âš ï¸ Step foreground service tidak didukung di platform ini');
+      return;
+    }
 
     final service = FlutterBackgroundService();
     await service.configure(
@@ -50,25 +61,27 @@ class StepForegroundService {
 
   /// Mulai service latar depan (dipanggil setelah login sukses).
   static Future<void> start() async {
+    if (!_supported) return;
     await initialize();
     final service = FlutterBackgroundService();
     final running = await service.isRunning();
     if (running) {
-      print('✅ Step foreground service sudah berjalan');
+      debugPrint('âœ… Step foreground service sudah berjalan');
       return;
     }
-    print('🚀 Starting step foreground service...');
+    debugPrint('ðŸš€ Starting step foreground service...');
     await service.startService();
   }
 
   /// Hentikan service (dipanggil saat logout).
   static Future<void> stop() async {
+    if (!_supported) return;
     try {
       final service = FlutterBackgroundService();
       service.invoke('stopService');
-      print('🛑 Step foreground service stopped');
+      debugPrint('ðŸ›‘ Step foreground service stopped');
     } catch (e) {
-      print('❌ Error stopping step foreground service: $e');
+      debugPrint('âŒ Error stopping step foreground service: $e');
     }
   }
 
@@ -86,14 +99,14 @@ class StepForegroundService {
 /// `vm:entry-point` wajib agar isolate dapat memanggil fungsi ini.
 @pragma('vm:entry-point')
 Future<void> stepTrackerServiceHandler(ServiceInstance service) async {
-  print('⚙️ Step foreground service handler started');
+  debugPrint('âš™ï¸ Step foreground service handler started');
 
   // Pastikan tracking berjalan di isolate background.
   await BackgroundStepsTracker.initialize(requestPermission: false);
 
   // Dengarkan perintah berhenti.
   service.on('stopService').listen((args) async {
-    print('🛑 Stop command received, stopping tracker...');
+    debugPrint('ðŸ›‘ Stop command received, stopping tracker...');
     await BackgroundStepsTracker.stop();
     service.stopSelf();
   });
@@ -108,7 +121,7 @@ Future<void> stepTrackerServiceHandler(ServiceInstance service) async {
         content: 'Langkahmu sedang dihitung di latar belakang',
       );
     } catch (e) {
-      print('⚠️ Error setting notification info: $e');
+      debugPrint('âš ï¸ Error setting notification info: $e');
     }
   }
 

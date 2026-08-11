@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'api_service.dart';
@@ -34,7 +35,7 @@ class TidurService {
       unawaited(_mergeFromServer());
       return _buildFromLocal(todayRows.first);
     } catch (e) {
-      print("❌ Cek Tidur Error: $e");
+      debugPrint("âŒ Cek Tidur Error: $e");
       return {"success": false, "sudah_lapor": false};
     }
   }
@@ -110,7 +111,7 @@ class TidurService {
       }
     } catch (e) {
       // Offline -> tetap dianggap berhasil (tersimpan di SQLite)
-      print("❌ Lapor Tidur Error (offline): $e");
+      debugPrint("âŒ Lapor Tidur Error (offline): $e");
       return {
         "success": true,
         "message": "Tersimpan offline, akan disinkronkan saat online",
@@ -225,7 +226,7 @@ class TidurService {
         };
       }
     } catch (e) {
-      print("❌ Cek Tidur (server) Error: $e");
+      debugPrint("âŒ Cek Tidur (server) Error: $e");
     }
     return null;
   }
@@ -263,7 +264,7 @@ class TidurService {
         }
       }
     } catch (e) {
-      print("❌ Error caching server tidur: $e");
+      debugPrint("âŒ Error caching server tidur: $e");
     }
   }
 
@@ -276,7 +277,7 @@ class TidurService {
         await _cacheServerTidur(server);
       }
     } catch (e) {
-      print("❌ Error merging tidur from server: $e");
+      debugPrint("âŒ Error merging tidur from server: $e");
     }
   }
 }

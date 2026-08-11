@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
@@ -28,9 +29,9 @@ class AuthService {
         };
       }
 
-      print("📤 Login Request:");
-      print("URL: ${ApiConfig.baseUrl}/auth/login");
-      print("Email: $email");
+      debugPrint("ðŸ“¤ Login Request:");
+      debugPrint("URL: ${ApiConfig.baseUrl}/auth/login");
+      debugPrint("Email: $email");
 
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/auth/login'),
@@ -46,8 +47,8 @@ class AuthService {
         },
       );
 
-      print("📥 Login Response: ${response.statusCode}");
-      print("Body: ${response.body}");
+      debugPrint("ðŸ“¥ Login Response: ${response.statusCode}");
+      debugPrint("Body: ${response.body}");
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -59,8 +60,8 @@ class AuthService {
           final user = data?['user'];
 
           if (token != null) {
-            print("✅ Login success! Token saved.");
-            print("👤 User: ${user?['nama_lengkap']} (${user?['email']})");
+            debugPrint("âœ… Login success! Token saved.");
+            debugPrint("ðŸ‘¤ User: ${user?['nama_lengkap']} (${user?['email']})");
 
             // Save token
             await AuthStorage.saveToken(token);
@@ -78,7 +79,7 @@ class AuthService {
                 password: password,
                 rememberMe: true,
               );
-              print("✅ Credentials saved for auto-refresh");
+              debugPrint("âœ… Credentials saved for auto-refresh");
             }
 
             return {
@@ -88,14 +89,14 @@ class AuthService {
               "user": user,
             };
           } else {
-            print("❌ Login failed: No token in response");
+            debugPrint("âŒ Login failed: No token in response");
             return {
               "success": false,
               "message": "Token tidak ditemukan",
             };
           }
         } else {
-          print("❌ Login failed: ${responseData['message']}");
+          debugPrint("âŒ Login failed: ${responseData['message']}");
           return {
             "success": false,
             "message": responseData['message'] ?? "Login gagal",
@@ -106,7 +107,7 @@ class AuthService {
         final data = jsonDecode(response.body);
         final errorMessage = data['message'] ?? "Email atau password salah";
 
-        print("❌ Unauthorized (401): $errorMessage");
+        debugPrint("âŒ Unauthorized (401): $errorMessage");
 
         return {
           "success": false,
@@ -114,7 +115,7 @@ class AuthService {
           "status": 401,
         };
       } else {
-        print("❌ HTTP Error: ${response.statusCode}");
+        debugPrint("âŒ HTTP Error: ${response.statusCode}");
 
         try {
           final data = jsonDecode(response.body);
@@ -132,25 +133,25 @@ class AuthService {
         }
       }
     } on SocketException catch (e) {
-      print("❌ Socket Exception: $e");
+      debugPrint("âŒ Socket Exception: $e");
       return {
         "success": false,
         "message": ApiService.getErrorMessage(e),
       };
     } on TimeoutException catch (e) {
-      print("❌ Timeout Exception: $e");
+      debugPrint("âŒ Timeout Exception: $e");
       return {
         "success": false,
         "message": ApiService.getErrorMessage(e),
       };
     } on http.ClientException catch (e) {
-      print("❌ Client Exception: $e");
+      debugPrint("âŒ Client Exception: $e");
       return {
         "success": false,
         "message": ApiService.getErrorMessage(e),
       };
     } catch (e) {
-      print("❌ Login Exception: $e");
+      debugPrint("âŒ Login Exception: $e");
       return {
         "success": false,
         "message": ApiService.getErrorMessage(e),
@@ -188,51 +189,51 @@ class AuthService {
   /// Logout - Clear all data
   static Future<Map<String, dynamic>> logout() async {
     try {
-      print("🔓 Logging out...");
+      debugPrint("ðŸ”“ Logging out...");
 
       // Stop background steps tracker
       try {
         await BackgroundStepsTracker.stop();
-        print("✅ Background tracker stopped");
+        debugPrint("âœ… Background tracker stopped");
       } catch (e) {
-        print("⚠️ Could not stop background tracker: $e");
+        debugPrint("âš ï¸ Could not stop background tracker: $e");
       }
 
       // Stop foreground service (pelacak langkah latar belakang)
       try {
         await StepForegroundService.stop();
-        print("✅ Step foreground service stopped");
+        debugPrint("âœ… Step foreground service stopped");
       } catch (e) {
-        print("⚠️ Could not stop step foreground service: $e");
+        debugPrint("âš ï¸ Could not stop step foreground service: $e");
       }
 
       // Clear offline steps data
       try {
         await OfflineStepsService.clearAllStepsData();
-        print("✅ Offline steps data cleared");
+        debugPrint("âœ… Offline steps data cleared");
       } catch (e) {
-        print("⚠️ Could not clear offline steps: $e");
+        debugPrint("âš ï¸ Could not clear offline steps: $e");
       }
 
       // Clear data SQLite lokal (semua fitur offline-first)
       try {
         await LocalDatabaseService.instance.clearAll();
-        print("✅ Local SQLite data cleared");
+        debugPrint("âœ… Local SQLite data cleared");
       } catch (e) {
-        print("⚠️ Could not clear local database: $e");
+        debugPrint("âš ï¸ Could not clear local database: $e");
       }
 
       // Clear all auth storage (token, credentials, etc)
       await AuthStorage.clearAll();
-      print("✅ Auth storage cleared");
+      debugPrint("âœ… Auth storage cleared");
 
-      print("✅ Logout complete - all data cleared");
+      debugPrint("âœ… Logout complete - all data cleared");
       return {
         "success": true,
         "message": "Logout berhasil",
       };
     } catch (e) {
-      print("❌ Logout error: $e");
+      debugPrint("âŒ Logout error: $e");
       // Even if error, still return success to force logout
       return {
         "success": true,

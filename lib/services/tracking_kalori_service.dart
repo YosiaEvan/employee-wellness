@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'api_service.dart';
@@ -95,7 +96,7 @@ class TrackingKaloriService {
       }
     } catch (e) {
       // Offline -> tetap dianggap berhasil (tersimpan di SQLite)
-      print("❌ Tracking Kalori Error (offline): $e");
+      debugPrint("âŒ Tracking Kalori Error (offline): $e");
       return {
         "success": true,
         "message": "Tersimpan offline, akan disinkronkan saat online",
@@ -132,7 +133,7 @@ class TrackingKaloriService {
       // Data lokal ada -> bangun dari SQLite (offline-first)
       return {"success": true, "data": await _buildFromLocal(todayRows)};
     } catch (e) {
-      print("❌ Get Tracking Error: $e");
+      debugPrint("âŒ Get Tracking Error: $e");
       return {"success": false, "message": "Error: $e"};
     }
   }
@@ -285,7 +286,7 @@ class TrackingKaloriService {
         }
       }
     } catch (e) {
-      print("❌ Error reading tracking target: $e");
+      debugPrint("âŒ Error reading tracking target: $e");
     }
     return Map<String, dynamic>.from(_defaultTarget);
   }
@@ -308,7 +309,7 @@ class TrackingKaloriService {
         }
       }
     } catch (e) {
-      print("❌ Get Tracking (server) Error: $e");
+      debugPrint("âŒ Get Tracking (server) Error: $e");
     }
     return null;
   }
@@ -348,7 +349,7 @@ class TrackingKaloriService {
         }
       });
     } catch (e) {
-      print("❌ Error caching server tracking data: $e");
+      debugPrint("âŒ Error caching server tracking data: $e");
     }
   }
 
@@ -360,7 +361,7 @@ class TrackingKaloriService {
         return jsonDecode(raw) as Map<String, dynamic>;
       }
     } catch (e) {
-      print("❌ Error reading cached tracking data: $e");
+      debugPrint("âŒ Error reading cached tracking data: $e");
     }
     return null;
   }

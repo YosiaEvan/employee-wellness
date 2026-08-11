@@ -1,4 +1,4 @@
-import 'package:employee_wellness/components/header.dart';
+﻿import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/module_section_card.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/config/penilaian_points.dart';
@@ -47,7 +47,7 @@ class TenangHomepage extends StatelessWidget {
                           alignment: Alignment.center,
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(40),
                           ),
                           child: const FaIcon(FontAwesomeIcons.arrowLeft, size: 20, color: Colors.white),
@@ -76,7 +76,7 @@ class TenangHomepage extends StatelessWidget {
                           alignment: Alignment.center,
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(40),
                           ),
                           child: const FaIcon(FontAwesomeIcons.chartLine, size: 20, color: Colors.white),
@@ -159,7 +159,7 @@ class TenangHomepage extends StatelessWidget {
           destination: AktivitasKlikPage(
             point: point,
             heading: loc.translate('tenang_title'),
-            subHeading: 'Penilaian 360°',
+            subHeading: 'Penilaian 360Â°',
             destination: const TenangHomepage(),
           ),
           backgroundColor: Colors.white,
@@ -183,7 +183,7 @@ class TenangHomepage extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 12,
             spreadRadius: 2,
             offset: const Offset(0, 6),

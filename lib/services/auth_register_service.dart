@@ -1,3 +1,4 @@
+﻿import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
@@ -26,17 +27,17 @@ class AuthRegisterService {
         }),
       );
 
-      print("📤 Register Request:");
-      print("URL: ${ApiConfig.baseUrl}/user/register");
-      print("Body: ${jsonEncode({
+      debugPrint("ðŸ“¤ Register Request:");
+      debugPrint("URL: ${ApiConfig.baseUrl}/user/register");
+      debugPrint("Body: ${jsonEncode({
         "nama_lengkap": namaLengkap,
         "email": email,
         "password": "***",
         "confirm_password": "***",
         "token_perusahaan": tokenPerusahaan,
       })}");
-      print("📥 Response: ${response.statusCode}");
-      print("Body: ${response.body}");
+      debugPrint("ðŸ“¥ Response: ${response.statusCode}");
+      debugPrint("Body: ${response.body}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
@@ -53,7 +54,7 @@ class AuthRegisterService {
         };
       }
     } catch (e) {
-      print("❌ Register Error: $e");
+      debugPrint("âŒ Register Error: $e");
       return {
         "success": false,
         "message": "Gagal terhubung ke server: $e",
@@ -76,11 +77,11 @@ class AuthRegisterService {
         }),
       );
 
-      print("📤 Verify Email Request:");
-      print("URL: ${ApiConfig.baseUrl}/auth/verify-email");
-      print("Body: ${jsonEncode({"email": email, "code": otp})}");
-      print("📥 Response: ${response.statusCode}");
-      print("Body: ${response.body}");
+      debugPrint("ðŸ“¤ Verify Email Request:");
+      debugPrint("URL: ${ApiConfig.baseUrl}/auth/verify-email");
+      debugPrint("Body: ${jsonEncode({"email": email, "code": otp})}");
+      debugPrint("ðŸ“¥ Response: ${response.statusCode}");
+      debugPrint("Body: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -103,7 +104,7 @@ class AuthRegisterService {
         };
       }
     } catch (e) {
-      print("❌ Verify Error: $e");
+      debugPrint("âŒ Verify Error: $e");
       return {
         "success": false,
         "message": "Gagal terhubung ke server: $e",
@@ -120,10 +121,10 @@ class AuthRegisterService {
         body: jsonEncode({"email": email}),
       );
 
-      print("📤 Resend OTP Request:");
-      print("URL: ${ApiConfig.baseUrl}/auth/resend-verification");
-      print("Body: ${jsonEncode({"email": email})}");
-      print("📥 Response: ${response.statusCode}");
+      debugPrint("ðŸ“¤ Resend OTP Request:");
+      debugPrint("URL: ${ApiConfig.baseUrl}/auth/resend-verification");
+      debugPrint("Body: ${jsonEncode({"email": email})}");
+      debugPrint("ðŸ“¥ Response: ${response.statusCode}");
 
       if (response.statusCode == 200) {
         return {
@@ -138,7 +139,7 @@ class AuthRegisterService {
         };
       }
     } catch (e) {
-      print("❌ Resend OTP Error: $e");
+      debugPrint("âŒ Resend OTP Error: $e");
       return {
         "success": false,
         "message": "Gagal terhubung ke server: $e",

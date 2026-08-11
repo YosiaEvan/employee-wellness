@@ -1,4 +1,4 @@
-import 'package:employee_wellness/components/auto_refresh_mixin.dart';
+﻿import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
@@ -72,10 +72,10 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
         isLoading = false;
       });
 
-      print("📊 Status minum:");
-      print("   Jumlah gelas: $jumlahGelas / $targetGelas");
-      print("   Bisa minum lagi: $bisaMinumLagi");
-      print("   Menit tersisa: $menitTersisa");
+      debugPrint("ðŸ“Š Status minum:");
+      debugPrint("   Jumlah gelas: $jumlahGelas / $targetGelas");
+      debugPrint("   Bisa minum lagi: $bisaMinumLagi");
+      debugPrint("   Menit tersisa: $menitTersisa");
     }
   }
 
@@ -83,7 +83,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
     if (!bisaMinumLagi) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('⏰ Tunggu $menitTersisa menit lagi untuk minum berikutnya'),
+          content: Text('â° Tunggu $menitTersisa menit lagi untuk minum berikutnya'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -93,7 +93,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
     if (sudahSelesai) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('✅ Target harian sudah tercapai!'),
+          content: Text('âœ… Target harian sudah tercapai!'),
           backgroundColor: Color(0xFF00C368),
         ),
       );
@@ -108,7 +108,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ ${result['message']}'),
+            content: Text('âœ… ${result['message']}'),
             backgroundColor: Color(0xFF00cbf6),
             duration: Duration(seconds: 2),
           ),
@@ -163,7 +163,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -207,7 +207,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                 jumlahGelas == targetGelas
                                   ? "Luar biasa! Kamu sudah minum cukup hari ini"
                                   : !bisaMinumLagi
-                                    ? "⏰ Tunggu $menitTersisa menit lagi"
+                                    ? "â° Tunggu $menitTersisa menit lagi"
                                     : "$sisaGelas gelas lagi untuk target harian",
                                 style: TextStyle(
                                   fontSize: 16,
@@ -241,7 +241,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                               ),
                               SizedBox(height: 12,),
                               Text(
-                                "${actualVolume} ml / ${totalVolume} ml",
+                                "$actualVolume ml / $totalVolume ml",
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: Color(0xff6a7282),
@@ -363,7 +363,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -460,7 +460,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.grey.withOpacity(0.4),
+                              color: Colors.grey.withValues(alpha: 0.4),
                               spreadRadius: 2,
                               blurRadius: 8,
                               offset: Offset(2, 4),
@@ -717,7 +717,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -779,7 +779,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                 child: Row(
                                   children: [
                                     Text(
-                                      "⏰",
+                                      "â°",
                                       style: TextStyle(
                                         fontSize: 32,
                                       ),
@@ -826,7 +826,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                 child: Row(
                                   children: [
                                     Text(
-                                      "🍽️",
+                                      "ðŸ½ï¸",
                                       style: TextStyle(
                                         fontSize: 32,
                                       ),
@@ -873,7 +873,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                 child: Row(
                                   children: [
                                     Text(
-                                      "💼",
+                                      "ðŸ’¼",
                                       style: TextStyle(
                                         fontSize: 32,
                                       ),
@@ -920,7 +920,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                 child: Row(
                                   children: [
                                     Text(
-                                      "⏱️",
+                                      "â±ï¸",
                                       style: TextStyle(
                                         fontSize: 32,
                                       ),

@@ -534,7 +534,7 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> with AutoRefreshM
                     '${progress.toStringAsFixed(0)}%',
                     bobot,
                   );
-                }).toList(),
+                }),
                 // Total row
                 DataRow(
                   cells: [
