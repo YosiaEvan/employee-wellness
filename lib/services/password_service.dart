@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
@@ -12,7 +12,7 @@ class PasswordService {
     required String email,
   }) async {
     try {
-      debugPrint("ðŸ“¤ Forgot Password Request:");
+      debugPrint(" Forgot Password Request:");
       debugPrint("URL: ${ApiConfig.baseUrl}/auth/forgot-password");
 
       final response = await http
@@ -31,7 +31,7 @@ class PasswordService {
             },
           );
 
-      debugPrint("ðŸ“¥ Response: ${response.statusCode}");
+      debugPrint(" Response: ${response.statusCode}");
       debugPrint("Body: ${response.body}");
 
       final data = jsonDecode(response.body);
@@ -48,13 +48,13 @@ class PasswordService {
         };
       }
     } on SocketException catch (e) {
-      debugPrint("âŒ Socket Exception: $e");
+      debugPrint(" Socket Exception: $e");
       return {"success": false, "message": "Tidak dapat terhubung ke server. Periksa koneksi internet Anda."};
     } on TimeoutException catch (e) {
-      debugPrint("âŒ Timeout: $e");
+      debugPrint(" Timeout: $e");
       return {"success": false, "message": "Koneksi timeout. Periksa koneksi internet Anda."};
     } catch (e) {
-      debugPrint("âŒ Forgot Password Error: $e");
+      debugPrint(" Forgot Password Error: $e");
       return {"success": false, "message": "Gagal terhubung ke server: $e"};
     }
   }
@@ -65,7 +65,7 @@ class PasswordService {
     required String password,
   }) async {
     try {
-      debugPrint("ðŸ“¤ Reset Password Request:");
+      debugPrint(" Reset Password Request:");
       debugPrint("URL: ${ApiConfig.baseUrl}/auth/reset-password");
 
       final response = await http
@@ -84,7 +84,7 @@ class PasswordService {
             },
           );
 
-      debugPrint("ðŸ“¥ Response: ${response.statusCode}");
+      debugPrint(" Response: ${response.statusCode}");
       debugPrint("Body: ${response.body}");
 
       final data = jsonDecode(response.body);
@@ -101,13 +101,13 @@ class PasswordService {
         };
       }
     } on SocketException catch (e) {
-      debugPrint("âŒ Socket Exception: $e");
+      debugPrint(" Socket Exception: $e");
       return {"success": false, "message": "Tidak dapat terhubung ke server. Periksa koneksi internet Anda."};
     } on TimeoutException catch (e) {
-      debugPrint("âŒ Timeout: $e");
+      debugPrint(" Timeout: $e");
       return {"success": false, "message": "Koneksi timeout. Periksa koneksi internet Anda."};
     } catch (e) {
-      debugPrint("âŒ Reset Password Error: $e");
+      debugPrint(" Reset Password Error: $e");
       return {"success": false, "message": "Gagal terhubung ke server: $e"};
     }
   }

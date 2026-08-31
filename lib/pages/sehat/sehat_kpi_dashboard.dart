@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../services/sehat_kpi_service.dart';
 import '../../components/header.dart';
+import '../../components/data_refresh_notifier.dart';
 import 'sehat_kpi_detail.dart';
 
 /// Halaman KPI Dashboard Sehat
@@ -24,16 +25,29 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> with AutoRefreshM
   @override
   void initState() {
     super.initState();
+    DataRefreshNotifier.instance.addListener(_onDataChanged);
     loadKPIData();
     startAutoRefresh(refresh: loadKPIData);
   }
 
+  void _onDataChanged() {
+    if (mounted) loadKPIData();
+  }
+
+  @override
+  void dispose() {
+    DataRefreshNotifier.instance.removeListener(_onDataChanged);
+    super.dispose();
+  }
+
   Future<void> loadKPIData() async {
-    setState(() => isLoading = true);
+    if (mounted) setState(() => isLoading = true);
 
     final dailyResult = await SehatKPIService.getDailyKPI();
     final weeklyResult = await SehatKPIService.getWeeklyKPI();
     final monthlyResult = await SehatKPIService.getMonthlyKPI();
+
+    if (!mounted) return;
 
     setState(() {
       if (dailyResult['success'] == true) {
@@ -371,7 +385,7 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> with AutoRefreshM
     String label,
     int poin,
     int maxPoin,
-    FaIconData icon, // ✅ corrected type and name
+    FaIconData icon, //  corrected type and name
     Color color,
   ) {
     return Column(
@@ -382,7 +396,7 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> with AutoRefreshM
             color: color.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
-          child: FaIcon(icon, color: color, size: 20), // ✅ changed to FaIcon
+          child: FaIcon(icon, color: color, size: 20), //  changed to FaIcon
         ),
         const SizedBox(height: 4),
         Text(
@@ -498,7 +512,7 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> with AutoRefreshM
                 FaIcon(FontAwesomeIcons.table, color: Color(0xFFC90028), size: 20), // removed const
                 const SizedBox(width: 8),
                 const Text(
-                  'Tabel KPI Sehat 360°',
+                  'Tabel KPI Sehat 360',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],

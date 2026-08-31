@@ -80,7 +80,7 @@ class _IndicatorState extends State<Indicator> {
                   description: loc.translate('sehat_desc_full'),
                   arTitle: loc.translate('ar_ready'),
                   arSubtitle: loc.translate('ar_subtitle_sehat'),
-                  arIcon: "🥽",
+                  arIcon: "",
                   arGradient: const [Color(0xFFb047ff), Color(0xFFf5349c)],
                   features: [
                     MainFeature(color: Colors.red, text: loc.translate('fitness_exp')),
@@ -104,7 +104,7 @@ class _IndicatorState extends State<Indicator> {
                   description: loc.translate('tenang_desc_full'),
                   arTitle: loc.translate('tenang_ar_title'),
                   arSubtitle: loc.translate('tenang_ar_subtitle'),
-                  arIcon: "🧘‍♂️",
+                  arIcon: "",
                   arGradient: const [Color(0xFF2e7eff), Color(0xFFac49ff)],
                   features: [
                     MainFeature(color: Colors.blue, text: loc.translate('daily_meditation')),
@@ -128,7 +128,7 @@ class _IndicatorState extends State<Indicator> {
                   description: loc.translate('hijau_desc_full'),
                   arTitle: loc.translate('hijau_ar_title'),
                   arSubtitle: loc.translate('tenang_ar_subtitle'), // Using same subtitle for now as placeholder or update if needed
-                  arIcon: "🌿",
+                  arIcon: "",
                   arGradient: const [Color(0xFF00ca52), Color(0xFF00eda2)],
                   features: [
                     MainFeature(color: Colors.green, text: loc.translate('carbon_tracker')),

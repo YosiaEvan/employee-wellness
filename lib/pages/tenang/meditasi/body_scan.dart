@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
@@ -198,7 +198,7 @@ class _BodyScanState extends State<BodyScan> with TickerProviderStateMixin {
                               ),
                             ),
                             SizedBox(height: 40),
-                            Text("Sesi Selesai ðŸŽ‰", style: TextStyle(fontSize: 40, fontWeight: FontWeight.w500)),
+                            Text("Sesi Selesai ", style: TextStyle(fontSize: 40, fontWeight: FontWeight.w500)),
                             SizedBox(height: 8),
                             Text(
                               "Selamat! Anda telah menyelesaikan sesi Body Scan. Bagaimana perasaan Anda sekarang?",
@@ -273,7 +273,7 @@ class _BodyScanState extends State<BodyScan> with TickerProviderStateMixin {
                                 Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text("ðŸ§˜", style: TextStyle(fontSize: 100)),
+                                    Text("", style: TextStyle(fontSize: 100)),
                                     SizedBox(height: 8),
                                     Text(timerText, style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
                                     SizedBox(height: 4),

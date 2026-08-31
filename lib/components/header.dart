@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'package:employee_wellness/main.dart';
 import 'package:employee_wellness/pages/health_profile.dart';
@@ -305,11 +305,11 @@ class _RealtimeClockState extends State<RealtimeClock> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final datetime = DateTime.parse(data['datetime']);
-        debugPrint('ðŸ“… Online time fetched: $datetime');
+        debugPrint(' Online time fetched: $datetime');
         return datetime;
       }
     } catch (e) {
-      debugPrint('âŒ Error fetching online time: $e');
+      debugPrint(' Error fetching online time: $e');
     }
 
     // Fallback to local time if API fails

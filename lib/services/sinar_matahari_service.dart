@@ -1,9 +1,10 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'api_service.dart';
 import 'local_database_service.dart';
 import 'offline_sync_service.dart';
+import '../components/data_refresh_notifier.dart';
 
 /// Service untuk aktivitas Sinar Matahari / Berjemur (offline-first)
 /// Data disimpan ke SQLite lokal terlebih dahulu, lalu disinkronkan ke backend.
@@ -14,10 +15,11 @@ class SinarMatahariService {
   static Future<Map<String, dynamic>> cekBerjemur() async {
     try {
       final tanggal = LocalDatabaseService.todayStr();
+      final userId = await LocalDatabaseService.getCurrentUserId();
       final todayRows = await _db.query(
         'sinar_matahari',
-        where: 'tanggal = ?',
-        whereArgs: [tanggal],
+        where: 'tanggal = ? AND user_id = ?',
+        whereArgs: [tanggal, userId],
         orderBy: 'id ASC',
       );
 
@@ -35,7 +37,7 @@ class SinarMatahariService {
       unawaited(_mergeFromServer());
       return _buildFromLocal();
     } catch (e) {
-      debugPrint("âŒ Cek Berjemur Error: $e");
+      debugPrint(" Cek Berjemur Error: $e");
       return {"success": false, "sudah_berjemur": false};
     }
   }
@@ -62,10 +64,12 @@ class SinarMatahariService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         await _db.markSyncedByDate('sinar_matahari', tanggal);
         final responseData = jsonDecode(response.body);
+        DataRefreshNotifier.instance.notifyDataChanged();
         return {
           "success": true,
           "message": responseData['message'] ?? "Berhasil mencatat aktivitas berjemur",
           "data": responseData['data'],
+          "tercapai": responseData['tercapai'] ?? true,
         };
       } else {
         // Ditolak server -> batalkan catatan lokal
@@ -82,7 +86,8 @@ class SinarMatahariService {
       }
     } catch (e) {
       // Offline -> tetap dianggap berhasil (tersimpan di SQLite)
-      debugPrint("âŒ Catat Berjemur Error (offline): $e");
+      debugPrint(" Catat Berjemur Error (offline): $e");
+      DataRefreshNotifier.instance.notifyDataChanged();
       return {
         "success": true,
         "message": "Tersimpan offline, akan disinkronkan saat online",
@@ -115,10 +120,11 @@ class SinarMatahariService {
 
   static Future<Map<String, dynamic>?> _buildDataHariIni() async {
     final tanggal = LocalDatabaseService.todayStr();
+    final userId = await LocalDatabaseService.getCurrentUserId();
     final rows = await _db.query(
       'sinar_matahari',
-      where: 'tanggal = ?',
-      whereArgs: [tanggal],
+      where: 'tanggal = ? AND user_id = ?',
+      whereArgs: [tanggal, userId],
       orderBy: 'waktu_selesai DESC',
     );
     if (rows.isEmpty) return null;
@@ -129,10 +135,11 @@ class SinarMatahariService {
 
   static Future<Map<String, dynamic>> _buildMingguIni() async {
     final start = LocalDatabaseService.weekStart();
+    final userId = await LocalDatabaseService.getCurrentUserId();
     final rows = await _db.query(
       'sinar_matahari',
-      where: 'tanggal >= ?',
-      whereArgs: [start],
+      where: 'tanggal >= ? AND user_id = ?',
+      whereArgs: [start, userId],
     );
     final uniqueTanggal = <String>{};
     for (final row in rows) {
@@ -161,7 +168,7 @@ class SinarMatahariService {
         };
       }
     } catch (e) {
-      debugPrint("âŒ Cek Berjemur (server) Error: $e");
+      debugPrint(" Cek Berjemur (server) Error: $e");
     }
     return null;
   }
@@ -184,8 +191,8 @@ class SinarMatahariService {
         if (waktu.isNotEmpty) {
           final existing = await _db.query(
             'sinar_matahari',
-            where: 'tanggal = ? AND waktu_selesai = ?',
-            whereArgs: [tanggal, waktu],
+            where: 'tanggal = ? AND waktu_selesai = ? AND user_id = ?',
+            whereArgs: [tanggal, waktu, await LocalDatabaseService.getCurrentUserId()],
           );
           if (existing.isEmpty) {
             await _db.insert('sinar_matahari', {
@@ -197,7 +204,7 @@ class SinarMatahariService {
         }
       }
     } catch (e) {
-      debugPrint("âŒ Error caching server sinar matahari: $e");
+      debugPrint(" Error caching server sinar matahari: $e");
     }
   }
 
@@ -210,7 +217,7 @@ class SinarMatahariService {
         await _cacheServer(server);
       }
     } catch (e) {
-      debugPrint("âŒ Error merging sinar matahari from server: $e");
+      debugPrint(" Error merging sinar matahari from server: $e");
     }
   }
 }

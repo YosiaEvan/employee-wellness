@@ -1,12 +1,10 @@
-﻿import 'package:employee_wellness/home.dart';
+import 'package:employee_wellness/home.dart';
 import 'package:employee_wellness/register.dart';
 import 'package:employee_wellness/forgot_password.dart';
 import 'package:employee_wellness/services/auth_service.dart';
 import 'package:employee_wellness/services/background_steps_tracker.dart';
-import 'package:employee_wellness/services/background_task_service.dart';
-import 'package:employee_wellness/services/offline_steps_service.dart';
+import 'package:employee_wellness/services/battery_optimization_service.dart';
 import 'package:employee_wellness/services/offline_sync_service.dart';
-import 'package:employee_wellness/services/steps_sync_service.dart';
 import 'package:employee_wellness/services/step_foreground_service.dart';
 import 'package:employee_wellness/services/language_provider.dart';
 import 'package:employee_wellness/services/app_localizations.dart';
@@ -19,22 +17,39 @@ import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (!kIsWeb) {
-    await StepForegroundService.initialize();
-    await BackgroundTaskService.instance.initialize();
-  }
-  final isLoggedIn = await AuthService.isLoggedIn();
-  if (isLoggedIn) {
-    debugPrint('ðŸš€ User is logged in, initializing background services...');
-    await StepsSyncService.instance.autoSync();
-    await OfflineSyncService.autoSyncOnAppStart();
+
+  try {
+    // Konfigurasi foreground service (belum start, hanya setup).
     if (!kIsWeb) {
-      await BackgroundStepsTracker.initialize(requestPermission: false);
-      await StepForegroundService.start();
-      await BackgroundTaskService.instance.registerPeriodicSync();
-      await BackgroundTaskService.instance.registerCleanupTask();
+      await StepForegroundService.initialize();
     }
+  } catch (e) {
+    debugPrint(' Error initializing foreground service: $e');
   }
+
+  // Sync data offline jika login
+  try {
+    final isLoggedIn = await AuthService.isLoggedIn();
+    if (isLoggedIn) {
+      debugPrint(' User is logged in, initializing background services...');
+      try {
+        await OfflineSyncService.autoSyncOnAppStart();
+      } catch (_) {}
+      if (!kIsWeb) {
+        try {
+          final granted = await BackgroundStepsTracker.isStepPermissionGranted();
+          if (granted) {
+            await StepForegroundService.start();
+          } else {
+            debugPrint(' Physical Activity permission not granted on app start, skipping foreground service');
+          }
+        } catch (_) {}
+      }
+    }
+  } catch (e) {
+    debugPrint(' Error during app startup: $e');
+  }
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => LanguageProvider(),
@@ -72,12 +87,36 @@ class MyApp extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(body: Center(child: CircularProgressIndicator()));
           } else {
-            return snapshot.data == true ? const HomePage() : const LoginPage();
+            return snapshot.data == true ? const _BatteryCheckWrapper(child: HomePage()) : const LoginPage();
           }
         },
       ),
     );
   }
+}
+
+/// Wrapper yang mengecek battery optimization setelah frame pertama render.
+/// Hanya relevant untuk user yang sudah login (cold start).
+class _BatteryCheckWrapper extends StatefulWidget {
+  final Widget child;
+  const _BatteryCheckWrapper({required this.child});
+
+  @override
+  State<_BatteryCheckWrapper> createState() => _BatteryCheckWrapperState();
+}
+
+class _BatteryCheckWrapperState extends State<_BatteryCheckWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    // Jalankan check setelah frame pertama render
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      BatteryOptimizationService.checkAndGuideIfNeeded(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 class LoginPage extends StatefulWidget {
@@ -93,23 +132,21 @@ class _LoginPageState extends State<LoginPage> {
   bool isLoading = false;
   bool _obscurePassword = true;
   final bool _rememberMe = true;
-
-  // Declare errorIcon for snackbar
-  IconData? errorIcon; // âœ… added
+  IconData? errorIcon;
 
   /// Minta ijin notifikasi (wajib Android 13+ agar foreground service
   /// dapat menampilkan notifikasi "Pelacak Langkah Aktif").
   Future<void> _requestNotificationPermission() async {
     try {
       final status = await Permission.notification.request();
-      debugPrint('ðŸ”” Notification permission: $status');
+      debugPrint(' Notification permission: $status');
     } catch (e) {
-      debugPrint('âš ï¸ Error requesting notification permission: $e');
+      debugPrint(' Error requesting notification permission: $e');
     }
   }
 
   Future<void> login() async {
-    debugPrint("ðŸ”µ Login button pressed");
+    debugPrint(" Login button pressed");
     final loc = AppLocalizations.of(context)!;
     if (emailController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -132,13 +169,36 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => isLoading = false);
 
     if (result["success"]) {
-      await OfflineStepsService.autoSyncOnAppStart();
-      await OfflineSyncService.autoSyncOnAppStart();
+      // Sync data offline
+      try {
+        await OfflineSyncService.autoSyncOnAppStart();
+      } catch (_) {}
+
       if (!kIsWeb) {
-        await BackgroundStepsTracker.initialize();
-        await _requestNotificationPermission();
-        await StepForegroundService.start();
+        // Jalankan semua inisialisasi background secara defensive
+        // App TIDAK boleh crash walau semua gagal
+        try {
+          await _requestNotificationPermission();
+        } catch (_) {}
+
+        try {
+          final stepGranted = await BackgroundStepsTracker.isStepPermissionGranted();
+          if (!stepGranted) {
+            await BackgroundStepsTracker.requestStepPermission();
+          }
+        } catch (_) {}
+
+        try {
+          await StepForegroundService.start();
+        } catch (_) {}
+
+        try {
+          if (mounted) {
+            await BatteryOptimizationService.checkAndGuideIfNeeded(context);
+          }
+        } catch (_) {}
       }
+
       if (!mounted) return;
       await Navigator.pushReplacement(
         context,
@@ -160,9 +220,9 @@ class _LoginPageState extends State<LoginPage> {
         );
       }
     } else {
-      debugPrint("âŒ Login FAILED: ${result['message']}");
+      debugPrint(" Login FAILED: ${result['message']}");
       String errorMessage = result["message"] ?? loc.translate('login_failed');
-      errorIcon = Icons.error_outline; // âœ… now defined
+      errorIcon = Icons.error_outline;
       Color errorColor = Colors.red;
 
       if (errorMessage.toLowerCase().contains("email atau password salah") ||
@@ -181,7 +241,7 @@ class _LoginPageState extends State<LoginPage> {
           content: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(errorIcon, color: Colors.white), // âœ… now valid
+              Icon(errorIcon, color: Colors.white),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(errorMessage, style: const TextStyle(fontSize: 14)),
@@ -216,7 +276,7 @@ class _LoginPageState extends State<LoginPage> {
                 const CircleAvatar(
                   radius: 40,
                   backgroundColor: Color(0xFF00C97A),
-                  child: FaIcon(FontAwesomeIcons.building, size: 40, color: Colors.white), // âœ… already FaIcon
+                  child: FaIcon(FontAwesomeIcons.building, size: 40, color: Colors.white),
                 ),
                 const SizedBox(height: 20),
                 Text(loc.translate('app_title'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'api_service.dart';
+import '../components/data_refresh_notifier.dart';
 
 class SehatKPIService {
   static Future<Map<String, dynamic>> updateStepsWithDate({
@@ -16,6 +17,7 @@ class SehatKPIService {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        DataRefreshNotifier.instance.notifyDataChanged();
         return jsonDecode(response.body);
       }
       return {"success": false, "message": "Failed to update steps"};

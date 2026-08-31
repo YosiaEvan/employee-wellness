@@ -1,4 +1,5 @@
-﻿import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/module_kpi_progress_card.dart';
 import 'package:employee_wellness/components/module_section_card.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/config/penilaian_points.dart';
@@ -93,6 +94,17 @@ class TenangHomepage extends StatelessWidget {
                 child: ResponsiveContainer(
                   child: Column(
                     children: [
+                      ModuleKpiProgressCard(
+                        module: 'tenang',
+                        primaryColor: const Color(0xff7141fc),
+                        gradientEnd: const Color(0xff5129c8),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const TenangKPIDashboard()),
+                          );
+                        },
+                      ),
                       ModuleSectionCard(
                         destination: const MeditasiTerpadu(),
                         backgroundColor: Colors.white,
@@ -159,7 +171,7 @@ class TenangHomepage extends StatelessWidget {
           destination: AktivitasKlikPage(
             point: point,
             heading: loc.translate('tenang_title'),
-            subHeading: 'Penilaian 360Â°',
+            subHeading: 'Penilaian 360',
             destination: const TenangHomepage(),
           ),
           backgroundColor: Colors.white,

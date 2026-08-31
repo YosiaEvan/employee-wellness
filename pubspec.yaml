@@ -39,17 +39,17 @@ dependencies:
   cupertino_icons: ^1.0.8
   font_awesome_flutter: ^11.0.0
   http: ^1.2.1
-  shared_preferences: ^2.2.2
+  shared_preferences: ^2.5.0
   intl: ^0.20.2
-  pedometer: ^4.1.1
-  permission_handler: ^12.0.1
+  pedometer: ^4.2.0
+  permission_handler: ^13.0.1
   fl_chart: ^1.1.1
   pinput: ^6.0.1
-  flutter_secure_storage: ^10.3.1
-  image_picker: ^1.0.7
+  flutter_secure_storage: ^11.0.0
+  image_picker: ^1.2.3
   image: ^4.1.7
   connectivity_plus: ^7.0.0
-  audioplayers: ^6.0.0
+  audioplayers: ^6.8.1
   url_launcher: ^6.2.5
   sqflite: ^2.3.3+1
   path: ^1.9.0

@@ -1,5 +1,6 @@
 import 'package:employee_wellness/pages/wellness/wellness_kpi_dashboard.dart';
 import 'package:employee_wellness/services/wellness_kpi_service.dart';
+import 'package:employee_wellness/components/data_refresh_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -18,7 +19,18 @@ class _WellnessScoreCardState extends State<WellnessScoreCard> {
   @override
   void initState() {
     super.initState();
+    DataRefreshNotifier.instance.addListener(_onDataChanged);
     _load();
+  }
+
+  void _onDataChanged() {
+    if (mounted) _load();
+  }
+
+  @override
+  void dispose() {
+    DataRefreshNotifier.instance.removeListener(_onDataChanged);
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -140,7 +152,7 @@ class _WellnessScoreCardState extends State<WellnessScoreCard> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '· $predikat',
+                    ' $predikat',
                     style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,

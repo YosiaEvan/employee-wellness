@@ -1,9 +1,10 @@
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/services/wellness_kpi_service.dart';
+import 'package:employee_wellness/components/data_refresh_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-/// Dashboard Skor KPI Wellness = (%SEHAT × 50%) + (%TENANG × 25%) + (%HIJAU × 25%).
+/// Dashboard Skor KPI Wellness = (%SEHAT  50%) + (%TENANG  25%) + (%HIJAU  25%).
 class WellnessKPIDashboard extends StatefulWidget {
   const WellnessKPIDashboard({super.key});
 
@@ -18,7 +19,18 @@ class _WellnessKPIDashboardState extends State<WellnessKPIDashboard> {
   @override
   void initState() {
     super.initState();
+    DataRefreshNotifier.instance.addListener(_onDataChanged);
     _load();
+  }
+
+  void _onDataChanged() {
+    if (mounted) _load();
+  }
+
+  @override
+  void dispose() {
+    DataRefreshNotifier.instance.removeListener(_onDataChanged);
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -273,7 +285,7 @@ class _WellnessKPIDashboardState extends State<WellnessKPIDashboard> {
                         fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                   Text(
-                    '$poin/$maks poin · $bobot%',
+                    '$poin/$maks poin  $bobot%',
                     style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                 ],
@@ -365,7 +377,7 @@ class _WellnessKPIDashboardState extends State<WellnessKPIDashboard> {
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           const Text(
-            '(%SEHAT × 50%) + (%TENANG × 25%) + (%HIJAU × 25%)',
+            '(%SEHAT  50%) + (%TENANG  25%) + (%HIJAU  25%)',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -374,7 +386,7 @@ class _WellnessKPIDashboardState extends State<WellnessKPIDashboard> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Predikat: ≥90% Sangat Baik · 75–89,9% Baik · 60–74,9% Cukup · <60% Perlu Perbaikan',
+            'Predikat: 90% Sangat Baik  7589,9% Baik  6074,9% Cukup  <60% Perlu Perbaikan',
             style: TextStyle(fontSize: 12, color: Colors.grey[600], height: 1.4),
           ),
         ],

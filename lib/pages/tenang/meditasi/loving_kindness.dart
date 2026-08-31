@@ -251,7 +251,7 @@ class _LovingKindnessState extends State<LovingKindness> with TickerProviderStat
                               ),
                               const SizedBox(height: 40),
                               const Text(
-                                "Sesi Selesai 🎉",
+                                "Sesi Selesai ",
                                 style: TextStyle(
                                   fontSize: 40,
                                   fontWeight: FontWeight.w500,
@@ -381,7 +381,7 @@ class _LovingKindnessState extends State<LovingKindness> with TickerProviderStat
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       const Text(
-                                        "❤️",
+                                        "",
                                         style: TextStyle(
                                           fontSize: 100,
                                         ),

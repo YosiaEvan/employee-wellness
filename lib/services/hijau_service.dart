@@ -1,50 +1,50 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../config/api_config.dart';
-import 'auth_storage.dart';
+import 'api_service.dart';
 import 'local_database_service.dart';
+import '../components/data_refresh_notifier.dart';
 
+/// Service untuk aktivitas HIJAU (offline-first)
+/// Data disimpan ke SQLite lokal terlebih dahulu, lalu disinkronkan ke backend.
 class HijauService {
-  static Future<String?> _getToken() => AuthStorage.getToken();
+  static final LocalDatabaseService _db = LocalDatabaseService.instance;
 
-  static Future<Map<String, dynamic>> _request(String path) async {
+  /// GET - Ambil aktivitas HIJAU untuk tanggal tertentu
+  static Future<Map<String, dynamic>> getHijauData({String? tanggal}) async {
     try {
-      final token = await _getToken();
-      if (token == null) {
-        return {"success": false, "message": "Token tidak ditemukan", "needsReauth": true};
-      }
-      final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}$path'),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
-      );
+      final qs = tanggal != null ? '?tanggal=$tanggal' : '';
+      final response = await ApiService.get('/user/hijau$qs');
       if (response.statusCode == 200) {
-        return {"success": true, "data": jsonDecode(response.body)};
+        final body = jsonDecode(response.body);
+        return {'success': true, 'data': body};
       }
-      return {"success": false};
+      return {'success': false, 'message': 'Gagal mengambil data HIJAU'};
     } catch (e) {
-      return {"success": false, "message": "Error: $e"};
+      return {'success': false, 'message': 'Error: $e'};
     }
   }
 
-  static Future<Map<String, dynamic>> getHijauData() =>
-      _request('/user/hijau');
+  /// Alias backward-compatible untuk getHijauData
+  static Future<Map<String, dynamic>> getCarbonFootprint({
+    String? startDate,
+    String? endDate,
+  }) =>
+      getHijauData(tanggal: startDate);
 
-  static Future<Map<String, dynamic>> getCarbonFootprint({String? startDate, String? endDate}) =>
-      _request('/user/hijau');
-
+  /// POST - Catat aktivitas HIJAU ke tabel canonical.
+  /// Offline-first: disimpan ke SQLite dulu, lalu disinkronkan.
   static Future<Map<String, dynamic>> recordGreenActivity({
-    required String activityType, required String description,
-    double? carbonSaved, int? points, String? category,
+    required String activityType,
+    required String description,
+    double? carbonSaved,
+    int? points,
+    String? category,
   }) async {
     final tgl = LocalDatabaseService.todayStr();
 
-    // Simpan ke antrean lokal dulu (agar tidak hilang saat offline).
+    // 1. Simpan ke antrean lokal dulu (agar tidak hilang saat offline).
     int? rowId;
     try {
-      rowId = await LocalDatabaseService.instance.insert('aktivitas_poin', {
+      rowId = await _db.insert('aktivitas_poin', {
         'modul': 'hijau',
         'aktivitas': activityType,
         'kategori': category,
@@ -58,44 +58,47 @@ class HijauService {
       rowId = null;
     }
 
+    // 2. Coba push ke server
     try {
-      final token = await _getToken();
-      if (token == null) return {"success": false, "needsReauth": true};
-      final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/user/hijau'),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
-        body: jsonEncode({
-          "activity_type": activityType,
-          "description": description,
-          "date": DateTime.now().toIso8601String(),
-          "kategori": ?category,
-          "points": ?points,
-          "carbon_saved": ?carbonSaved,
-        }),
-      );
+      final body = <String, dynamic>{
+        'activity_type': activityType,
+        'description': description,
+        'date': tgl,
+      };
+      if (category != null) body['kategori'] = category;
+      if (points != null) body['points'] = points;
+      if (carbonSaved != null) body['carbon_saved'] = carbonSaved;
+
+      final response = await ApiService.post('/user/hijau', body: body);
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (rowId != null) {
           try {
-            await LocalDatabaseService.instance
-                .markSynced('aktivitas_poin', rowId);
+            await _db.markSynced('aktivitas_poin', rowId);
           } catch (_) {}
         }
-        return {"success": true, "data": jsonDecode(response.body)};
+        final body = jsonDecode(response.body);
+        DataRefreshNotifier.instance.notifyDataChanged();
+        return {
+          'success': true,
+          'data': body['data'],
+          'tercapai': body['tercapai'] ?? false,
+          'message': body['message'] ?? 'Aktivitas HIJAU berhasil dicatat',
+        };
       }
+
       // 4xx: ditolak permanen (cap 409 / 400) -> hapus antrean lokal
       if (rowId != null) {
         try {
-          await LocalDatabaseService.instance.delete(
+          await _db.delete(
             'aktivitas_poin',
             where: 'id = ?',
             whereArgs: [rowId],
           );
         } catch (_) {}
       }
-      String message = "Gagal mencatat aktivitas";
+
+      String message = 'Gagal mencatat aktivitas';
       try {
         final body = jsonDecode(response.body);
         if (body is Map && body['message'] != null) {
@@ -103,20 +106,21 @@ class HijauService {
         }
       } catch (_) {}
       return {
-        "success": false,
-        "statusCode": response.statusCode,
-        "message": message,
+        'success': false,
+        'statusCode': response.statusCode,
+        'message': message,
       };
     } catch (e) {
-      // Offline / 5xx -> scan tetap tersimpan di antrean lokal
+      // Offline -> tetap dianggap berhasil (tersimpan di SQLite)
       if (rowId != null) {
+        DataRefreshNotifier.instance.notifyDataChanged();
         return {
-          "success": true,
-          "offline": true,
-          "message": "Tersimpan, akan disinkronkan saat online",
+          'success': true,
+          'offline': true,
+          'message': 'Tersimpan offline, akan disinkronkan saat online',
         };
       }
-      return {"success": false, "message": "Error: $e"};
+      return {'success': false, 'message': 'Error: $e'};
     }
   }
 }

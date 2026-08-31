@@ -1,4 +1,4 @@
-﻿import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/homepage_indicator.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/components/wellness_score_card.dart';
@@ -22,7 +22,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    debugPrint("ðŸ  HomePage initState() called");
+    debugPrint(" HomePage initState() called");
     _checkProfileCompletion();
   }
 
@@ -33,12 +33,12 @@ class _HomePageState extends State<HomePage> {
       isProfileComplete = isComplete;
       isLoadingProfile = false;
     });
-    debugPrint("ðŸ“Š Profile status - Complete: $isComplete");
+    debugPrint(" Profile status - Complete: $isComplete");
   }
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("ðŸ  HomePage build() called");
+    debugPrint(" HomePage build() called");
     final loc = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.white.withValues(alpha: 0.98),
@@ -116,13 +116,13 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     ),
                                     const SizedBox(width: 20),
-                                    const FaIcon(FontAwesomeIcons.chevronRight, size: 12, color: Color(0xfff67200)), // âœ…
+                                    const FaIcon(FontAwesomeIcons.chevronRight, size: 12, color: Color(0xfff67200)), // 
                                   ],
                                 ),
                                 const SizedBox(height: 12),
                                 Row(
                                   children: [
-                                    const FaIcon(FontAwesomeIcons.circleInfo, size: 12, color: Color(0xfff67200)), // âœ…
+                                    const FaIcon(FontAwesomeIcons.circleInfo, size: 12, color: Color(0xfff67200)), // 
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(

@@ -276,12 +276,12 @@ class _PernapasanState extends State<Pernapasan> with SingleTickerProviderStateM
                           children: [
                             Text(
                               phase == "Siap untuk memulai?"
-                                  ? "🧘"
+                                  ? ""
                                   : phase == "Tarik Napas"
-                                      ? "️⬆️"
+                                      ? ""
                                       : phase == "Tahan Napas"
-                                          ? "⏸️"
-                                          : "⬇️",
+                                          ? ""
+                                          : "",
                               style: const TextStyle(
                                 fontSize: 60,
                               ),
@@ -501,7 +501,7 @@ class _PernapasanState extends State<Pernapasan> with SingleTickerProviderStateM
                               ),
                               const SizedBox(height: 40),
                               const Text(
-                                "Latihan Selesai 🎉",
+                                "Latihan Selesai ",
                                 style: TextStyle(
                                   fontSize: 40,
                                   fontWeight: FontWeight.w500,

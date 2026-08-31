@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-/// Titik scan HIJAU 360° — satu klik = satu laporan = 1 poin,
-/// maksimal 1 poin/minggu per aktivitas (4/bulan).
+/// Titik scan HIJAU 360  satu klik = satu laporan = 1 poin,
+/// dibatasi cap mingguan per aktivitas (maks 1 poin/minggu per aktivitas).
 class HijauScanPoint {
   /// Kode KPI kanonik backend (hemat_air, hemat_listrik, ...).
   final String kode;
@@ -25,6 +25,12 @@ class HijauScanPoint {
   /// Aset video animasi (bisa null bila tidak ada).
   final String? videoAsset;
 
+  /// Target poin per minggu (cap).
+  final int targetPerWeek;
+
+  /// Target poin per bulan.
+  final int targetPerMonth;
+
   const HijauScanPoint({
     required this.kode,
     required this.kategori,
@@ -36,6 +42,8 @@ class HijauScanPoint {
     required this.insight,
     required this.confirmLabel,
     this.videoAsset,
+    this.targetPerWeek = 1,
+    this.targetPerMonth = 4,
   });
 }
 
@@ -46,23 +54,25 @@ class HijauScanPoints {
     kode: 'hemat_air',
     kategori: 'konservasi_air',
     title: 'Hemat Air',
-    emoji: '💧',
+    emoji: '',
     icon: FontAwesomeIcons.faucetDrip,
     color: Color(0xff0ea5e9),
     softColor: Color(0xfff0f9ff),
     insight:
         'Menutup keran rapat dan memperbaiki kebocoran bisa menghemat puluhan '
-        'liter air per hari. Air bersih adalah sumber daya terbatas — hemat hari '
+        'liter air per hari. Air bersih adalah sumber daya terbatas  hemat hari '
         'ini berarti masa depan yang lebih berkelanjutan.',
     confirmLabel: 'Sudah Hemat Air',
     videoAsset: 'assets/videos/keran.mp4',
+    targetPerWeek: 1,
+    targetPerMonth: 4,
   );
 
   static const hematListrik = HijauScanPoint(
     kode: 'hemat_listrik',
     kategori: 'hemat_energi',
     title: 'Hemat Listrik',
-    emoji: '⚡',
+    emoji: '',
     icon: FontAwesomeIcons.bolt,
     color: Color(0xff059669),
     softColor: Color(0xffecfdf5),
@@ -72,28 +82,32 @@ class HijauScanPoints {
         'dari pembangkit listrik.',
     confirmLabel: 'Sudah Hemat Listrik',
     videoAsset: 'assets/videos/listrik.mp4',
+    targetPerWeek: 1,
+    targetPerMonth: 4,
   );
 
   static const gayaHidupHijau = HijauScanPoint(
     kode: 'gaya_hidup_hijau',
     kategori: 'gaya_hidup_hijau',
     title: 'Gaya Hidup Hijau',
-    emoji: '🌿',
+    emoji: '',
     icon: FontAwesomeIcons.leaf,
     color: Color(0xff16a34a),
     softColor: Color(0xfff7fee7),
     insight:
-        'Tak harus serentak — pilih satu kebiasaan hijau dan lakukan secara '
+        'Tak harus serentak  pilih satu kebiasaan hijau dan lakukan secara '
         'konsisten. Perubahan kecil yang bertahan lebih berdampak daripada '
         'perubahan besar yang berhenti di tengah jalan.',
     confirmLabel: 'Sudah Melakukan',
+    targetPerWeek: 1,
+    targetPerMonth: 4,
   );
 
   static const zeroWaste = HijauScanPoint(
     kode: 'gaya_hidup_hijau',
     kategori: 'zero_waste',
     title: 'Zero Waste',
-    emoji: '♻️',
+    emoji: '',
     icon: FontAwesomeIcons.recycle,
     color: Color(0xff16a34a),
     softColor: Color(0xfff0fdf4),
@@ -102,13 +116,15 @@ class HijauScanPoints {
         'makan sendiri. Setiap benda yang tidak terbuang berarti satu langkah '
         'menjaga lingkungan.',
     confirmLabel: 'Sudah Melakukan',
+    targetPerWeek: 1,
+    targetPerMonth: 4,
   );
 
   static const ajakOrangLain = HijauScanPoint(
     kode: 'ajak_orang_lain',
     kategori: 'ajak_orang_lain',
     title: 'Ajak Orang Lain',
-    emoji: '🤝',
+    emoji: '',
     icon: FontAwesomeIcons.userPlus,
     color: Color(0xfff59e0b),
     softColor: Color(0xfffffbeb),
@@ -117,20 +133,39 @@ class HijauScanPoints {
         'lebih mudah bertahan bila dilakukan bersama dan jadi gerakan yang '
         'menyenangkan, bukan paksaan.',
     confirmLabel: 'Sudah Mengajak',
+    targetPerWeek: 1,
+    targetPerMonth: 4,
   );
 
   static const ubahKebiasaan = HijauScanPoint(
     kode: 'ubah_kebiasaan',
     kategori: 'ubah_kebiasaan',
     title: 'Ubah Kebiasaan',
-    emoji: '🔄',
+    emoji: '',
     icon: FontAwesomeIcons.arrowsRotate,
     color: Color(0xff10b981),
     softColor: Color(0xffecfdf5),
     insight:
-        'Rata-rata dibutuhkan 21–66 hari agar sebuah tindakan menjadi kebiasaan '
+        'Rata-rata dibutuhkan 2166 hari agar sebuah tindakan menjadi kebiasaan '
         'otomatis. Pilih satu kebiasaan hijau dan ulangi setiap hari sampai '
         'menjadi refleks.',
     confirmLabel: 'Sudah Jadi Kebiasaan',
+    targetPerWeek: 1,
+    targetPerMonth: 4,
   );
+
+  /// Semua titik penilaian HIJAU (5 aktivitas unik backend).
+  static const semua = <HijauScanPoint>[
+    hematAir,
+    hematListrik,
+    gayaHidupHijau,
+    ajakOrangLain,
+    ubahKebiasaan,
+  ];
+
+  /// Maksimal poin per minggu (5 aktivitas  1 = 5).
+  static const int maksPerMinggu = 5;
+
+  /// Maksimal poin per bulan (5 aktivitas  4 = 20).
+  static const int maksPerBulan = 20;
 }

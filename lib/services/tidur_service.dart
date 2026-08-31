@@ -1,9 +1,10 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'api_service.dart';
 import 'local_database_service.dart';
 import 'offline_sync_service.dart';
+import '../components/data_refresh_notifier.dart';
 
 /// Service untuk Tidur Cukup (offline-first)
 /// Data disimpan ke SQLite lokal terlebih dahulu, lalu disinkronkan ke backend.
@@ -14,10 +15,11 @@ class TidurService {
   static Future<Map<String, dynamic>> cekTidurHariIni() async {
     try {
       final tanggal = LocalDatabaseService.todayStr();
+      final userId = await LocalDatabaseService.getCurrentUserId();
       final todayRows = await _db.query(
         'tidur',
-        where: 'tanggal = ?',
-        whereArgs: [tanggal],
+        where: 'tanggal = ? AND user_id = ?',
+        whereArgs: [tanggal, userId],
         orderBy: 'id ASC',
       );
 
@@ -35,7 +37,7 @@ class TidurService {
       unawaited(_mergeFromServer());
       return _buildFromLocal(todayRows.first);
     } catch (e) {
-      debugPrint("âŒ Cek Tidur Error: $e");
+      debugPrint(" Cek Tidur Error: $e");
       return {"success": false, "sudah_lapor": false};
     }
   }
@@ -91,10 +93,12 @@ class TidurService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         await _db.markSyncedByDate('tidur', tanggal);
         final responseData = jsonDecode(response.body);
+        DataRefreshNotifier.instance.notifyDataChanged();
         return {
           "success": true,
           "message": responseData['message'] ?? "Berhasil mencatat tidur",
           "data": responseData['data'],
+          "tercapai": responseData['tercapai'] ?? false,
         };
       } else {
         // Ditolak server -> batalkan catatan lokal
@@ -111,7 +115,8 @@ class TidurService {
       }
     } catch (e) {
       // Offline -> tetap dianggap berhasil (tersimpan di SQLite)
-      debugPrint("âŒ Lapor Tidur Error (offline): $e");
+      debugPrint(" Lapor Tidur Error (offline): $e");
+      DataRefreshNotifier.instance.notifyDataChanged();
       return {
         "success": true,
         "message": "Tersimpan offline, akan disinkronkan saat online",
@@ -150,10 +155,11 @@ class TidurService {
 
   static Future<Map<String, dynamic>> _buildMingguIni() async {
     final start = LocalDatabaseService.weekStart();
+    final userId = await LocalDatabaseService.getCurrentUserId();
     final rows = await _db.query(
       'tidur',
-      where: 'tanggal >= ?',
-      whereArgs: [start],
+      where: 'tanggal >= ? AND user_id = ?',
+      whereArgs: [start, userId],
     );
 
     final byTanggal = <String, Map<String, dynamic>>{};
@@ -226,7 +232,7 @@ class TidurService {
         };
       }
     } catch (e) {
-      debugPrint("âŒ Cek Tidur (server) Error: $e");
+      debugPrint(" Cek Tidur (server) Error: $e");
     }
     return null;
   }
@@ -250,8 +256,8 @@ class TidurService {
         if (waktuTidur != null) {
           final existing = await _db.query(
             'tidur',
-            where: 'tanggal = ? AND waktu_tidur = ?',
-            whereArgs: [tanggal, waktuTidur],
+            where: 'tanggal = ? AND waktu_tidur = ? AND user_id = ?',
+            whereArgs: [tanggal, waktuTidur, await LocalDatabaseService.getCurrentUserId()],
           );
           if (existing.isEmpty) {
             await _db.insert('tidur', {
@@ -264,7 +270,7 @@ class TidurService {
         }
       }
     } catch (e) {
-      debugPrint("âŒ Error caching server tidur: $e");
+      debugPrint(" Error caching server tidur: $e");
     }
   }
 
@@ -277,7 +283,7 @@ class TidurService {
         await _cacheServerTidur(server);
       }
     } catch (e) {
-      debugPrint("âŒ Error merging tidur from server: $e");
+      debugPrint(" Error merging tidur from server: $e");
     }
   }
 }

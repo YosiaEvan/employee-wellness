@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
@@ -17,17 +17,17 @@ class ApiService {
 
       // Check if connected to any network
       if (connectivityResult.contains(ConnectivityResult.none)) {
-        debugPrint("âš ï¸ No network connection");
+        debugPrint(" No network connection");
         return false;
       }
 
-      debugPrint("âœ… Network connection available");
+      debugPrint(" Network connection available");
       // Jika ada network connection, return true
       // Kita tidak bisa guarantee internet access tanpa actual request
       // Jadi lebih baik return true dan biarkan HTTP request yang handle error
       return true;
     } catch (e) {
-      debugPrint("âš ï¸ Error checking connectivity: $e");
+      debugPrint(" Error checking connectivity: $e");
       // Jika error, assume ada koneksi dan biarkan HTTP request yang handle
       return true;
     }
@@ -202,9 +202,9 @@ class ApiService {
 
     // Log headers for debugging (token truncated for security)
     if (token != null) {
-      debugPrint('ðŸ” Request headers include: Authorization: Bearer ${token.substring(0, 20)}...');
+      debugPrint(' Request headers include: Authorization: Bearer ${token.substring(0, 20)}...');
     } else {
-      debugPrint('âš ï¸ No token found - request will be unauthorized');
+      debugPrint(' No token found - request will be unauthorized');
     }
 
     return headers;
@@ -231,19 +231,19 @@ class ApiService {
   /// Refresh token dan retry
   static Future<bool> _refreshTokenAndRetry() async {
     try {
-      debugPrint('ðŸ”„ Token expired, refreshing...');
+      debugPrint(' Token expired, refreshing...');
 
       final newToken = await AuthService.refreshToken();
 
       if (newToken != null) {
-        debugPrint('âœ… Token refreshed successfully');
+        debugPrint(' Token refreshed successfully');
         return true;
       } else {
-        debugPrint('âŒ Failed to refresh token, credentials not found');
+        debugPrint(' Failed to refresh token, credentials not found');
         return false;
       }
     } catch (e) {
-      debugPrint('âŒ Error refreshing token: $e');
+      debugPrint(' Error refreshing token: $e');
       return false;
     }
   }

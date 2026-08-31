@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -35,11 +35,11 @@ class StepsDatabase {
       };
 
       await prefs.setString(key, jsonEncode(data));
-      debugPrint('ðŸ’¾ Saved steps: $key -> $totalSteps steps');
+      debugPrint(' Saved steps: $key -> $totalSteps steps');
 
       return data['id'] as int;
     } catch (e) {
-      debugPrint('âŒ Error inserting steps: $e');
+      debugPrint(' Error inserting steps: $e');
       rethrow;
     }
   }
@@ -63,7 +63,7 @@ class StepsDatabase {
       }
       return null;
     } catch (e) {
-      debugPrint('âŒ Error getting steps: $e');
+      debugPrint(' Error getting steps: $e');
       return null;
     }
   }
@@ -94,7 +94,7 @@ class StepsDatabase {
 
       return unsyncedSteps;
     } catch (e) {
-      debugPrint('âŒ Error getting unsynced steps: $e');
+      debugPrint(' Error getting unsynced steps: $e');
       return [];
     }
   }
@@ -132,7 +132,7 @@ class StepsDatabase {
 
       return stepsInRange;
     } catch (e) {
-      debugPrint('âŒ Error getting steps in range: $e');
+      debugPrint(' Error getting steps in range: $e');
       return [];
     }
   }
@@ -160,7 +160,7 @@ class StepsDatabase {
 
       return allSteps;
     } catch (e) {
-      debugPrint('âŒ Error getting all steps: $e');
+      debugPrint(' Error getting all steps: $e');
       return [];
     }
   }
@@ -185,12 +185,12 @@ class StepsDatabase {
         data['synced_at'] = DateTime.now().toIso8601String();
 
         await prefs.setString(key, jsonEncode(data));
-        debugPrint('âœ… Marked as synced: $key');
+        debugPrint(' Marked as synced: $key');
         return 1;
       }
       return 0;
     } catch (e) {
-      debugPrint('âŒ Error marking as synced: $e');
+      debugPrint(' Error marking as synced: $e');
       return 0;
     }
   }
@@ -223,10 +223,10 @@ class StepsDatabase {
         }
       }
 
-      debugPrint('ðŸ—‘ï¸ Deleted $deleteCount records for user $userId');
+      debugPrint(' Deleted $deleteCount records for user $userId');
       return deleteCount;
     } catch (e) {
-      debugPrint('âŒ Error deleting user steps: $e');
+      debugPrint(' Error deleting user steps: $e');
       return 0;
     }
   }
@@ -256,10 +256,10 @@ class StepsDatabase {
         }
       }
 
-      debugPrint('ðŸ—‘ï¸ Deleted $deleteCount old synced records');
+      debugPrint(' Deleted $deleteCount old synced records');
       return deleteCount;
     } catch (e) {
-      debugPrint('âŒ Error deleting old steps: $e');
+      debugPrint(' Error deleting old steps: $e');
       return 0;
     }
   }
@@ -274,7 +274,7 @@ class StepsDatabase {
       final unsyncedSteps = await getUnsyncedSteps(userId);
       return unsyncedSteps.length;
     } catch (e) {
-      debugPrint('âŒ Error getting unsynced count: $e');
+      debugPrint(' Error getting unsynced count: $e');
       return 0;
     }
   }
@@ -293,7 +293,7 @@ class StepsDatabase {
         'unsynced_records': unsyncedSteps.length,
       };
     } catch (e) {
-      debugPrint('âŒ Error getting statistics: $e');
+      debugPrint(' Error getting statistics: $e');
       return {
         'total_records': 0,
         'synced_records': 0,
@@ -312,7 +312,7 @@ class StepsDatabase {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString('user_id') ?? prefs.getString('email');
     } catch (e) {
-      debugPrint('âŒ Error getting user ID: $e');
+      debugPrint(' Error getting user ID: $e');
       return null;
     }
   }

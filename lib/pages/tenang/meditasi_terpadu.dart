@@ -115,22 +115,22 @@ class MeditasiTerpadu extends StatelessWidget {
                       child: Column(
                         children: [
                         // Pernapasan Mindful
-                        const MeditationSectionCard(destination: PernapasanMindful(), sectionColor: Color(0xff0087ef), icon: FontAwesomeIcons.wind, heading: "Pernapasan Mindful", description: "Fokus pada pernapasan untuk menenangkan pikiran.", targetText: "⏱️ 5 menit"),
+                        const MeditationSectionCard(destination: PernapasanMindful(), sectionColor: Color(0xff0087ef), icon: FontAwesomeIcons.wind, heading: "Pernapasan Mindful", description: "Fokus pada pernapasan untuk menenangkan pikiran.", targetText: " 5 menit"),
 
                         const SizedBox(height: 20,),
 
                         // Body Scan
-                        const MeditationSectionCard(destination: BodyScan(), sectionColor: Color(0xff7541fc), icon: FontAwesomeIcons.userCheck, heading: "Body Scan", description: "Scan tubuh dari kepala hingga kaki.", targetText: "⏱️ 10 menit"),
+                        const MeditationSectionCard(destination: BodyScan(), sectionColor: Color(0xff7541fc), icon: FontAwesomeIcons.userCheck, heading: "Body Scan", description: "Scan tubuh dari kepala hingga kaki.", targetText: " 10 menit"),
 
                         const SizedBox(height: 20,),
 
                         // Loving Kindness
-                        const MeditationSectionCard(destination: LovingKindness(), sectionColor: Color(0xfff20868), icon: FontAwesomeIcons.heart, heading: "Loving Kindness", description: "Kembangkan rasa kasih sayang pada diri sendiri.", targetText: "⏱️ 10 menit"),
+                        const MeditationSectionCard(destination: LovingKindness(), sectionColor: Color(0xfff20868), icon: FontAwesomeIcons.heart, heading: "Loving Kindness", description: "Kembangkan rasa kasih sayang pada diri sendiri.", targetText: " 10 menit"),
 
                         const SizedBox(height: 20,),
 
                         // Visualisasi Positif
-                        const MeditationSectionCard(destination: VisualisasiPositif(), sectionColor: Color(0xff00bca8), icon: FontAwesomeIcons.eye, heading: "Visualisasi Positif", description: "Bayangkan tempat yang tenang dan damai.", targetText: "⏱️ 10 menit"),
+                        const MeditationSectionCard(destination: VisualisasiPositif(), sectionColor: Color(0xff00bca8), icon: FontAwesomeIcons.eye, heading: "Visualisasi Positif", description: "Bayangkan tempat yang tenang dan damai.", targetText: " 10 menit"),
 
                         const SizedBox(height: 20,),
 

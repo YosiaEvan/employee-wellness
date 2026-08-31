@@ -1,8 +1,9 @@
-﻿import 'package:employee_wellness/components/auto_refresh_mixin.dart';
+import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../services/sehat_kpi_service.dart';
 import '../../components/header.dart';
+import '../../components/data_refresh_notifier.dart';
 import 'package:intl/intl.dart';
 
 class SehatKPIDetail extends StatefulWidget {
@@ -25,12 +26,18 @@ class _SehatKPIDetailState extends State<SehatKPIDetail>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    DataRefreshNotifier.instance.addListener(_onDataChanged);
     loadAllKPIData();
     startAutoRefresh(refresh: loadAllKPIData);
   }
 
+  void _onDataChanged() {
+    if (mounted) loadAllKPIData();
+  }
+
   @override
   void dispose() {
+    DataRefreshNotifier.instance.removeListener(_onDataChanged);
     _tabController.dispose();
     super.dispose();
   }
@@ -42,30 +49,30 @@ class _SehatKPIDetailState extends State<SehatKPIDetail>
     final weeklyResult = await SehatKPIService.getWeeklyKPI();
     final monthlyResult = await SehatKPIService.getMonthlyKPI();
 
-    debugPrint('ðŸ” Daily Result: $dailyResult');
-    debugPrint('ðŸ” Weekly Result: $weeklyResult');
-    debugPrint('ðŸ” Monthly Result: $monthlyResult');
+    debugPrint(' Daily Result: $dailyResult');
+    debugPrint(' Weekly Result: $weeklyResult');
+    debugPrint(' Monthly Result: $monthlyResult');
 
     setState(() {
       if (dailyResult['success'] == true) {
         dailyKPI = dailyResult['data'];
-        debugPrint('âœ… Daily KPI loaded successfully');
+        debugPrint(' Daily KPI loaded successfully');
       } else {
-        debugPrint('âŒ Daily KPI failed: ${dailyResult['message']}');
+        debugPrint(' Daily KPI failed: ${dailyResult['message']}');
       }
 
       if (weeklyResult['success'] == true) {
         weeklyKPI = weeklyResult['data'];
-        debugPrint('âœ… Weekly KPI loaded successfully');
+        debugPrint(' Weekly KPI loaded successfully');
       } else {
-        debugPrint('âŒ Weekly KPI failed: ${weeklyResult['message']}');
+        debugPrint(' Weekly KPI failed: ${weeklyResult['message']}');
       }
 
       if (monthlyResult['success'] == true) {
         monthlyKPI = monthlyResult['data'];
-        debugPrint('âœ… Monthly KPI loaded successfully');
+        debugPrint(' Monthly KPI loaded successfully');
       } else {
-        debugPrint('âŒ Monthly KPI failed: ${monthlyResult['message']}');
+        debugPrint(' Monthly KPI failed: ${monthlyResult['message']}');
       }
 
       isLoading = false;
@@ -89,7 +96,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail>
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: FaIcon(FontAwesomeIcons.arrowLeft), // âœ… fixed
+                    icon: FaIcon(FontAwesomeIcons.arrowLeft), //  fixed
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: const Color(0xFFC9001E),
@@ -233,7 +240,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail>
               children: [
                 Row(
                   children: [
-                    FaIcon(FontAwesomeIcons.calendarDay, color: Colors.white, size: 24), // âœ… fixed
+                    FaIcon(FontAwesomeIcons.calendarDay, color: Colors.white, size: 24), //  fixed
                     const SizedBox(width: 12),
                     Text(
                       _formatTanggal(tanggal),
@@ -323,7 +330,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail>
     final target = activity['target'];
     final tercapai = activity['tercapai'];
 
-    FaIconData icon; // âœ… fixed: from FaFaIconDataicon to FaIconData icon
+    FaIconData icon; //  fixed: from FaFaIconDataicon to FaIconData icon
     Color color;
 
     if (nama.toLowerCase().contains('berjemur')) {
@@ -378,7 +385,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail>
                   color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: FaIcon(icon, color: color, size: 24), // âœ… already correct
+                child: FaIcon(icon, color: color, size: 24), //  already correct
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -393,7 +400,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail>
                       ),
                     ),
                     Text(
-                      '$frekuensi â€¢ $hariPerBulan hari/bulan â€¢ Bobot: $bobot',
+                      '$frekuensi  $hariPerBulan hari/bulan  Bobot: $bobot',
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.grey.shade600,
@@ -707,7 +714,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail>
               children: [
                 Row(
                   children: [
-                    FaIcon(FontAwesomeIcons.calendarWeek, color: Colors.white, size: 24), // âœ… fixed
+                    FaIcon(FontAwesomeIcons.calendarWeek, color: Colors.white, size: 24), //  fixed
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -774,7 +781,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail>
     final bobot = activity['bobot'] ?? '';
     final totalLangkah = activity['total_langkah'];
 
-    FaIconData icon; // âœ… fixed: from FaFaIconDataicon to FaIconData icon
+    FaIconData icon; //  fixed: from FaFaIconDataicon to FaIconData icon
     Color color;
 
     if (nama.toLowerCase().contains('berjemur')) {
@@ -817,7 +824,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                child: FaIcon(icon, color: color, size: 24), // âœ… already correct
+                child: FaIcon(icon, color: color, size: 24), //  already correct
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -825,7 +832,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(nama, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                    Text('Target: $targetPerMinggu hari â€¢ Bobot: $bobot', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                    Text('Target: $targetPerMinggu hari  Bobot: $bobot', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
                   ],
                 ),
               ),
@@ -937,13 +944,13 @@ class _SehatKPIDetailState extends State<SehatKPIDetail>
               children: [
                 Row(
                   children: [
-                    FaIcon(FontAwesomeIcons.calendarDays, color: Colors.white, size: 24), // âœ… fixed
+                    FaIcon(FontAwesomeIcons.calendarDays, color: Colors.white, size: 24), //  fixed
                     const SizedBox(width: 12),
                     Expanded(child: Text('$namaBulan $tahun', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white))),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text('$jumlahMinggu minggu â€¢ $jumlahHari hari', style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                Text('$jumlahMinggu minggu  $jumlahHari hari', style: const TextStyle(color: Colors.white70, fontSize: 14)),
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -999,7 +1006,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail>
     final rataRataLangkah = activity['rata_rata_langkah'];
     final rataRataDurasiJam = activity['rata_rata_durasi_jam'];
 
-    FaIconData icon; // âœ… fixed: from FaFaIconDataicon to FaIconData icon
+    FaIconData icon; //  fixed: from FaFaIconDataicon to FaIconData icon
     Color color;
 
     if (nama.toLowerCase().contains('berjemur')) {
@@ -1042,7 +1049,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                child: FaIcon(icon, color: color, size: 24), // âœ… already correct
+                child: FaIcon(icon, color: color, size: 24), //  already correct
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1050,7 +1057,7 @@ class _SehatKPIDetailState extends State<SehatKPIDetail>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(nama, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                    Text('Target: $targetPerBulan hari â€¢ Bobot: $bobot', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                    Text('Target: $targetPerBulan hari  Bobot: $bobot', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
                   ],
                 ),
               ),

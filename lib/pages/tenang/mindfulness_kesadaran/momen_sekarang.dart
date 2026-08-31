@@ -161,7 +161,7 @@ class _MomenSekarangState extends State<MomenSekarang> with TickerProviderStateM
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             const Text(
-                              "✨",
+                              "",
                               style: TextStyle(
                                 fontSize: 60,
                               ),
@@ -311,7 +311,7 @@ class _MomenSekarangState extends State<MomenSekarang> with TickerProviderStateM
                               ),
                               const SizedBox(height: 40),
                               const Text(
-                                "Latihan Selesai 🎉",
+                                "Latihan Selesai ",
                                 style: TextStyle(
                                   fontSize: 40,
                                   fontWeight: FontWeight.w500,

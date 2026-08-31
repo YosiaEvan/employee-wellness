@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../services/hijau_kpi_service.dart';
 import '../../components/header.dart';
+import '../../components/data_refresh_notifier.dart';
 
 class HijauKPIDashboard extends StatefulWidget {
   const HijauKPIDashboard({super.key});
@@ -10,7 +11,7 @@ class HijauKPIDashboard extends StatefulWidget {
   State<HijauKPIDashboard> createState() => _HijauKPIDashboardState();
 }
 
-/// Daftar 5 aktivitas HIJAU 360° (kode kanonik backend).
+/// Daftar 5 aktivitas HIJAU 360 (kode kanonik backend).
 const List<({String kode, String label, FaIconData icon, Color color})> _hijauItems = [
   (kode: 'hemat_air', label: 'Hemat Air', icon: FontAwesomeIcons.droplet, color: Color(0xff0ea5e9)),
   (kode: 'hemat_listrik', label: 'Listrik', icon: FontAwesomeIcons.bolt, color: Color(0xff059669)),
@@ -28,7 +29,18 @@ class _HijauKPIDashboardState extends State<HijauKPIDashboard> {
   @override
   void initState() {
     super.initState();
+    DataRefreshNotifier.instance.addListener(_onDataChanged);
     loadKPIData();
+  }
+
+  void _onDataChanged() {
+    if (mounted) loadKPIData();
+  }
+
+  @override
+  void dispose() {
+    DataRefreshNotifier.instance.removeListener(_onDataChanged);
+    super.dispose();
   }
 
   Future<void> loadKPIData() async {

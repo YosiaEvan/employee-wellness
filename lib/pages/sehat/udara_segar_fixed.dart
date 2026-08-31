@@ -1,4 +1,4 @@
-﻿import 'package:employee_wellness/components/bottom_header.dart';
+import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/pages/sehat_homepage.dart';
 import 'package:employee_wellness/services/tidur_service.dart';
@@ -132,7 +132,7 @@ class _TidurCukupState extends State<TidurCukup> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('âœ… ${result['message']}'),
+            content: Text(' ${result['message']}'),
             backgroundColor: Color(0xFF715cff),
             duration: Duration(seconds: 3),
           ),
@@ -196,7 +196,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                     color: Color(0xff715cff),
                                     borderRadius: BorderRadius.circular(40),
                                   ),
-                                  child: FaIcon( // âœ… fixed
+                                  child: FaIcon( //  fixed
                                     hasTodayReport ? FontAwesomeIcons.circleCheck : FontAwesomeIcons.moon,
                                     size: 36,
                                     color: Colors.white,
@@ -233,7 +233,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                           children: [
                                             Row(
                                               children: [
-                                                FaIcon(FontAwesomeIcons.moon, size: 20, color: Color(0xff4f39f6)), // âœ…
+                                                FaIcon(FontAwesomeIcons.moon, size: 20, color: Color(0xff4f39f6)), // 
                                                 SizedBox(width: 12),
                                                 Text("Tidur", style: TextStyle(fontSize: 20, color: Color(0xff5f6878))),
                                               ],
@@ -260,7 +260,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                           children: [
                                             Row(
                                               children: [
-                                                FaIcon(FontAwesomeIcons.sun, size: 20, color: Color(0xff4f39f6)), // âœ…
+                                                FaIcon(FontAwesomeIcons.sun, size: 20, color: Color(0xff4f39f6)), // 
                                                 SizedBox(width: 12),
                                                 Text("Bangun", style: TextStyle(fontSize: 20, color: Color(0xff5f6878))),
                                               ],
@@ -303,7 +303,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                             ),
                                             Row(
                                               children: [
-                                                FaIcon( // âœ…
+                                                FaIcon( // 
                                                   (todayData['durasi_jam'] ?? 0) > 8
                                                     ? FontAwesomeIcons.circleInfo
                                                     : (todayData['durasi_jam'] ?? 0) < 7
@@ -362,7 +362,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        FaIcon( // âœ…
+                                        FaIcon( // 
                                           isInSleepTimeRange ? FontAwesomeIcons.moon : FontAwesomeIcons.clock,
                                           size: 16,
                                           color: Colors.white,
@@ -387,7 +387,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                     ),
                                     child: Row(
                                       children: [
-                                        FaIcon(FontAwesomeIcons.circleInfo, size: 16, color: Color(0xFFFF9800)), // âœ…
+                                        FaIcon(FontAwesomeIcons.circleInfo, size: 16, color: Color(0xFFFF9800)), // 
                                         SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
@@ -443,7 +443,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                     color: Color(0xff715cff),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.arrowTrendUp, size: 36, color: Colors.white), // âœ…
+                                  child: FaIcon(FontAwesomeIcons.arrowTrendUp, size: 36, color: Colors.white), // 
                                 ),
                               ),
                               SizedBox(width: 20),
@@ -626,7 +626,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                     color: Color(0xff715cff),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.lightbulb, size: 36, color: Colors.white), // âœ…
+                                  child: FaIcon(FontAwesomeIcons.lightbulb, size: 36, color: Colors.white), // 
                                 ),
                               ),
                               SizedBox(width: 20),
@@ -704,7 +704,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                     color: Color(0xff715cff),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.heart, size: 36, color: Colors.white), // âœ…
+                                  child: FaIcon(FontAwesomeIcons.heart, size: 36, color: Colors.white), // 
                                 ),
                               ),
                               SizedBox(width: 20),

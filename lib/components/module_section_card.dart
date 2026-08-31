@@ -1,4 +1,4 @@
-﻿import 'package:employee_wellness/services/app_localizations.dart';
+import 'package:employee_wellness/services/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -66,7 +66,7 @@ class ModuleSectionCard extends StatelessWidget {
                       color: sectionColor,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: FaIcon( // ðŸ”¥ sudah benar
+                    child: FaIcon( //  sudah benar
                       icon,
                       size: 36,
                       color: Colors.white,

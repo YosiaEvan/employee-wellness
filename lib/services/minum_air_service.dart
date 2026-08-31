@@ -1,9 +1,10 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'api_service.dart';
 import 'local_database_service.dart';
 import 'offline_sync_service.dart';
+import '../components/data_refresh_notifier.dart';
 
 /// Service untuk Minum Air 8 Gelas (offline-first)
 /// Data disimpan ke SQLite lokal terlebih dahulu, lalu disinkronkan ke backend.
@@ -17,10 +18,11 @@ class MinumAirService {
   static Future<Map<String, dynamic>> getStatusMinum() async {
     try {
       final tanggal = LocalDatabaseService.todayStr();
+      final userId = await LocalDatabaseService.getCurrentUserId();
       final todayRows = await _db.query(
         'minum',
-        where: 'tanggal = ?',
-        whereArgs: [tanggal],
+        where: 'tanggal = ? AND user_id = ?',
+        whereArgs: [tanggal, userId],
         orderBy: 'waktu_minum ASC',
       );
 
@@ -38,7 +40,7 @@ class MinumAirService {
       unawaited(_mergeFromServer());
       return _buildStatusFromLocal(todayRows);
     } catch (e) {
-      debugPrint("âŒ Get Status Minum Error: $e");
+      debugPrint(" Get Status Minum Error: $e");
       return {"success": false};
     }
   }
@@ -66,10 +68,12 @@ class MinumAirService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         await _db.markSyncedByDate('minum', tanggal);
         final responseData = jsonDecode(response.body);
+        DataRefreshNotifier.instance.notifyDataChanged();
         return {
           "success": true,
           "message": responseData['message'] ?? "Berhasil mencatat minum air",
           "data": responseData['data'],
+          "tercapai": responseData['tercapai'] ?? false,
         };
       } else {
         // Ditolak server (mis. interval 15 menit belum lewat) -> batalkan catatan lokal
@@ -86,7 +90,8 @@ class MinumAirService {
       }
     } catch (e) {
       // Offline -> tetap dianggap berhasil (tersimpan di SQLite)
-      debugPrint("âŒ Catat Minum Error (offline): $e");
+      debugPrint(" Catat Minum Error (offline): $e");
+      DataRefreshNotifier.instance.notifyDataChanged();
       return {
         "success": true,
         "message": "Tersimpan offline, akan disinkronkan saat online",
@@ -164,7 +169,8 @@ class MinumAirService {
 
   static Future<Map<String, dynamic>> _buildMingguIni() async {
     final start = LocalDatabaseService.weekStart();
-    final rows = await _db.query('minum', where: 'tanggal >= ?', whereArgs: [start]);
+    final userId = await LocalDatabaseService.getCurrentUserId();
+    final rows = await _db.query('minum', where: 'tanggal >= ? AND user_id = ?', whereArgs: [start, userId]);
 
     final perTanggal = <String, int>{};
     for (final row in rows) {
@@ -207,7 +213,7 @@ class MinumAirService {
         };
       }
     } catch (e) {
-      debugPrint("âŒ Get Status Minum (server) Error: $e");
+      debugPrint(" Get Status Minum (server) Error: $e");
     }
     return null;
   }
@@ -231,8 +237,8 @@ class MinumAirService {
         if (waktu == null) continue;
         final existing = await _db.query(
           'minum',
-          where: 'tanggal = ? AND waktu_minum = ?',
-          whereArgs: [tanggal, waktu],
+          where: 'tanggal = ? AND waktu_minum = ? AND user_id = ?',
+          whereArgs: [tanggal, waktu, await LocalDatabaseService.getCurrentUserId()],
         );
         if (existing.isEmpty) {
           await _db.insert('minum', {
@@ -243,7 +249,7 @@ class MinumAirService {
         }
       }
     } catch (e) {
-      debugPrint("âŒ Error caching server minum: $e");
+      debugPrint(" Error caching server minum: $e");
     }
   }
 
@@ -256,7 +262,7 @@ class MinumAirService {
         await _cacheServerMinum(server);
       }
     } catch (e) {
-      debugPrint("âŒ Error merging minum from server: $e");
+      debugPrint(" Error merging minum from server: $e");
     }
   }
 

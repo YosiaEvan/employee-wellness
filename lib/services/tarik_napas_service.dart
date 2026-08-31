@@ -1,9 +1,10 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'api_service.dart';
 import 'local_database_service.dart';
 import 'offline_sync_service.dart';
+import '../components/data_refresh_notifier.dart';
 
 /// Service untuk Tarik Napas / Udara Segar (offline-first)
 /// Data disimpan ke SQLite lokal terlebih dahulu, lalu disinkronkan ke backend.
@@ -14,10 +15,11 @@ class TarikNapasService {
   static Future<Map<String, dynamic>> cekTarikNapas() async {
     try {
       final tanggal = LocalDatabaseService.todayStr();
+      final userId = await LocalDatabaseService.getCurrentUserId();
       final todayRows = await _db.query(
         'tarik_napas',
-        where: 'tanggal = ?',
-        whereArgs: [tanggal],
+        where: 'tanggal = ? AND user_id = ?',
+        whereArgs: [tanggal, userId],
         orderBy: 'id ASC',
       );
 
@@ -35,7 +37,7 @@ class TarikNapasService {
       unawaited(_mergeFromServer());
       return _buildFromLocal();
     } catch (e) {
-      debugPrint("âŒ Cek Tarik Napas Error: $e");
+      debugPrint(" Cek Tarik Napas Error: $e");
       return {"success": false, "sudah_tarik_napas": false};
     }
   }
@@ -62,10 +64,12 @@ class TarikNapasService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         await _db.markSyncedByDate('tarik_napas', tanggal);
         final responseData = jsonDecode(response.body);
+        DataRefreshNotifier.instance.notifyDataChanged();
         return {
           "success": true,
           "message": responseData['message'] ?? "Berhasil mencatat aktivitas tarik napas",
           "data": responseData['data'],
+          "tercapai": responseData['tercapai'] ?? true,
         };
       } else {
         // Ditolak server -> batalkan catatan lokal
@@ -82,7 +86,8 @@ class TarikNapasService {
       }
     } catch (e) {
       // Offline -> tetap dianggap berhasil (tersimpan di SQLite)
-      debugPrint("âŒ Catat Tarik Napas Error (offline): $e");
+      debugPrint(" Catat Tarik Napas Error (offline): $e");
+      DataRefreshNotifier.instance.notifyDataChanged();
       return {
         "success": true,
         "message": "Tersimpan offline, akan disinkronkan saat online",
@@ -115,10 +120,11 @@ class TarikNapasService {
 
   static Future<Map<String, dynamic>?> _buildDataHariIni() async {
     final tanggal = LocalDatabaseService.todayStr();
+    final userId = await LocalDatabaseService.getCurrentUserId();
     final rows = await _db.query(
       'tarik_napas',
-      where: 'tanggal = ?',
-      whereArgs: [tanggal],
+      where: 'tanggal = ? AND user_id = ?',
+      whereArgs: [tanggal, userId],
       orderBy: 'waktu_selesai DESC',
     );
     if (rows.isEmpty) return null;
@@ -129,10 +135,11 @@ class TarikNapasService {
 
   static Future<Map<String, dynamic>> _buildMingguIni() async {
     final start = LocalDatabaseService.weekStart();
+    final userId = await LocalDatabaseService.getCurrentUserId();
     final rows = await _db.query(
       'tarik_napas',
-      where: 'tanggal >= ?',
-      whereArgs: [start],
+      where: 'tanggal >= ? AND user_id = ?',
+      whereArgs: [start, userId],
     );
     final uniqueTanggal = <String>{};
     for (final row in rows) {
@@ -161,7 +168,7 @@ class TarikNapasService {
         };
       }
     } catch (e) {
-      debugPrint("âŒ Cek Tarik Napas (server) Error: $e");
+      debugPrint(" Cek Tarik Napas (server) Error: $e");
     }
     return null;
   }
@@ -184,8 +191,8 @@ class TarikNapasService {
         if (waktu.isNotEmpty) {
           final existing = await _db.query(
             'tarik_napas',
-            where: 'tanggal = ? AND waktu_selesai = ?',
-            whereArgs: [tanggal, waktu],
+            where: 'tanggal = ? AND waktu_selesai = ? AND user_id = ?',
+            whereArgs: [tanggal, waktu, await LocalDatabaseService.getCurrentUserId()],
           );
           if (existing.isEmpty) {
             await _db.insert('tarik_napas', {
@@ -197,7 +204,7 @@ class TarikNapasService {
         }
       }
     } catch (e) {
-      debugPrint("âŒ Error caching server tarik napas: $e");
+      debugPrint(" Error caching server tarik napas: $e");
     }
   }
 
@@ -210,7 +217,7 @@ class TarikNapasService {
         await _cacheServer(server);
       }
     } catch (e) {
-      debugPrint("âŒ Error merging tarik napas from server: $e");
+      debugPrint(" Error merging tarik napas from server: $e");
     }
   }
 }

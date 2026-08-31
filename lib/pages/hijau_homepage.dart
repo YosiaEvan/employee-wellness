@@ -1,4 +1,5 @@
-﻿import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/module_kpi_progress_card.dart';
 import 'package:employee_wellness/components/module_section_card.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/hijau/hemat_energi.dart';
@@ -93,6 +94,17 @@ class HijauHomepage extends StatelessWidget {
                 child: ResponsiveContainer(
                   child: Column(
                     children: [
+                      ModuleKpiProgressCard(
+                        module: 'hijau',
+                        primaryColor: const Color(0xff16a34a),
+                        gradientEnd: const Color(0xff15803d),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const HijauKPIDashboard()),
+                          );
+                        },
+                      ),
                       ModuleSectionCard(
                         destination: const HematEnergi(),
                         backgroundColor: const Color(0xffecfdf5),

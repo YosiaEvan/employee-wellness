@@ -252,7 +252,7 @@ class _VisualisasiPositifState extends State<VisualisasiPositif> with TickerProv
                               ),
                               const SizedBox(height: 40),
                               const Text(
-                                "Sesi Selesai 🎉",
+                                "Sesi Selesai ",
                                 style: TextStyle(
                                   fontSize: 40,
                                   fontWeight: FontWeight.w500,
@@ -382,7 +382,7 @@ class _VisualisasiPositifState extends State<VisualisasiPositif> with TickerProv
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       const Text(
-                                        "🌅",
+                                        "",
                                         style: TextStyle(
                                           fontSize: 100,
                                         ),

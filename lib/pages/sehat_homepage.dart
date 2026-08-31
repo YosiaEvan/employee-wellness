@@ -1,4 +1,5 @@
-﻿import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/module_kpi_progress_card.dart';
 import 'package:employee_wellness/components/module_section_card.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/config/penilaian_points.dart';
@@ -96,6 +97,17 @@ class SehatHomepage extends StatelessWidget {
                 child: ResponsiveContainer(
                   child: Column(
                     children: [
+                      ModuleKpiProgressCard(
+                        module: 'sehat',
+                        primaryColor: const Color(0xfff44336),
+                        gradientEnd: const Color(0xffd32f2f),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const SehatKPIDashboard()),
+                          );
+                        },
+                      ),
                       ModuleSectionCard(
                         destination: const SinarMatahari(),
                         backgroundColor: const Color(0xfffff7ed),

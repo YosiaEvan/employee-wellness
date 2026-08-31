@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../services/tenang_kpi_service.dart';
 import '../../components/header.dart';
+import '../../components/data_refresh_notifier.dart';
 
 class TenangKPIDashboard extends StatefulWidget {
   const TenangKPIDashboard({super.key});
@@ -21,8 +22,19 @@ class _TenangKPIDashboardState extends State<TenangKPIDashboard> with AutoRefres
   @override
   void initState() {
     super.initState();
+    DataRefreshNotifier.instance.addListener(_onDataChanged);
     loadKPIData();
     startAutoRefresh(refresh: loadKPIData);
+  }
+
+  void _onDataChanged() {
+    if (mounted) loadKPIData();
+  }
+
+  @override
+  void dispose() {
+    DataRefreshNotifier.instance.removeListener(_onDataChanged);
+    super.dispose();
   }
 
   Future<void> loadKPIData() async {

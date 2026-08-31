@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'api_service.dart';
 import 'local_database_service.dart';
+import '../components/data_refresh_notifier.dart';
 
 /// Service pencatatan aktivitas penilaian SEHAT/TENANG (self-report klik).
 /// 1 klik = 1 poin, dengan penegakan cap mingguan di backend (409).
 /// Offline-first: klik disimpan ke SQLite lokal dahulu, lalu disinkronkan.
 class AktivitasService {
-  /// POST /user/aktivitas — catat 1 klik.
-  /// Mengembalikan { success, statusCode?, message?, data? }.
+  /// POST /user/aktivitas  catat 1 klik.
+  /// Mengembalikan { success, statusCode?, message?, data?, tercapai? }.
   static Future<Map<String, dynamic>> recordAktivitas({
     required String modul,
     required String aktivitas,
@@ -33,15 +34,15 @@ class AktivitasService {
     }
 
     try {
-      final response = await ApiService.post(
-        '/user/aktivitas',
-        body: {
-          'modul': modul,
-          'aktivitas': aktivitas,
-          'tanggal': ?tanggal,
-          'deskripsi': ?deskripsi,
-        },
-      );
+      final body = <String, dynamic>{
+        'modul': modul,
+        'aktivitas': aktivitas,
+        'tanggal': tgl,
+      };
+      if (deskripsi != null) body['deskripsi'] = deskripsi;
+
+      final response = await ApiService.post('/user/aktivitas', body: body);
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (rowId != null) {
           try {
@@ -49,8 +50,16 @@ class AktivitasService {
                 .markSynced('aktivitas_poin', rowId);
           } catch (_) {}
         }
-        return jsonDecode(response.body);
+        final resBody = jsonDecode(response.body);
+        DataRefreshNotifier.instance.notifyDataChanged();
+        return {
+          'success': true,
+          'data': resBody['data'],
+          'tercapai': resBody['tercapai'] ?? false,
+          'message': resBody['message'] ?? 'Aktivitas berhasil dicatat',
+        };
       }
+
       // 4xx: ditolak permanen (cap 409 / aktivitas 400) -> hapus antrean lokal
       if (rowId != null) {
         try {
@@ -61,6 +70,7 @@ class AktivitasService {
           );
         } catch (_) {}
       }
+
       String message = 'Gagal mencatat aktivitas';
       try {
         final body = jsonDecode(response.body);
@@ -76,6 +86,7 @@ class AktivitasService {
     } catch (e) {
       // Offline / 5xx -> klik tetap tersimpan di antrean lokal
       if (rowId != null) {
+        DataRefreshNotifier.instance.notifyDataChanged();
         return {
           'success': true,
           'offline': true,
@@ -86,7 +97,7 @@ class AktivitasService {
     }
   }
 
-  /// GET /user/aktivitas?modul=&tanggal= — daftar klik penilaian user.
+  /// GET /user/aktivitas?modul=&tanggal=  daftar klik penilaian user.
   static Future<Map<String, dynamic>> getAktivitas({
     required String modul,
     String? tanggal,

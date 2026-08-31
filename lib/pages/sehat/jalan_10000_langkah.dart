@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
@@ -6,7 +6,8 @@ import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/sehat_homepage.dart';
 import 'package:employee_wellness/services/background_steps_tracker.dart';
 import 'package:employee_wellness/services/langkah_service.dart';
-import 'package:employee_wellness/services/steps_sync_service.dart';
+import 'package:employee_wellness/services/local_database_service.dart';
+import 'package:employee_wellness/services/step_foreground_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -18,7 +19,7 @@ class Jalan10000Langkah extends StatefulWidget {
   State<Jalan10000Langkah> createState() => _Jalan10000LangkahState();
 }
 
-class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshMixin<Jalan10000Langkah> {
+class _Jalan10000LangkahState extends State<Jalan10000Langkah> with WidgetsBindingObserver, AutoRefreshMixin<Jalan10000Langkah> {
   int _totalSteps = 0;
   double progressValue = 0;
   int _remainingSteps = 10000;
@@ -40,6 +41,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializeSteps();
     _loadYesterdaySteps();
     // Auto-start tracking di background (dengan permission handling aman)
@@ -48,15 +50,30 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
     startAutoRefresh(refresh: _initializeSteps);
   }
 
+  /// Re-check permission saat app kembali ke foreground (setelah user
+  /// mengizinkan lewat Settings). Device tertentu (mis. Infinix/Android 16)
+  /// tidak memberi tahu app ketika permission diubah di Settings, jadi
+  /// harus dicek ulang secara manual.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // User baru saja menutup Settings -> cek ulang permission aktivitas fisik
+      if (_permissionDenied) {
+        _retryPermission();
+      }
+    }
+  }
+
   /// Load data langkah kemarin untuk notifikasi
   Future<void> _loadYesterdaySteps() async {
     try {
-      final syncService = StepsSyncService.instance;
-      final yesterdayData = await syncService.getYesterdaySteps();
+      final yesterday = DateTime.now().subtract(const Duration(days: 1));
+      final yesterdayDate = yesterday.toIso8601String().split('T')[0];
+      final yesterdayData = await LocalDatabaseService.instance.getLangkah(yesterdayDate);
 
       if (yesterdayData != null && mounted) {
         final steps = yesterdayData['total_steps'] as int?;
-        final wasSynced = yesterdayData['is_synced'] == 1;
+        final wasSynced = yesterdayData['synced'] == 1;
 
         if (steps != null && steps > 0 && wasSynced) {
           setState(() {
@@ -64,11 +81,11 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
             _showYesterdayNotification = true;
           });
 
-          debugPrint('ðŸ“Š Yesterday steps loaded: $steps');
+          debugPrint(' Yesterday steps loaded: $steps');
         }
       }
     } catch (e) {
-      debugPrint('âŒ Error loading yesterday steps: $e');
+      debugPrint(' Error loading yesterday steps: $e');
     }
   }
 
@@ -85,13 +102,13 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
 
       if (status == StepPermissionStatus.granted) {
         // Pastikan tracker aktif (register stream pedometer)
-        final ok = await BackgroundStepsTracker.ensureTracking();
+        // pedometer hanya dijalankan di foreground service isolate
         setState(() {
           _permissionDenied = false;
           _permissionPermanentlyDenied = false;
-          _trackingActive = ok;
+          _trackingActive = true;
         });
-        if (ok) {
+        {
           await _syncWithBackgroundTracker();
           startPolling();
         }
@@ -103,10 +120,10 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
               status == StepPermissionStatus.permanentlyDenied;
           _trackingActive = false;
         });
-        debugPrint("âš ï¸ Permission denied for activity recognition");
+        debugPrint(" Permission denied for activity recognition");
       }
     } catch (e) {
-      debugPrint("âŒ Error requesting activity recognition permission: $e");
+      debugPrint(" Error requesting activity recognition permission: $e");
       if (mounted) {
         setState(() {
           _permissionDenied = true;
@@ -123,7 +140,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
     try {
       await openAppSettings();
     } catch (e) {
-      debugPrint("âŒ Error opening app settings: $e");
+      debugPrint(" Error opening app settings: $e");
     }
   }
 
@@ -133,13 +150,13 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
     if (!mounted) return;
 
     if (status == StepPermissionStatus.granted) {
-      final ok = await BackgroundStepsTracker.ensureTracking();
+      // pedometer hanya dijalankan di foreground service isolate
       setState(() {
         _permissionDenied = false;
         _permissionPermanentlyDenied = false;
-        _trackingActive = ok;
+        _trackingActive = true;
       });
-      if (ok) {
+      {
         await _syncWithBackgroundTracker();
         startPolling();
       }
@@ -156,15 +173,27 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
   /// Load steps from background tracker and merge with current
   Future<void> _syncWithBackgroundTracker() async {
     try {
-      if (!BackgroundStepsTracker.isListening) {
-        if (mounted && _trackingActive) {
-          setState(() => _trackingActive = false);
-        }
-        return;
+      // PENTING: `BackgroundStepsTracker.isListening` HANYA bernilai true di
+      // isolate foreground service. Di main isolate selalu false (setiap
+      // isolate punya static state sendiri). Jadi JANGAN dipakai untuk
+      // menentukan status tracking. Gunakan status ijin + foreground service.
+      final granted = await BackgroundStepsTracker.isStepPermissionGranted();
+      var running = await StepForegroundService.isRunning();
+
+      // Jika ijin sudah diberikan tapi service belum berjalan, coba nyalakan
+      // agar background tracker benar-benar aktif.
+      if (granted && !running) {
+        await StepForegroundService.start();
+        running = await StepForegroundService.isRunning();
       }
+
+      if (mounted) {
+        setState(() => _trackingActive = granted && running);
+      }
+
       final bgSteps = BackgroundStepsTracker.todaySteps;
       if (bgSteps > _totalSteps) {
-        debugPrint('ðŸ“Š Background tracker has more steps: $bgSteps > $_totalSteps');
+        debugPrint(' Background tracker has more steps: $bgSteps > $_totalSteps');
         if (mounted) {
           setState(() {
             _totalSteps = bgSteps;
@@ -173,11 +202,9 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
           });
         }
         await LangkahService.saveTodaySteps(_totalSteps);
-      } else if (bgSteps > 0 && !_trackingActive) {
-        if (mounted) setState(() => _trackingActive = true);
       }
     } catch (e) {
-      debugPrint('âŒ Error syncing with background tracker: $e');
+      debugPrint(' Error syncing with background tracker: $e');
     }
   }
 
@@ -293,14 +320,14 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
       // Save ke LangkahService queue untuk sync
       await LangkahService.updateLangkahLocal(jumlahLangkah: _totalSteps);
 
-      // Juga save ke StepsDatabase agar BackgroundStepsTracker punya data terbaru
+      // Juga save ke SQLite agar BackgroundStepsTracker punya data terbaru
       try {
-        await StepsSyncService.instance.saveStepsLocally(
+        await LocalDatabaseService.instance.upsertLangkah(
           tanggal: DateTime.now().toIso8601String().split('T')[0],
           totalSteps: _totalSteps,
         );
       } catch (e) {
-        debugPrint('âš ï¸ Failed to sync to StepsDatabase: $e');
+        debugPrint(' Failed to sync to SQLite: $e');
       }
     }
   }
@@ -318,6 +345,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pollTimer?.cancel();
     _syncTimer?.cancel();
     _pollTimer = null;
@@ -776,17 +804,19 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                                 ),
                               ),
                               SizedBox(width: 20,),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Manfaat Jalan 10.000 Langkah",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Manfaat Jalan 10.000 Langkah",
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -805,7 +835,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                             child: Row(
                               children: [
                                 Text(
-                                  "â¤ï¸",
+                                  "",
                                   style: TextStyle(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 20,
@@ -838,7 +868,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                             child: Row(
                               children: [
                                 Text(
-                                  "ðŸ”¥",
+                                  "",
                                   style: TextStyle(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 20,
@@ -871,7 +901,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                             child: Row(
                               children: [
                                 Text(
-                                  "ðŸ¦´",
+                                  "",
                                   style: TextStyle(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 20,
@@ -904,7 +934,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                             child: Row(
                               children: [
                                 Text(
-                                  "ðŸ˜Š",
+                                  "",
                                   style: TextStyle(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 20,
@@ -937,7 +967,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                             child: Row(
                               children: [
                                 Text(
-                                  "ðŸ§ ",
+                                  "",
                                   style: TextStyle(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 20,
@@ -1004,17 +1034,19 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                                 ),
                               ),
                               SizedBox(width: 20,),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Tips Mencapai 10.000 Langkah",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Tips Mencapai 10.000 Langkah",
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -1193,7 +1225,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                     //             borderRadius: BorderRadius.circular(40),
                     //           ),
                     //           child: Text(
-                    //             "ðŸ™‹â€â™‚ï¸",
+                    //             "",
                     //             style: TextStyle(
                     //               fontSize: 40,
                     //             ),
@@ -1230,7 +1262,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                     //           ),
                     //           SizedBox(height: 12,),
                     //           Text(
-                    //             "â­â­â­â­â­",
+                    //             "",
                     //             style: TextStyle(
                     //               fontSize: 16,
                     //             ),
@@ -1330,7 +1362,7 @@ class _Jalan10000LangkahState extends State<Jalan10000Langkah> with AutoRefreshM
                     //               ),
                     //             ),
                     //             child: Text(
-                    //               "â˜€ï¸ Saya Sudah Berjemur",
+                    //               " Saya Sudah Berjemur",
                     //               style: TextStyle(
                     //                 fontSize: 20,
                     //                 fontWeight: FontWeight.bold,

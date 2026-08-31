@@ -280,7 +280,7 @@ class _HijauScanCardState extends State<HijauScanCard> {
         child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
       );
     } else if (done) {
-      child = const Text('✔ Selesai minggu ini', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold));
+      child = const Text(' Selesai minggu ini', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold));
     } else {
       child = Row(
         mainAxisSize: MainAxisSize.min,

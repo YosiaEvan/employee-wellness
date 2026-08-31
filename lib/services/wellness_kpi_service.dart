@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'api_service.dart';
 
 class WellnessKPIService {
-  /// Skor KPI Wellness bulanan = (%SEHAT × 50%) + (%TENANG × 25%) + (%HIJAU × 25%).
+  /// Skor KPI Wellness bulanan = (%SEHAT  50%) + (%TENANG  25%) + (%HIJAU  25%).
   static Future<Map<String, dynamic>> getMonthlyWellness({
     int? bulan,
     int? tahun,

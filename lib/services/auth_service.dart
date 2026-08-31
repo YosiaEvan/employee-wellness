@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
@@ -9,8 +9,6 @@ import 'api_service.dart';
 import 'background_steps_tracker.dart';
 import 'step_foreground_service.dart';
 import 'local_database_service.dart';
-import 'offline_steps_service.dart';
-
 /// Service untuk Authentication dengan auto-refresh token
 class AuthService {
   /// Login
@@ -29,7 +27,7 @@ class AuthService {
         };
       }
 
-      debugPrint("ðŸ“¤ Login Request:");
+      debugPrint(" Login Request:");
       debugPrint("URL: ${ApiConfig.baseUrl}/auth/login");
       debugPrint("Email: $email");
 
@@ -47,7 +45,7 @@ class AuthService {
         },
       );
 
-      debugPrint("ðŸ“¥ Login Response: ${response.statusCode}");
+      debugPrint(" Login Response: ${response.statusCode}");
       debugPrint("Body: ${response.body}");
 
       if (response.statusCode == 200) {
@@ -60,8 +58,8 @@ class AuthService {
           final user = data?['user'];
 
           if (token != null) {
-            debugPrint("âœ… Login success! Token saved.");
-            debugPrint("ðŸ‘¤ User: ${user?['nama_lengkap']} (${user?['email']})");
+            debugPrint(" Login success! Token saved.");
+            debugPrint(" User: ${user?['nama_lengkap']} (${user?['email']})");
 
             // Save token
             await AuthStorage.saveToken(token);
@@ -79,7 +77,7 @@ class AuthService {
                 password: password,
                 rememberMe: true,
               );
-              debugPrint("âœ… Credentials saved for auto-refresh");
+              debugPrint(" Credentials saved for auto-refresh");
             }
 
             return {
@@ -89,14 +87,14 @@ class AuthService {
               "user": user,
             };
           } else {
-            debugPrint("âŒ Login failed: No token in response");
+            debugPrint(" Login failed: No token in response");
             return {
               "success": false,
               "message": "Token tidak ditemukan",
             };
           }
         } else {
-          debugPrint("âŒ Login failed: ${responseData['message']}");
+          debugPrint(" Login failed: ${responseData['message']}");
           return {
             "success": false,
             "message": responseData['message'] ?? "Login gagal",
@@ -107,7 +105,7 @@ class AuthService {
         final data = jsonDecode(response.body);
         final errorMessage = data['message'] ?? "Email atau password salah";
 
-        debugPrint("âŒ Unauthorized (401): $errorMessage");
+        debugPrint(" Unauthorized (401): $errorMessage");
 
         return {
           "success": false,
@@ -115,7 +113,7 @@ class AuthService {
           "status": 401,
         };
       } else {
-        debugPrint("âŒ HTTP Error: ${response.statusCode}");
+        debugPrint(" HTTP Error: ${response.statusCode}");
 
         try {
           final data = jsonDecode(response.body);
@@ -133,25 +131,25 @@ class AuthService {
         }
       }
     } on SocketException catch (e) {
-      debugPrint("âŒ Socket Exception: $e");
+      debugPrint(" Socket Exception: $e");
       return {
         "success": false,
         "message": ApiService.getErrorMessage(e),
       };
     } on TimeoutException catch (e) {
-      debugPrint("âŒ Timeout Exception: $e");
+      debugPrint(" Timeout Exception: $e");
       return {
         "success": false,
         "message": ApiService.getErrorMessage(e),
       };
     } on http.ClientException catch (e) {
-      debugPrint("âŒ Client Exception: $e");
+      debugPrint(" Client Exception: $e");
       return {
         "success": false,
         "message": ApiService.getErrorMessage(e),
       };
     } catch (e) {
-      debugPrint("âŒ Login Exception: $e");
+      debugPrint(" Login Exception: $e");
       return {
         "success": false,
         "message": ApiService.getErrorMessage(e),
@@ -189,51 +187,43 @@ class AuthService {
   /// Logout - Clear all data
   static Future<Map<String, dynamic>> logout() async {
     try {
-      debugPrint("ðŸ”“ Logging out...");
+      debugPrint(" Logging out...");
 
       // Stop background steps tracker
       try {
         await BackgroundStepsTracker.stop();
-        debugPrint("âœ… Background tracker stopped");
+        debugPrint(" Background tracker stopped");
       } catch (e) {
-        debugPrint("âš ï¸ Could not stop background tracker: $e");
+        debugPrint(" Could not stop background tracker: $e");
       }
 
       // Stop foreground service (pelacak langkah latar belakang)
       try {
         await StepForegroundService.stop();
-        debugPrint("âœ… Step foreground service stopped");
+        debugPrint(" Step foreground service stopped");
       } catch (e) {
-        debugPrint("âš ï¸ Could not stop step foreground service: $e");
-      }
-
-      // Clear offline steps data
-      try {
-        await OfflineStepsService.clearAllStepsData();
-        debugPrint("âœ… Offline steps data cleared");
-      } catch (e) {
-        debugPrint("âš ï¸ Could not clear offline steps: $e");
+        debugPrint(" Could not stop step foreground service: $e");
       }
 
       // Clear data SQLite lokal (semua fitur offline-first)
       try {
         await LocalDatabaseService.instance.clearAll();
-        debugPrint("âœ… Local SQLite data cleared");
+        debugPrint(" Local SQLite data cleared");
       } catch (e) {
-        debugPrint("âš ï¸ Could not clear local database: $e");
+        debugPrint(" Could not clear local database: $e");
       }
 
       // Clear all auth storage (token, credentials, etc)
       await AuthStorage.clearAll();
-      debugPrint("âœ… Auth storage cleared");
+      debugPrint(" Auth storage cleared");
 
-      debugPrint("âœ… Logout complete - all data cleared");
+      debugPrint(" Logout complete - all data cleared");
       return {
         "success": true,
         "message": "Logout berhasil",
       };
     } catch (e) {
-      debugPrint("âŒ Logout error: $e");
+      debugPrint(" Logout error: $e");
       // Even if error, still return success to force logout
       return {
         "success": true,

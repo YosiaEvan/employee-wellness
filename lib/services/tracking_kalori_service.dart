@@ -1,9 +1,10 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'api_service.dart';
 import 'local_database_service.dart';
 import 'offline_sync_service.dart';
+import '../components/data_refresh_notifier.dart';
 
 /// Service untuk Tracking Kalori (offline-first)
 /// Data makanan disimpan ke SQLite lokal terlebih dahulu, lalu disinkronkan.
@@ -28,16 +29,20 @@ class TrackingKaloriService {
     final tanggal = LocalDatabaseService.todayStr();
 
     final nama = foodDetail?['nama_makanan']?.toString() ?? 'Makanan #$idFoodNutrition';
-    final kalori = (foodDetail?['kalori'] ?? 0).toDouble();
-    final protein = (foodDetail?['protein_gram'] ?? 0).toDouble();
-    final karbohidrat = (foodDetail?['karbohidrat_gram'] ?? 0).toDouble();
-    final lemak = (foodDetail?['lemak_gram'] ?? 0).toDouble();
-    final serat = (foodDetail?['serat_gram'] ?? 0).toDouble();
+    final protein = (foodDetail?['protein_gram'] ?? foodDetail?['protein'] ?? 0).toDouble();
+    final karbohidrat = (foodDetail?['karbohidrat_gram'] ?? foodDetail?['karbohidrat'] ?? 0).toDouble();
+    final serat = (foodDetail?['serat_gram'] ?? foodDetail?['serat'] ?? 0).toDouble();
+    final lemak = (foodDetail?['lemak_gram'] ?? foodDetail?['lemak'] ?? 0).toDouble();
+    // Kalori tidak selalu disediakan oleh sumber (DB/Gemini), jadi hitung sendiri
+    // dari makronutrien dengan rumus yang sama dengan backend hitungKalori.
+    final kalori = foodDetail?['kalori'] != null
+        ? (foodDetail?['kalori'] ?? 0).toDouble()
+        : (protein * 4) + (karbohidrat * 4) + (lemak * 9) + (serat * 2);
     final berminyak = foodDetail?['mengandung_minyak'] == true ? 1 : 0;
     final bergula = foodDetail?['mengandung_gula'] == true ? 1 : 0;
 
     // 1. Simpan ke SQLite lokal dulu
-    final rowId = await _db.insert('makanan', {
+    await _db.insert('makanan', {
       'tanggal': tanggal,
       'id_food_nutrition': idFoodNutrition,
       'jenis_makan': jenisMakan,
@@ -68,6 +73,7 @@ class TrackingKaloriService {
         final responseData = jsonDecode(response.body);
         if (responseData['success'] == true) {
           await _db.markSyncedByDate('makanan', tanggal);
+          DataRefreshNotifier.instance.notifyDataChanged();
           return {
             "success": true,
             "message": responseData['message'],
@@ -75,15 +81,16 @@ class TrackingKaloriService {
             "data": responseData['data'],
           };
         } else {
-          await _db.delete('makanan', where: 'id = ?', whereArgs: [rowId]);
+          // Server reject  keep local row for retry during sync
+          debugPrint(" Server rejected food: ${responseData['message']}");
           return {
             "success": false,
             "message": responseData['message'] ?? "Gagal menambahkan makanan",
           };
         }
       } else {
-        // Ditolak server -> batalkan catatan lokal
-        await _db.delete('makanan', where: 'id = ?', whereArgs: [rowId]);
+        // Server error  keep local row for retry during sync
+        debugPrint(" Server error ${response.statusCode}, keeping local row");
         try {
           final errorData = jsonDecode(response.body);
           return {
@@ -96,7 +103,8 @@ class TrackingKaloriService {
       }
     } catch (e) {
       // Offline -> tetap dianggap berhasil (tersimpan di SQLite)
-      debugPrint("âŒ Tracking Kalori Error (offline): $e");
+      debugPrint(" Tracking Kalori Error (offline): $e");
+      DataRefreshNotifier.instance.notifyDataChanged();
       return {
         "success": true,
         "message": "Tersimpan offline, akan disinkronkan saat online",
@@ -109,10 +117,11 @@ class TrackingKaloriService {
   static Future<Map<String, dynamic>> getTrackingHariIni() async {
     try {
       final tanggal = LocalDatabaseService.todayStr();
+      final userId = await LocalDatabaseService.getCurrentUserId();
       final todayRows = await _db.query(
         'makanan',
-        where: 'tanggal = ?',
-        whereArgs: [tanggal],
+        where: 'tanggal = ? AND user_id = ?',
+        whereArgs: [tanggal, userId],
       );
 
       if (todayRows.isEmpty) {
@@ -133,7 +142,7 @@ class TrackingKaloriService {
       // Data lokal ada -> bangun dari SQLite (offline-first)
       return {"success": true, "data": await _buildFromLocal(todayRows)};
     } catch (e) {
-      debugPrint("âŒ Get Tracking Error: $e");
+      debugPrint(" Get Tracking Error: $e");
       return {"success": false, "message": "Error: $e"};
     }
   }
@@ -220,10 +229,11 @@ class TrackingKaloriService {
 
   static Future<Map<String, dynamic>> _buildRiwayatSeminggu() async {
     final start = LocalDatabaseService.weekStart();
+    final userId = await LocalDatabaseService.getCurrentUserId();
     final rows = await _db.query(
       'makanan',
-      where: 'tanggal >= ?',
-      whereArgs: [start],
+      where: 'tanggal >= ? AND user_id = ?',
+      whereArgs: [start, userId],
     );
 
     final perTanggal = <String, Map<String, bool>>{};
@@ -286,7 +296,7 @@ class TrackingKaloriService {
         }
       }
     } catch (e) {
-      debugPrint("âŒ Error reading tracking target: $e");
+      debugPrint(" Error reading tracking target: $e");
     }
     return Map<String, dynamic>.from(_defaultTarget);
   }
@@ -309,7 +319,7 @@ class TrackingKaloriService {
         }
       }
     } catch (e) {
-      debugPrint("âŒ Get Tracking (server) Error: $e");
+      debugPrint(" Get Tracking (server) Error: $e");
     }
     return null;
   }
@@ -349,7 +359,7 @@ class TrackingKaloriService {
         }
       });
     } catch (e) {
-      debugPrint("âŒ Error caching server tracking data: $e");
+      debugPrint(" Error caching server tracking data: $e");
     }
   }
 
@@ -361,7 +371,7 @@ class TrackingKaloriService {
         return jsonDecode(raw) as Map<String, dynamic>;
       }
     } catch (e) {
-      debugPrint("âŒ Error reading cached tracking data: $e");
+      debugPrint(" Error reading cached tracking data: $e");
     }
     return null;
   }

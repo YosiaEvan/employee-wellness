@@ -1,4 +1,4 @@
-﻿import 'package:employee_wellness/components/auto_refresh_mixin.dart';
+import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
@@ -53,7 +53,16 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> with AutoRefreshMixin<P
   double get totalProtein => konsumsiData['protein']?.toDouble() ?? 0.0;
   double get totalCarb => konsumsiData['karbohidrat']?.toDouble() ?? 0.0;
   double get totalFiber => konsumsiData['serat']?.toDouble() ?? 0.0;
-  double get totalAll => totalProtein + totalCarb + totalFiber;
+  double get totalLemak => konsumsiData['lemak']?.toDouble() ?? 0.0;
+
+  // Basis distribusi makronutrien: protein + karbohidrat + lemak + serat.
+  // Menyertakan lemak agar proporsi mencerminkan seluruh makanan yang tercatat.
+  double get totalAll => totalProtein + totalCarb + totalLemak + totalFiber;
+
+  String pct(double value) {
+    if (totalAll <= 0) return "0.00";
+    return ((value / totalAll) * 100).toStringAsFixed(2);
+  }
 
   @override
   void initState() {
@@ -132,7 +141,7 @@ void _checkHealthChallenge() {
     isChallengeAchieved = false;
   }
 
-  debugPrint("ðŸŽ¯ Health Challenge Check (Weekly Data):");
+  debugPrint(" Health Challenge Check (Weekly Data):");
   debugPrint("   - Hari makan berminyak: $hariMakanBerminyak / 7");
   debugPrint("   - Hari makan bergula: $hariMakanBergula / 7");
   debugPrint("   - Hari tanpa minyak: $hariTanpaMinyak / 7");
@@ -141,7 +150,7 @@ void _checkHealthChallenge() {
 }
 
   Future<void> addFoodFromDatabase(Map<String, dynamic> result) async {
-    debugPrint("\nðŸ½ï¸ addFoodFromDatabase() called");
+    debugPrint("\n addFoodFromDatabase() called");
     debugPrint("   Result success: ${result["success"]}");
 
     // Set loading state untuk visual feedback
@@ -161,7 +170,7 @@ void _checkHealthChallenge() {
     if (mounted) {
       setState(() {
         // Trigger complete rebuild
-        debugPrint("   âœ… setState() called - UI should rebuild now");
+        debugPrint("    setState() called - UI should rebuild now");
       });
     }
 
@@ -190,18 +199,18 @@ void _checkHealthChallenge() {
               children: [
                 Row(
                   children: [
-                    FaIcon(FontAwesomeIcons.check, color: Colors.white, size: 16), // âœ… removed const
+                    FaIcon(FontAwesomeIcons.check, color: Colors.white, size: 16), //  removed const
                     const SizedBox(width: 8),
                     Expanded(child: Text(result['message'] ?? 'Berhasil menambahkan')),
                   ],
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'ðŸ“Š Total Kalori: ${totalCalories.toStringAsFixed(1)} kkal',
+                  ' Total Kalori: ${totalCalories.toStringAsFixed(1)} kkal',
                   style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'âœ… Total Makanan: $totalItem item',
+                  ' Total Makanan: $totalItem item',
                   style: const TextStyle(fontSize: 12),
                 ),
               ],
@@ -223,8 +232,8 @@ void _checkHealthChallenge() {
       }
     }
 
-    debugPrint("âœ… addFoodFromDatabase() completed!");
-    debugPrint("â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\n");
+    debugPrint(" addFoodFromDatabase() completed!");
+    debugPrint("\n");
   }
 
   @override
@@ -276,7 +285,7 @@ void _checkHealthChallenge() {
                                 color: Color(0xff00c368),
                                 borderRadius: BorderRadius.circular(40),
                               ),
-                              child: FaIcon( // âœ… removed const
+                              child: FaIcon( //  removed const
                                 FontAwesomeIcons.fireFlameCurved,
                                 size: 36,
                                 color: Colors.white,
@@ -397,7 +406,7 @@ void _checkHealthChallenge() {
                                     color: Color(0xff00c368),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon( // âœ… removed const
+                                  child: FaIcon( //  removed const
                                     FontAwesomeIcons.arrowTrendUp,
                                     size: 36,
                                     color: Colors.white,
@@ -405,17 +414,19 @@ void _checkHealthChallenge() {
                                 ),
                               ),
                               SizedBox(width: 20,),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Distribusi Nutirisi",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Distribusi Nutirisi",
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -461,6 +472,11 @@ void _checkHealthChallenge() {
                                       PieChartSectionData(
                                         color: Colors.green,
                                         value: totalFiber,
+                                        title: '',
+                                      ),
+                                      PieChartSectionData(
+                                        color: Colors.orange,
+                                        value: totalLemak,
                                         title: '',
                                       )
                                     ]
@@ -514,10 +530,10 @@ void _checkHealthChallenge() {
                                         ),
                                       ],
                                     ),
-                                    SizedBox(width: 16,),
-                                    Flexible(
-                                      child:                                       Text(
-                                        "${totalAll > 0 ? ((totalProtein/totalAll)*100).toStringAsFixed(2) : "0.00"}%",
+                                    Expanded(
+                                      child: Text(
+                                        "${pct(totalProtein)}%",
+                                        textAlign: TextAlign.right,
                                         style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
@@ -537,10 +553,10 @@ void _checkHealthChallenge() {
                                         color: Colors.red,
                                       ),
                                     ),
-                                    SizedBox(width: 16,),
-                                    Flexible(
+                                    Expanded(
                                       child: Text(
                                         "Target: 30%",
+                                        textAlign: TextAlign.right,
                                         style: TextStyle(
                                           fontSize: 16,
                                           color: Colors.red,
@@ -597,10 +613,10 @@ void _checkHealthChallenge() {
                                         ),
                                       ],
                                     ),
-                                    SizedBox(width: 16,),
-                                    Flexible(
-                                      child:                                       Text(
-                                        "${totalAll > 0 ? ((totalCarb/totalAll)*100).toStringAsFixed(2) : "0.00"}%",
+                                    Expanded(
+                                      child: Text(
+                                        "${pct(totalCarb)}%",
+                                        textAlign: TextAlign.right,
                                         style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
@@ -620,10 +636,10 @@ void _checkHealthChallenge() {
                                         color: Colors.blue,
                                       ),
                                     ),
-                                    SizedBox(width: 16,),
-                                    Flexible(
+                                    Expanded(
                                       child: Text(
                                         "Target: 50%",
+                                        textAlign: TextAlign.right,
                                         style: TextStyle(
                                           fontSize: 16,
                                           color: Colors.blue,
@@ -680,10 +696,10 @@ void _checkHealthChallenge() {
                                         ),
                                       ],
                                     ),
-                                    SizedBox(width: 16,),
-                                    Flexible(
-                                      child:                                       Text(
-                                        "${totalAll > 0 ? ((totalFiber/totalAll)*100).toStringAsFixed(2) : "0.00"}%",
+                                    Expanded(
+                                      child: Text(
+                                        "${pct(totalFiber)}%",
+                                        textAlign: TextAlign.right,
                                         style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
@@ -703,13 +719,96 @@ void _checkHealthChallenge() {
                                         color: Colors.green,
                                       ),
                                     ),
-                                    SizedBox(width: 16,),
-                                    Flexible(
+                                    Expanded(
                                       child: Text(
-                                        "Target: 20%",
+                                        "Target: 25g",
+                                        textAlign: TextAlign.right,
                                         style: TextStyle(
                                           fontSize: 16,
                                           color: Colors.green,
+                                        ),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ],
+                            )
+                          ),
+
+                          SizedBox(height: 12,),
+
+                          // Lemak
+                          Container(
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              color: Color(0xfffff7ed),
+                              border: Border.all(
+                                  color: Color(0xffffddb0),
+                                  width: 2,
+                                  style: BorderStyle.solid
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        SizedBox.square(
+                                          dimension: 10,
+                                          child: Container(
+                                            alignment: Alignment.center,
+                                            padding: EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: Color(0xfff27f0c),
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Text(""),
+                                          ),
+                                        ),
+                                        SizedBox(width: 8,),
+                                        Text(
+                                          "Lemak",
+                                          style: TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xffb45309)
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        "${pct(totalLemak)}%",
+                                        textAlign: TextAlign.right,
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.orange,
+                                        ),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      "${totalLemak}g",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.orange,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        "Target: 20%",
+                                        textAlign: TextAlign.right,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.orange,
                                         ),
                                       ),
                                     )
@@ -752,7 +851,7 @@ void _checkHealthChallenge() {
                                     color: Color(0xff00c368),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon( // âœ… removed const
+                                  child: FaIcon( //  removed const
                                     FontAwesomeIcons.arrowTrendUp,
                                     size: 36,
                                     color: Colors.white,
@@ -764,13 +863,17 @@ void _checkHealthChallenge() {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(
-                                      "Makanan Hari Ini",
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w500,
+                                    Expanded(
+                                      child: Text(
+                                        "Makanan Hari Ini",
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
+                                    SizedBox(width: 8,),
                                     ElevatedButton(
                                       onPressed: () {
                                         showDialog(
@@ -785,7 +888,7 @@ void _checkHealthChallenge() {
                                       ),
                                       child: Row(
                                         children: [
-                                          FaIcon( // âœ… removed const
+                                          FaIcon( //  removed const
                                             FontAwesomeIcons.plus,
                                             size: 16,
                                             color: Colors.white,
@@ -813,7 +916,7 @@ void _checkHealthChallenge() {
                               children: [
                                 // Sarapan
                                 if (daftarMakanan['sarapan']?.isNotEmpty ?? false) ...[
-                                  _buildMealCategoryHeader('ðŸŒ… Sarapan', daftarMakanan['sarapan']!.length),
+                                  _buildMealCategoryHeader(' Sarapan', daftarMakanan['sarapan']!.length),
                                   SizedBox(height: 12),
                                   ..._buildFoodList(daftarMakanan['sarapan']!),
                                   SizedBox(height: 20),
@@ -821,7 +924,7 @@ void _checkHealthChallenge() {
 
                                 // Makan Siang
                                 if (daftarMakanan['makan_siang']?.isNotEmpty ?? false) ...[
-                                  _buildMealCategoryHeader('â˜€ï¸ Makan Siang', daftarMakanan['makan_siang']!.length),
+                                  _buildMealCategoryHeader(' Makan Siang', daftarMakanan['makan_siang']!.length),
                                   SizedBox(height: 12),
                                   ..._buildFoodList(daftarMakanan['makan_siang']!),
                                   SizedBox(height: 20),
@@ -829,7 +932,7 @@ void _checkHealthChallenge() {
 
                                 // Makan Malam
                                 if (daftarMakanan['makan_malam']?.isNotEmpty ?? false) ...[
-                                  _buildMealCategoryHeader('ðŸŒ™ Makan Malam', daftarMakanan['makan_malam']!.length),
+                                  _buildMealCategoryHeader(' Makan Malam', daftarMakanan['makan_malam']!.length),
                                   SizedBox(height: 12),
                                   ..._buildFoodList(daftarMakanan['makan_malam']!),
                                   SizedBox(height: 20),
@@ -837,7 +940,7 @@ void _checkHealthChallenge() {
 
                                 // Snack
                                 if (daftarMakanan['snack']?.isNotEmpty ?? false) ...[
-                                  _buildMealCategoryHeader('ðŸª Snack', daftarMakanan['snack']!.length),
+                                  _buildMealCategoryHeader(' Snack', daftarMakanan['snack']!.length),
                                   SizedBox(height: 12),
                                   ..._buildFoodList(daftarMakanan['snack']!),
                                 ],
@@ -929,7 +1032,7 @@ void _checkHealthChallenge() {
                                       : Color(0xff1e89fe),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon( // âœ… removed const
+                                  child: FaIcon( //  removed const
                                     isChallengeAchieved
                                       ? FontAwesomeIcons.trophy
                                       : FontAwesomeIcons.lightbulb,
@@ -945,7 +1048,7 @@ void _checkHealthChallenge() {
                                   children: [
                                     Text(
                                       isChallengeAchieved
-                                        ? "ðŸŽ‰ Anda Hebat!"
+                                        ? " Anda Hebat!"
                                         : "Tantangan Sehat",
                                       style: TextStyle(
                                         fontSize: 20,
@@ -985,7 +1088,7 @@ void _checkHealthChallenge() {
                               ),
                               child: Column(
                                 children: [
-                                  FaIcon( // âœ… removed const
+                                  FaIcon( //  removed const
                                     FontAwesomeIcons.solidCircleCheck,
                                     size: 48,
                                     color: Color(0xFF4CAF50),
@@ -1074,7 +1177,7 @@ void _checkHealthChallenge() {
                                     children: [
                                       Row(
                                         children: [
-                                          FaIcon( // âœ… removed const
+                                          FaIcon( //  removed const
                                             hariTanpaMinyak >= 2
                                               ? FontAwesomeIcons.solidCircleCheck
                                               : FontAwesomeIcons.circle,
@@ -1086,7 +1189,7 @@ void _checkHealthChallenge() {
                                           SizedBox(width: 8),
                                           Expanded(
                                             child: Text(
-                                              "ðŸŽ¯ Target 2 Hari Tanpa Minyak",
+                                              " Target 2 Hari Tanpa Minyak",
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
@@ -1144,7 +1247,7 @@ void _checkHealthChallenge() {
                                     children: [
                                       Row(
                                         children: [
-                                          FaIcon( // âœ… removed const
+                                          FaIcon( //  removed const
                                             hariTanpaGula >= 2
                                               ? FontAwesomeIcons.solidCircleCheck
                                               : FontAwesomeIcons.circle,
@@ -1156,7 +1259,7 @@ void _checkHealthChallenge() {
                                           SizedBox(width: 8),
                                           Expanded(
                                             child: Text(
-                                              "ðŸŽ¯ Target 2 Hari Tanpa Gula",
+                                              " Target 2 Hari Tanpa Gula",
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
@@ -1275,7 +1378,7 @@ void _checkHealthChallenge() {
                             color: const Color(0xFF00C368),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: FaIcon( // âœ… removed const
+                          child: FaIcon( //  removed const
                             FontAwesomeIcons.utensils,
                             color: Colors.white,
                             size: 20,
@@ -1292,7 +1395,7 @@ void _checkHealthChallenge() {
                       ],
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close), // âœ… changed from FaIcon(Icons.close)
+                      icon: const Icon(Icons.close), //  changed from FaIcon(Icons.close)
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -1304,112 +1407,35 @@ void _checkHealthChallenge() {
                 Expanded(
                   child: SmartFoodSearch(
                     onFoodSelected: (result) async {
-                      debugPrint("\nâ•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—");
-                      debugPrint("â•‘   ðŸŽ¯ CALLBACK TRIGGERED                â•‘");
-                      debugPrint("â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•");
-                      debugPrint("Result Success: ${result["success"]}");
-                      debugPrint("Message: ${result["message"]}");
-                      debugPrint("Data: ${result["data"]}");
-
-                      // Capture messenger BEFORE closing dialog (context akan invalid setelah pop)
-                      final messenger = ScaffoldMessenger.of(context);
+                      debugPrint(" CALLBACK TRIGGERED - Success: ${result["success"]}");
 
                       // Close bottom sheet first
-                      debugPrint("\n[1/8] Closing bottom sheet...");
                       Navigator.pop(context);
 
-                      // Wait for animation
-                      debugPrint("[2/8] Waiting 300ms for animation...");
-                      await Future.delayed(const Duration(milliseconds: 300));
-
-                      // Show loading feedback
-                      debugPrint("[3/8] Showing loading snackbar...");
-                      messenger.showSnackBar(
-                        const SnackBar(
-                          content: Row(
-                            children: [
-                              SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              SizedBox(width: 12),
-                              Text('Memuat data terbaru...'),
-                            ],
-                          ),
-                          backgroundColor: Colors.blue,
-                          duration: Duration(seconds: 3),
-                        ),
-                      );
-
-                      // Set loading state
-                      debugPrint("[4/8] Setting isLoading = true...");
+                      // Reload data after frame completes (safe context usage)
                       if (mounted) {
-                        setState(() {
-                          isLoading = true;
-                        });
+                        setState(() => isLoading = true);
                       }
 
-                      // Wait for database commit
-                      debugPrint("[5/8] Waiting 1000ms for database commit...");
-                      await Future.delayed(const Duration(milliseconds: 1000));
-
-                      // NOW FETCH DATA - THIS IS THE CRITICAL PART
-                      debugPrint("[6/8] â­ CALLING loadTodayFood() NOW â­");
-                      debugPrint("      This should trigger GET request to API...");
                       await loadTodayFood();
-                      debugPrint("      loadTodayFood() completed!");
-
-                      // Force rebuilds
-                      debugPrint("[7/8] Forcing UI rebuilds...");
-                      if (mounted) {
-                        setState(() {});
-                        await Future.delayed(const Duration(milliseconds: 50));
-                        setState(() {});
-                        await Future.delayed(const Duration(milliseconds: 50));
-                        setState(() {});
-                      }
-
-                      // Hide loading and show success
-                      debugPrint("[8/8] Showing success notification...");
-                      messenger.hideCurrentSnackBar();
 
                       if (mounted) {
+                        setState(() {});
+
+                        // Show feedback
+                        final messenger = ScaffoldMessenger.of(this.context);
                         if (result["success"]) {
-                          debugPrint("\nâœ… SUCCESS - Current State:");
-                          debugPrint("   Total Calories: $totalCalories kkal");
-                          debugPrint("   Total Items: $totalItem");
-                          debugPrint("   Foods Count: ${foods.length}");
-
                           messenger.showSnackBar(
                             SnackBar(
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              content: Row(
                                 children: [
-                                  Row(
-                                    children: [
-                                      FaIcon(FontAwesomeIcons.check, color: Colors.white, size: 16),
-                                      const SizedBox(width: 8),
-                                      Expanded(child: Text(result['message'] ?? 'Berhasil menambahkan')),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'ðŸ“Š Total Kalori: ${totalCalories.toStringAsFixed(1)} kkal',
-                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(
-                                    'âœ… Total Makanan: $totalItem item',
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
+                                  const FaIcon(FontAwesomeIcons.check, color: Colors.white, size: 16),
+                                  const SizedBox(width: 8),
+                                  Expanded(child: Text(result['message'] ?? 'Berhasil menambahkan')),
                                 ],
                               ),
                               backgroundColor: const Color(0xFF00C368),
-                              duration: const Duration(seconds: 3),
+                              duration: const Duration(seconds: 2),
                             ),
                           );
                         } else {
@@ -1536,7 +1562,7 @@ void _checkHealthChallenge() {
             const SizedBox(height: 8),
             Row(
               children: [
-                FaIcon(FontAwesomeIcons.fire, size: 14, color: Colors.red), // âœ… removed const
+                FaIcon(FontAwesomeIcons.fire, size: 14, color: Colors.red), //  removed const
                 const SizedBox(width: 6),
                 Text(
                   "${totalKalori.toStringAsFixed(1)} kkal",
@@ -1549,7 +1575,9 @@ void _checkHealthChallenge() {
               ],
             ),
             const SizedBox(height: 12),
-            Row(
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1562,7 +1590,6 @@ void _checkHealthChallenge() {
                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                 ),
-                const SizedBox(width: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
@@ -1574,7 +1601,6 @@ void _checkHealthChallenge() {
                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                 ),
-                const SizedBox(width: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(

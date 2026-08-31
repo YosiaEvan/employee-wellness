@@ -8,7 +8,7 @@ import 'package:employee_wellness/services/hijau_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-/// Halaman titik scan HIJAU 360°.
+/// Halaman titik scan HIJAU 360.
 /// User menonton animasi (video), membaca wawasan, lalu menekan tombol
 /// konfirmasi "Sudah ..." = 1 klik = 1 laporan = 1 poin (cap 1/minggu).
 class HijauScanPage extends StatefulWidget {
@@ -98,10 +98,10 @@ class _HijauScanPageState extends State<HijauScanPage> {
         SnackBar(
           content: Text(
             ok
-                ? '✅ ${point.title} tercatat. +1 poin!'
+                ? ' ${point.title} tercatat. +1 poin!'
                 : (message?.isNotEmpty == true
-                    ? '⚠️ $message'
-                    : '⚠️ Gagal mencatat. Coba lagi.'),
+                    ? ' $message'
+                    : ' Gagal mencatat. Coba lagi.'),
           ),
           backgroundColor: ok
               ? point.color

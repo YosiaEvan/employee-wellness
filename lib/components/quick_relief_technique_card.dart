@@ -1,10 +1,10 @@
-﻿import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // ðŸ”¥ tambahkan import
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart'; //  tambahkan import
 
 class QuickReliefTechniqueCard extends StatelessWidget {
   final Widget? destination;
   final Color sectionColor;
-  final FaIconData icon; // ðŸ”¥ perbaiki
+  final FaIconData icon; //  perbaiki
   final String heading;
   final String targetText;
 
@@ -12,7 +12,7 @@ class QuickReliefTechniqueCard extends StatelessWidget {
     super.key,
     required this.destination,
     required this.sectionColor,
-    required this.icon, // ðŸ”¥ cocok
+    required this.icon, //  cocok
     required this.heading,
     required this.targetText,
   });
@@ -51,7 +51,7 @@ class QuickReliefTechniqueCard extends StatelessWidget {
                   color: sectionColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: FaIcon( // ðŸ”¥ ganti Icon -> FaIcon
+                child: FaIcon( //  ganti Icon -> FaIcon
                   icon,
                   size: 36,
                   color: Colors.white,

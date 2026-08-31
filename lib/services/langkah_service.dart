@@ -1,8 +1,9 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 import 'local_database_service.dart';
+import '../components/data_refresh_notifier.dart';
 
 /// Service untuk tracking Jalan 10.000 Langkah dengan Offline Queue
 class LangkahService {
@@ -51,13 +52,13 @@ class LangkahService {
           "minggu_ini": responseData['minggu_ini'],
         };
       } else {
-        debugPrint("âŒ HTTP Error ${response.statusCode}");
+        debugPrint(" HTTP Error ${response.statusCode}");
         return {
           "success": false,
         };
       }
     } catch (e) {
-      debugPrint("âŒ Get Status Langkah Error: $e");
+      debugPrint(" Get Status Langkah Error: $e");
       return {
         "success": false,
       };
@@ -71,15 +72,15 @@ class LangkahService {
     final lastSyncDate = prefs.getString(_lastSyncDateKey);
     final today = DateTime.now().toIso8601String().split('T')[0]; // YYYY-MM-DD
 
-    debugPrint("ðŸ“… Last sync date: $lastSyncDate");
-    debugPrint("ðŸ“… Today date: $today");
+    debugPrint(" Last sync date: $lastSyncDate");
+    debugPrint(" Today date: $today");
 
     if (lastSyncDate == null || lastSyncDate != today) {
-      debugPrint("âœ… Hari sudah berganti, perlu reset!");
+      debugPrint(" Hari sudah berganti, perlu reset!");
       return true;
     }
 
-    debugPrint("â„¹ï¸ Masih hari yang sama, tidak perlu reset");
+    debugPrint(" Masih hari yang sama, tidak perlu reset");
     return false;
   }
 
@@ -88,7 +89,7 @@ class LangkahService {
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now().toIso8601String().split('T')[0];
     await prefs.setString(_lastSyncDateKey, today);
-    debugPrint("ðŸ’¾ Saved last sync date: $today");
+    debugPrint(" Saved last sync date: $today");
   }
 
   /// Simpan langkah hari ini ke local storage
@@ -120,7 +121,7 @@ class LangkahService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_todayStepsKey);
     await prefs.remove(_initialStepsKey);
-    debugPrint("ðŸ”„ Local data reset untuk hari baru");
+    debugPrint(" Local data reset untuk hari baru");
   }
 
   /// Simpan data harian ke queue (untuk sync nanti)
@@ -144,7 +145,7 @@ class LangkahService {
         'jumlah_langkah': jumlahLangkah,
         'created_at': DateTime.now().toIso8601String(),
       };
-      debugPrint("ðŸ“ Updated existing record in queue: $tanggal -> $jumlahLangkah langkah");
+      debugPrint(" Updated existing record in queue: $tanggal -> $jumlahLangkah langkah");
     } else {
       // Tambah record baru
       queue.add({
@@ -152,12 +153,12 @@ class LangkahService {
         'jumlah_langkah': jumlahLangkah,
         'created_at': DateTime.now().toIso8601String(),
       });
-      debugPrint("ðŸ“ Added new record to queue: $tanggal -> $jumlahLangkah langkah");
+      debugPrint(" Added new record to queue: $tanggal -> $jumlahLangkah langkah");
     }
 
     // Simpan kembali ke storage
     await prefs.setString(_pendingQueueKey, jsonEncode(queue));
-    debugPrint("ðŸ’¾ Queue size: ${queue.length} records");
+    debugPrint(" Queue size: ${queue.length} records");
   }
 
   /// Ambil semua pending records dari queue
@@ -179,24 +180,24 @@ class LangkahService {
     queue.removeWhere((item) => item['tanggal'] == tanggal);
 
     await prefs.setString(_pendingQueueKey, jsonEncode(queue));
-    debugPrint("âœ… Removed from queue: $tanggal");
+    debugPrint(" Removed from queue: $tanggal");
   }
 
   /// Clear seluruh queue
   static Future<void> clearQueue() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_pendingQueueKey);
-    debugPrint("ðŸ—‘ï¸ Queue cleared");
+    debugPrint(" Queue cleared");
   }
 
   /// Sync semua pending records ke API (background process)
   static Future<Map<String, dynamic>> syncPendingRecords() async {
-    debugPrint("ðŸ”„ Starting background sync...");
+    debugPrint(" Starting background sync...");
 
     final queue = await getPendingQueue();
 
     if (queue.isEmpty) {
-      debugPrint("â„¹ï¸ No pending records to sync");
+      debugPrint(" No pending records to sync");
       return {
         "success": true,
         "synced": 0,
@@ -211,7 +212,7 @@ class LangkahService {
       final tanggal = record['tanggal'];
       final jumlahLangkah = record['jumlah_langkah'];
 
-      debugPrint("ðŸ“¤ Syncing: $tanggal -> $jumlahLangkah langkah");
+      debugPrint(" Syncing: $tanggal -> $jumlahLangkah langkah");
 
       try {
         final response = await ApiService.post(
@@ -226,19 +227,23 @@ class LangkahService {
           // Berhasil, hapus dari queue
           await removeFromQueue(tanggal);
           synced++;
-          debugPrint("âœ… Synced: $tanggal");
+          debugPrint(" Synced: $tanggal");
         } else {
           failed++;
-          debugPrint("âŒ Failed to sync: $tanggal (HTTP ${response.statusCode})");
+          debugPrint(" Failed to sync: $tanggal (HTTP ${response.statusCode})");
         }
       } catch (e) {
         failed++;
-        debugPrint("âŒ Error syncing $tanggal: $e");
+        debugPrint(" Error syncing $tanggal: $e");
         // Tidak hapus dari queue, akan di-retry nanti
       }
     }
 
-    debugPrint("ðŸ“Š Sync complete: $synced synced, $failed failed");
+    debugPrint(" Sync complete: $synced synced, $failed failed");
+
+    if (synced > 0) {
+      DataRefreshNotifier.instance.notifyDataChanged();
+    }
 
     return {
       "success": true,
@@ -271,7 +276,7 @@ class LangkahService {
     try {
       await syncPendingRecords();
     } catch (e) {
-      debugPrint("âš ï¸ Sync failed (no connection?): $e");
+      debugPrint(" Sync failed (no connection?): $e");
       // Tidak masalah, akan di-sync nanti
     }
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-/// Titik klik penilaian SEHAT 360° / TENANG 360°.
+/// Titik klik penilaian SEHAT 360 / TENANG 360.
 /// Satu klik self-report = satu laporan = 1 poin,
 /// dibatasi cap mingguan per aktivitas (sesuai `penilaian.md`).
 class PenilaianPoint {
@@ -44,13 +44,13 @@ class PenilaianPoint {
   });
 }
 
-/// SEHAT 360° — maksimal 34 poin/minggu, 136 poin/bulan.
+/// SEHAT 360  maksimal 34 poin/minggu, 136 poin/bulan.
 class SehatPenilaianPoints {
   static const berjemur = PenilaianPoint(
     modul: 'sehat',
     kode: 'berjemur',
     title: 'Berjemur Matahari',
-    emoji: '☀️',
+    emoji: '',
     icon: FontAwesomeIcons.cloudSun,
     color: Color(0xfffb8f00),
     softColor: Color(0xfffff7ed),
@@ -65,7 +65,7 @@ class SehatPenilaianPoints {
     modul: 'sehat',
     kode: 'langkah_10000',
     title: 'Olahraga 10.000 Langkah',
-    emoji: '🚶',
+    emoji: '',
     icon: FontAwesomeIcons.shoePrints,
     color: Color(0xff1b8cfd),
     softColor: Color(0xffecfeff),
@@ -80,7 +80,7 @@ class SehatPenilaianPoints {
     modul: 'sehat',
     kode: 'tanpa_minyak',
     title: 'Makan Tanpa Minyak',
-    emoji: '🥗',
+    emoji: '',
     icon: FontAwesomeIcons.bowlRice,
     color: Color(0xff00c368),
     softColor: Color(0xffeefdf5),
@@ -95,7 +95,7 @@ class SehatPenilaianPoints {
     modul: 'sehat',
     kode: 'tanpa_gula',
     title: 'Tanpa Gula',
-    emoji: '🍚',
+    emoji: '',
     icon: FontAwesomeIcons.cookie,
     color: Color(0xff00a896),
     softColor: Color(0xffe6faf7),
@@ -110,7 +110,7 @@ class SehatPenilaianPoints {
     modul: 'sehat',
     kode: 'porsi_kalori',
     title: 'Makan Sesuai Porsi Kalori Ideal',
-    emoji: '⚖️',
+    emoji: '',
     icon: FontAwesomeIcons.scaleBalanced,
     color: Color(0xfff59e0b),
     softColor: Color(0xfffff8e1),
@@ -125,7 +125,7 @@ class SehatPenilaianPoints {
     modul: 'sehat',
     kode: 'napas_448',
     title: 'Hirup Udara Segar (Napas 4-4-8)',
-    emoji: '🌬️',
+    emoji: '',
     icon: FontAwesomeIcons.wind,
     color: Color(0xff009bf4),
     softColor: Color(0xffeefaff),
@@ -140,7 +140,7 @@ class SehatPenilaianPoints {
     modul: 'sehat',
     kode: 'minum_8_gelas',
     title: 'Minum 8 Gelas Air',
-    emoji: '💧',
+    emoji: '',
     icon: FontAwesomeIcons.glassWater,
     color: Color(0xff00cbf6),
     softColor: Color(0xffedfaff),
@@ -155,7 +155,7 @@ class SehatPenilaianPoints {
     modul: 'sehat',
     kode: 'tidur_78',
     title: 'Tidur 7-8 Jam',
-    emoji: '😴',
+    emoji: '',
     icon: FontAwesomeIcons.moon,
     color: Color(0xff715cff),
     softColor: Color(0xfff4f4ff),
@@ -178,13 +178,13 @@ class SehatPenilaianPoints {
   ];
 }
 
-/// TENANG 360° — maksimal 10 poin/minggu, 40 poin/bulan.
+/// TENANG 360  maksimal 10 poin/minggu, 40 poin/bulan.
 class TenangPenilaianPoints {
   static const tahanEmosi = PenilaianPoint(
     modul: 'tenang',
     kode: 'tahan_emosi',
     title: 'Tahan Emosi (Napas 4-4-8)',
-    emoji: '🫁',
+    emoji: '',
     icon: FontAwesomeIcons.handHoldingHeart,
     color: Color(0xff7141fc),
     softColor: Color(0xfff0ecff),
@@ -199,7 +199,7 @@ class TenangPenilaianPoints {
     modul: 'tenang',
     kode: 'ekspresi_sehat',
     title: 'Ekspresikan Sehat (Me-Time)',
-    emoji: '🎧',
+    emoji: '',
     icon: FontAwesomeIcons.music,
     color: Color(0xfff20868),
     softColor: Color(0xffffecf5),
@@ -214,7 +214,7 @@ class TenangPenilaianPoints {
     modul: 'tenang',
     kode: 'harmoni_keluarga',
     title: 'Nyalakan Harmoni (Quality Time)',
-    emoji: '🏠',
+    emoji: '',
     icon: FontAwesomeIcons.houseUser,
     color: Color(0xfff59e0b),
     softColor: Color(0xfffff8e1),
@@ -229,7 +229,7 @@ class TenangPenilaianPoints {
     modul: 'tenang',
     kode: 'akui_emosi',
     title: 'Akui Emosi',
-    emoji: '💬',
+    emoji: '',
     icon: FontAwesomeIcons.comments,
     color: Color(0xff00a896),
     softColor: Color(0xffe6faf7),
@@ -244,7 +244,7 @@ class TenangPenilaianPoints {
     modul: 'tenang',
     kode: 'kendali_diri',
     title: 'Nyalakan Kendali (Verbal/WA)',
-    emoji: '🛡️',
+    emoji: '',
     icon: FontAwesomeIcons.shieldHalved,
     color: Color(0xff2c7eff),
     softColor: Color(0xffe8f0ff),
@@ -259,7 +259,7 @@ class TenangPenilaianPoints {
     modul: 'tenang',
     kode: 'koneksi_sosial',
     title: 'Gaungkan Koneksi (Sosialisasi)',
-    emoji: '🤝',
+    emoji: '',
     icon: FontAwesomeIcons.users,
     color: Color(0xff00c368),
     softColor: Color(0xffeefdf5),

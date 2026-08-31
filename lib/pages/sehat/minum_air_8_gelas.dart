@@ -1,4 +1,4 @@
-﻿import 'package:employee_wellness/components/auto_refresh_mixin.dart';
+import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
@@ -72,7 +72,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
         isLoading = false;
       });
 
-      debugPrint("ðŸ“Š Status minum:");
+      debugPrint(" Status minum:");
       debugPrint("   Jumlah gelas: $jumlahGelas / $targetGelas");
       debugPrint("   Bisa minum lagi: $bisaMinumLagi");
       debugPrint("   Menit tersisa: $menitTersisa");
@@ -83,7 +83,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
     if (!bisaMinumLagi) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('â° Tunggu $menitTersisa menit lagi untuk minum berikutnya'),
+          content: Text(' Tunggu $menitTersisa menit lagi untuk minum berikutnya'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -93,7 +93,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
     if (sudahSelesai) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('âœ… Target harian sudah tercapai!'),
+          content: Text(' Target harian sudah tercapai!'),
           backgroundColor: Color(0xFF00C368),
         ),
       );
@@ -108,7 +108,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('âœ… ${result['message']}'),
+            content: Text(' ${result['message']}'),
             backgroundColor: Color(0xFF00cbf6),
             duration: Duration(seconds: 2),
           ),
@@ -207,7 +207,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                 jumlahGelas == targetGelas
                                   ? "Luar biasa! Kamu sudah minum cukup hari ini"
                                   : !bisaMinumLagi
-                                    ? "â° Tunggu $menitTersisa menit lagi"
+                                    ? " Tunggu $menitTersisa menit lagi"
                                     : "$sisaGelas gelas lagi untuk target harian",
                                 style: TextStyle(
                                   fontSize: 16,
@@ -391,17 +391,19 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                 ),
                               ),
                               SizedBox(width: 20,),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Tracker Harian",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Tracker Harian",
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -493,17 +495,19 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                 ),
                               ),
                               SizedBox(width: 20,),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Manfaat Minum Air 8 Gelas/Hari",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Manfaat Minum Air 8 Gelas/Hari",
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -745,17 +749,19 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                 ),
                               ),
                               SizedBox(width: 20,),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Tips Tetap Terhidrasi",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Tips Tetap Terhidrasi",
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -779,7 +785,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                 child: Row(
                                   children: [
                                     Text(
-                                      "â°",
+                                      "",
                                       style: TextStyle(
                                         fontSize: 32,
                                       ),
@@ -826,7 +832,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                 child: Row(
                                   children: [
                                     Text(
-                                      "ðŸ½ï¸",
+                                      "",
                                       style: TextStyle(
                                         fontSize: 32,
                                       ),
@@ -873,7 +879,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                 child: Row(
                                   children: [
                                     Text(
-                                      "ðŸ’¼",
+                                      "",
                                       style: TextStyle(
                                         fontSize: 32,
                                       ),
@@ -920,7 +926,7 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                 child: Row(
                                   children: [
                                     Text(
-                                      "â±ï¸",
+                                      "",
                                       style: TextStyle(
                                         fontSize: 32,
                                       ),

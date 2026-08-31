@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'api_service.dart';
 
@@ -7,14 +7,14 @@ class UserProfileService {
   /// GET - Get user name and photo
   static Future<Map<String, dynamic>> getUserNameAndPhoto() async {
     try {
-      debugPrint("ðŸ“¤ Get User Name and Photo Request:");
+      debugPrint(" Get User Name and Photo Request:");
       debugPrint("URL: /user/nama-foto");
-      debugPrint("ðŸ” Using Bearer token (auto-refresh if expired)");
+      debugPrint(" Using Bearer token (auto-refresh if expired)");
 
       // ApiService automatically adds Bearer token and handles 401 refresh
       final response = await ApiService.get("/user/nama-foto");
 
-      debugPrint("ðŸ“¥ Get User Name/Photo Response: ${response.statusCode}");
+      debugPrint(" Get User Name/Photo Response: ${response.statusCode}");
       debugPrint("Body: ${response.body}");
 
       if (response.statusCode == 200) {
@@ -24,9 +24,9 @@ class UserProfileService {
         final data = responseData['data'];
 
         if (data != null) {
-          debugPrint("âœ… User data retrieved successfully!");
-          debugPrint("ðŸ“Š Data keys: ${data.keys.toList()}");
-          debugPrint("ðŸ“· Foto value: ${data['foto']}");
+          debugPrint(" User data retrieved successfully!");
+          debugPrint(" Data keys: ${data.keys.toList()}");
+          debugPrint(" Foto value: ${data['foto']}");
 
           return {
             "success": true,
@@ -34,18 +34,18 @@ class UserProfileService {
             "foto_url": data['foto_url'] ?? data['foto'], // Try both field names
           };
         } else {
-          debugPrint("âš ï¸ No data in response");
+          debugPrint(" No data in response");
           return {
             "success": false,
             "message": "No data found"
           };
         }
       } else {
-        debugPrint("âŒ HTTP Error ${response.statusCode}");
+        debugPrint(" HTTP Error ${response.statusCode}");
         return {"success": false, "message": "Failed to get user data"};
       }
     } catch (e) {
-      debugPrint("âŒ Get User Data Error: $e");
+      debugPrint(" Get User Data Error: $e");
       return {"success": false, "message": "Error: $e"};
     }
   }

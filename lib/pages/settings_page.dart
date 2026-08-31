@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -57,8 +57,8 @@ class _SettingsPageState extends State<SettingsPage> {
         SnackBar(
           content: Text(
             value
-                ? 'âœ… Pelacak langkah latar belakang AKTIF'
-                : 'â¸ï¸ Pelacak langkah latar belakang dimatikan',
+                ? ' Pelacak langkah latar belakang AKTIF'
+                : ' Pelacak langkah latar belakang dimatikan',
           ),
           backgroundColor: value ? const Color(0xFF00C368) : Colors.grey,
           duration: const Duration(seconds: 2),

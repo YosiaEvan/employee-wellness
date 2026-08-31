@@ -1,10 +1,11 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'api_service.dart';
 import 'local_database_service.dart';
 import 'sehat_kpi_service.dart';
+import '../components/data_refresh_notifier.dart';
 
 /// Service untuk menyinkronkan data offline (SQLite) ke backend
 /// saat koneksi internet tersedia.
@@ -17,7 +18,7 @@ class OfflineSyncService {
       final results = await Connectivity().checkConnectivity();
       return !results.contains(ConnectivityResult.none);
     } catch (e) {
-      debugPrint('âŒ Error checking connectivity: $e');
+      debugPrint(' Error checking connectivity: $e');
       return false;
     }
   }
@@ -60,6 +61,11 @@ class OfflineSyncService {
       failedCount += r['failed'] as int;
     }
 
+    // Ada data baru tersinkron -> beri sinyal agar UI me-refresh.
+    if (syncedCount > 0) {
+      DataRefreshNotifier.instance.notifyDataChanged();
+    }
+
     return {
       'success': true,
       'message': 'Sinkronisasi selesai',
@@ -89,7 +95,7 @@ class OfflineSyncService {
 
       return {'total': pending.length, 'synced': synced, 'failed': failed};
     } catch (e) {
-      debugPrint('âŒ Error syncing table $table: $e');
+      debugPrint(' Error syncing table $table: $e');
       return {'total': 0, 'synced': 0, 'failed': 0};
     }
   }
@@ -188,7 +194,7 @@ class OfflineSyncService {
           return false;
       }
     } catch (e) {
-      debugPrint('âŒ Error pushing row ($table): $e');
+      debugPrint(' Error pushing row ($table): $e');
       return false;
     }
   }
@@ -201,7 +207,7 @@ class OfflineSyncService {
   static bool _resolve(int statusCode) {
     if (_isSuccess(statusCode)) return true;
     if (statusCode >= 400 && statusCode < 500) {
-      debugPrint('âš ï¸ Pending record ditolak server (status $statusCode), dilewati');
+      debugPrint(' Pending record ditolak server (status $statusCode), dilewati');
       return true;
     }
     return false;
@@ -214,16 +220,16 @@ class OfflineSyncService {
   /// Jalankan sinkronisasi otomatis saat aplikasi dibuka / login
   static Future<void> autoSyncOnAppStart() async {
     try {
-      debugPrint('ðŸ”„ Running offline sync on app start...');
+      debugPrint(' Running offline sync on app start...');
       if (await hasInternet()) {
         final result = await syncAllPending();
         debugPrint(
-            'ðŸ“Š Sync result: ${result['message']} (synced: ${result['synced_count']}, failed: ${result['failed_count']})');
+            ' Sync result: ${result['message']} (synced: ${result['synced_count']}, failed: ${result['failed_count']})');
       } else {
-        debugPrint('âš ï¸ No internet connection, skipping auto sync');
+        debugPrint(' No internet connection, skipping auto sync');
       }
     } catch (e) {
-      debugPrint('âŒ Error in offline auto sync: $e');
+      debugPrint(' Error in offline auto sync: $e');
     }
   }
 

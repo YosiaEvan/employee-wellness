@@ -41,7 +41,7 @@ class TenangSession {
 class StressCheckIn {
   final int? id;
   final String userId;
-  final int stressLevel;       // 1–5
+  final int stressLevel;       // 15
   final DateTime createdAt;
 
   const StressCheckIn({

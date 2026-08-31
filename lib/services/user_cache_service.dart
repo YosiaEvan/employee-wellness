@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'user_profile_service.dart';
 
@@ -34,7 +34,7 @@ class UserCacheService {
 
     // Check memory cache first
     if (_cachedName != null && !_isCacheExpired()) {
-      debugPrint("âœ… User data from memory cache");
+      debugPrint(" User data from memory cache");
       return {
         'nama_lengkap': _cachedName,
         'foto_url': _cachedPhotoUrl,
@@ -44,7 +44,7 @@ class UserCacheService {
 
     // Check if already loading
     if (_isLoading) {
-      debugPrint("â³ Already loading user data, waiting...");
+      debugPrint(" Already loading user data, waiting...");
       // Wait a bit and return current cache
       await Future.delayed(const Duration(milliseconds: 100));
       return {
@@ -65,7 +65,7 @@ class UserCacheService {
         _cachedPhotoUrl = cachedData['foto_url'];
         _cachedPhotoBase64 = cachedData['foto_base64'];
         _cacheTimestamp = DateTime.now();
-        debugPrint("âœ… User data from SharedPreferences cache");
+        debugPrint(" User data from SharedPreferences cache");
         _isLoading = false;
         return cachedData;
       }
@@ -99,7 +99,7 @@ class UserCacheService {
 
         await _saveToPreferences(nama, photoUrl, photoBase64);
 
-        debugPrint("âœ… User data loaded from API and cached");
+        debugPrint(" User data loaded from API and cached");
         _isLoading = false;
 
         return {
@@ -116,7 +116,7 @@ class UserCacheService {
         };
       }
     } catch (e) {
-      debugPrint("âŒ Error loading user data: $e");
+      debugPrint(" Error loading user data: $e");
       _isLoading = false;
       return {
         'nama_lengkap': _cachedName ?? "Employee Wellness",
@@ -144,7 +144,7 @@ class UserCacheService {
       final difference = now.difference(cacheTime).inMinutes;
 
       if (difference > _cacheDurationMinutes) {
-        debugPrint("âš ï¸ Cache expired ($difference minutes old)");
+        debugPrint(" Cache expired ($difference minutes old)");
         return null;
       }
 
@@ -160,7 +160,7 @@ class UserCacheService {
         'foto_base64': photoType == 'base64' ? photo : null,
       };
     } catch (e) {
-      debugPrint("âŒ Error loading from preferences: $e");
+      debugPrint(" Error loading from preferences: $e");
       return null;
     }
   }
@@ -182,9 +182,9 @@ class UserCacheService {
         await prefs.remove(_cacheKeyPhotoType);
       }
 
-      debugPrint("âœ… User data saved to preferences");
+      debugPrint(" User data saved to preferences");
     } catch (e) {
-      debugPrint("âŒ Error saving to preferences: $e");
+      debugPrint(" Error saving to preferences: $e");
     }
   }
 
@@ -203,9 +203,9 @@ class UserCacheService {
       await prefs.remove(_cacheKeyPhotoType);
       await prefs.remove(_cacheKeyTimestamp);
 
-      debugPrint("âœ… User cache cleared");
+      debugPrint(" User cache cleared");
     } catch (e) {
-      debugPrint("âŒ Error clearing cache: $e");
+      debugPrint(" Error clearing cache: $e");
     }
   }
 

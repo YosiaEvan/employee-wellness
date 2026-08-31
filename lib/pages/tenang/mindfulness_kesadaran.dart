@@ -115,22 +115,22 @@ class MindfulnessKesadaran extends StatelessWidget {
                       child: Column(
                         children: [
                         // Pernapasan
-                        const MeditationSectionCard(destination: Pernapasan(), sectionColor: Color(0xff445ffe), icon: FontAwesomeIcons.wind, heading: "Pernapasan 4-7-8", description: "Teknik pernapasan untuk relaksasi instan.", targetText: "⏱️ 5 menit"),
+                        const MeditationSectionCard(destination: Pernapasan(), sectionColor: Color(0xff445ffe), icon: FontAwesomeIcons.wind, heading: "Pernapasan 4-7-8", description: "Teknik pernapasan untuk relaksasi instan.", targetText: " 5 menit"),
 
                         const SizedBox(height: 20,),
 
                         // Panca Indra
-                        const MeditationSectionCard(destination: PancaIndra(), sectionColor: Color(0xff7541fc), icon: FontAwesomeIcons.eye, heading: "Teknik 5-4-3-2-1", description: "Gunakan panca indra untuk kembali ke momen ini.", targetText: "⏱️ 5 menit"),
+                        const MeditationSectionCard(destination: PancaIndra(), sectionColor: Color(0xff7541fc), icon: FontAwesomeIcons.eye, heading: "Teknik 5-4-3-2-1", description: "Gunakan panca indra untuk kembali ke momen ini.", targetText: " 5 menit"),
 
                         const SizedBox(height: 20,),
 
                         // Momen Sekarang
-                        const MeditationSectionCard(destination: MomenSekarang(), sectionColor: Color(0xfff20868), icon: FontAwesomeIcons.clock, heading: "Momen Sekarang", description: "Latihan hadir sepenuhnya di saat ini.", targetText: "⏱️ 5 menit"),
+                        const MeditationSectionCard(destination: MomenSekarang(), sectionColor: Color(0xfff20868), icon: FontAwesomeIcons.clock, heading: "Momen Sekarang", description: "Latihan hadir sepenuhnya di saat ini.", targetText: " 5 menit"),
 
                         const SizedBox(height: 20,),
 
                         // Kesadaran Tubuh
-                        const MeditationSectionCard(destination: KesadaranTubuh(), sectionColor: Color(0xff00bca8), icon: FontAwesomeIcons.userCheck, heading: "Kesadaran Tubuh", description: "Rasakan sensasi tubuh Anda secara mendalam.", targetText: "⏱️ 5 menit"),
+                        const MeditationSectionCard(destination: KesadaranTubuh(), sectionColor: Color(0xff00bca8), icon: FontAwesomeIcons.userCheck, heading: "Kesadaran Tubuh", description: "Rasakan sensasi tubuh Anda secara mendalam.", targetText: " 5 menit"),
 
                         const SizedBox(height: 20,),
 

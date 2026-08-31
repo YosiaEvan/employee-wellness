@@ -4,6 +4,7 @@ import '../models/tenang_model.dart';
 import 'api_service.dart';
 import 'auth_storage.dart';
 import 'local_database_service.dart';
+import '../components/data_refresh_notifier.dart';
 
 /// Konstanta kategori & sub-kategori agar tidak typo di seluruh kode
 class TenangKategori {
@@ -102,10 +103,12 @@ class TenangService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         await LocalDatabaseService.instance.markSyncedByDate('tenang_sessions', tanggal);
         final body = jsonDecode(response.body);
+        DataRefreshNotifier.instance.notifyDataChanged();
         return {
           'success': true,
           'message': 'Sesi berhasil dicatat',
           'data': body['data'],
+          'tercapai': body['tercapai'] ?? false,
         };
       }
 
@@ -114,6 +117,7 @@ class TenangService {
       return _errorFromStatus(response.statusCode, response.body);
     } catch (e) {
       // Offline -> tetap dianggap berhasil (tersimpan di SQLite)
+      DataRefreshNotifier.instance.notifyDataChanged();
       return {
         'success': true,
         'message': 'Tersimpan offline, akan disinkronkan saat online',
@@ -197,6 +201,7 @@ class TenangService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         await LocalDatabaseService.instance.markSyncedByDate('stress_checkin', tanggal);
+        DataRefreshNotifier.instance.notifyDataChanged();
         return {
           'success': true,
           'message': 'Level stres berhasil dicatat',
@@ -208,6 +213,7 @@ class TenangService {
       return _errorFromStatus(response.statusCode, response.body);
     } catch (e) {
       // Offline -> tetap dianggap berhasil (tersimpan di SQLite)
+      DataRefreshNotifier.instance.notifyDataChanged();
       return {
         'success': true,
         'message': 'Tersimpan offline, akan disinkronkan saat online',

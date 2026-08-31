@@ -100,10 +100,10 @@ class _AktivitasKlikPageState extends State<AktivitasKlikPage> {
         SnackBar(
           content: Text(
             ok
-                ? '✅ ${point.title} tercatat. +1 poin!'
+                ? ' ${point.title} tercatat. +1 poin!'
                 : (message?.isNotEmpty == true
-                    ? '⚠️ $message'
-                    : '⚠️ Gagal mencatat. Coba lagi.'),
+                    ? ' $message'
+                    : ' Gagal mencatat. Coba lagi.'),
           ),
           backgroundColor: ok
               ? point.color

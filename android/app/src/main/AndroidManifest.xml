@@ -43,6 +43,7 @@
             android:name="id.flutter.flutter_background_service.BackgroundService"
             android:foregroundServiceType="health"
             android:exported="false"
+            tools:replace="android:exported"
             tools:node="merge" />
 
         <meta-data

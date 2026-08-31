@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'api_service.dart';
 
@@ -7,14 +7,14 @@ class HealthProfileService {
   /// GET - Get health profile
   static Future<Map<String, dynamic>> getProfile() async {
     try {
-      debugPrint("ðŸ“¤ Get Profile Health Request:");
+      debugPrint(" Get Profile Health Request:");
       debugPrint("URL: /user/profile-health/get");
-      debugPrint("ðŸ” Using Bearer token (auto-refresh if expired)");
+      debugPrint(" Using Bearer token (auto-refresh if expired)");
 
       // ApiService automatically adds Bearer token and handles 401 refresh
       final response = await ApiService.get("/user/profile-health");
 
-      debugPrint("ðŸ“¥ Get Profile Response: ${response.statusCode}");
+      debugPrint(" Get Profile Response: ${response.statusCode}");
       debugPrint("Body: ${response.body}");
 
       if (response.statusCode == 200) {
@@ -22,31 +22,31 @@ class HealthProfileService {
 
         // Handle nested response structure
         if (responseData['success'] == true) {
-          debugPrint("âœ… Profile retrieved successfully!");
+          debugPrint(" Profile retrieved successfully!");
           return {
             "success": true,
             "data": responseData['data'],
           };
         } else {
-          debugPrint("âš ï¸ No profile data or failed: ${responseData['message']}");
+          debugPrint(" No profile data or failed: ${responseData['message']}");
           return {
             "success": false,
             "message": responseData['message'] ?? "Failed to get profile"
           };
         }
       } else if (response.statusCode == 404) {
-        debugPrint("â„¹ï¸ No profile found (404) - User may not have created profile yet");
+        debugPrint(" No profile found (404) - User may not have created profile yet");
         return {
           "success": false,
           "message": "Profil belum dibuat",
           "data": null
         };
       } else {
-        debugPrint("âŒ HTTP Error ${response.statusCode}");
+        debugPrint(" HTTP Error ${response.statusCode}");
         return {"success": false, "message": "Failed to get profile"};
       }
     } catch (e) {
-      debugPrint("âŒ Get Profile Error: $e");
+      debugPrint(" Get Profile Error: $e");
       return {"success": false, "message": "Error: $e"};
     }
   }
