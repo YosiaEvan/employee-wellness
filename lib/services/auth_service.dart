@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
@@ -9,6 +10,11 @@ import 'api_service.dart';
 import 'background_steps_tracker.dart';
 import 'step_foreground_service.dart';
 import 'local_database_service.dart';
+
+/// Global navigator key agar layanan non-widget (service) bisa
+/// memaksa navigasi kembali ke halaman Login saat session tidak valid.
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
+
 /// Service untuk Authentication dengan auto-refresh token
 class AuthService {
   /// Login
