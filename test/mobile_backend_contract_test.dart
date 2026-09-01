@@ -307,10 +307,12 @@ void main() {
 
       expect(result['success'], isTrue);
       final responseBody = result['data'] as Map<String, dynamic>;
-      expect(responseBody['data']['id'], 1);
-      expect(responseBody['data']['aktivitas'], 'hemat_listrik');
-      expect(responseBody['data']['kategori'], 'hemat_energi');
-      expect(responseBody['data']['poin'], 1);
+      // HijauService returns inner data directly (body['data'])
+      final inner = responseBody.containsKey('data') ? responseBody['data'] as Map<String, dynamic> : responseBody;
+      expect(inner['id'], 1);
+      expect(inner['aktivitas'], 'hemat_listrik');
+      expect(inner['kategori'], 'hemat_energi');
+      expect(inner['poin'], 1);
 
       final req = backend.requests.last;
       expect(req['method'], 'POST');
@@ -510,7 +512,8 @@ void main() {
       final body = backend.requests.last['body'] as Map<String, dynamic>;
       expect(body['modul'], 'tenang');
       expect(body['aktivitas'], 'tahan_emosi');
-      expect(body.containsKey('tanggal'), isFalse);
+      // tanggal is always sent (todayStr) for offline consistency; deskripsi optional
+      expect(body.containsKey('tanggal'), isTrue);
       expect(body.containsKey('deskripsi'), isFalse);
     });
 

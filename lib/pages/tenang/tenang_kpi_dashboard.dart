@@ -534,29 +534,454 @@ class _TenangKPIDashboardState extends State<TenangKPIDashboard> with AutoRefres
   }
 }
 
-class TenangKPIDetail extends StatelessWidget {
+class TenangKPIDetail extends StatefulWidget {
   const TenangKPIDetail({super.key});
+
+  @override
+  State<TenangKPIDetail> createState() => _TenangKPIDetailState();
+}
+
+class _TenangKPIDetailState extends State<TenangKPIDetail>
+    with SingleTickerProviderStateMixin, AutoRefreshMixin<TenangKPIDetail> {
+  late TabController _tabController;
+  bool isLoading = true;
+
+  Map<String, dynamic>? dailyKPI;
+  Map<String, dynamic>? weeklyKPI;
+  Map<String, dynamic>? monthlyKPI;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    DataRefreshNotifier.instance.addListener(_onDataChanged);
+    loadAllKPIData();
+    startAutoRefresh(refresh: loadAllKPIData);
+  }
+
+  void _onDataChanged() {
+    if (mounted) loadAllKPIData();
+  }
+
+  @override
+  void dispose() {
+    DataRefreshNotifier.instance.removeListener(_onDataChanged);
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> loadAllKPIData() async {
+    setState(() => isLoading = true);
+    final dailyResult = await TenangKPIService.getDailyKPI();
+    final weeklyResult = await TenangKPIService.getWeeklyKPI();
+    final monthlyResult = await TenangKPIService.getMonthlyKPI();
+    if (!mounted) return;
+    setState(() {
+      if (dailyResult['success'] == true) dailyKPI = dailyResult['data'];
+      if (weeklyResult['success'] == true) weeklyKPI = weeklyResult['data'];
+      if (monthlyResult['success'] == true) monthlyKPI = monthlyResult['data'];
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Detail KPI Tenang'),
-        backgroundColor: const Color(0xFF2C7EFF),
-        foregroundColor: Colors.white,
-      ),
-      body: const Center(
+      backgroundColor: const Color(0xFFEEF3FF),
+      body: SafeArea(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            FaIcon(FontAwesomeIcons.chartLine, size: 48, color: Color(0xFF2C7EFF)),
-            SizedBox(height: 16),
-            Text('Detail KPI Tenang', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-            Text('Fitur detail akan segera hadir', style: TextStyle(color: Colors.grey)),
+            const Header(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: FaIcon(FontAwesomeIcons.arrowLeft),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF2C7EFF),
+                      padding: const EdgeInsets.all(12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 2,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text('Detail KPI Tenang', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2C7EFF))),
+                ],
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF2C7EFF),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [BoxShadow(color: const Color(0xFF2C7EFF).withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))],
+              ),
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              child: TabBar(
+                controller: _tabController,
+                indicatorColor: Colors.white,
+                indicatorWeight: 3,
+                indicatorSize: TabBarIndicatorSize.tab,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white70,
+                labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
+                dividerColor: Colors.transparent,
+                tabs: const [Tab(text: 'Harian'), Tab(text: 'Mingguan'), Tab(text: 'Bulanan')],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : RefreshIndicator(
+                      onRefresh: loadAllKPIData,
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [_buildDailyView(), _buildWeeklyView(), _buildMonthlyView()],
+                      ),
+                    ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  // =====================================================
+  // HARIAN
+  // =====================================================
+  Widget _buildDailyView() {
+    if (dailyKPI == null) {
+      return Center(
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          const Icon(Icons.error_outline, size: 64, color: Colors.grey),
+          const SizedBox(height: 16),
+          const Text('Data harian tidak tersedia', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text('Tarik ke bawah untuk refresh', style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 16),
+          ElevatedButton(onPressed: loadAllKPIData, child: const Text('Coba Lagi')),
+        ]),
+      );
+    }
+    final tanggal = dailyKPI!['tanggal'] ?? '';
+    final ringkasan = dailyKPI!['ringkasan'] ?? {};
+    final aktivitas = dailyKPI!['aktivitas'] as List<dynamic>? ?? [];
+    final aktivitasSelesai = ringkasan['aktivitas_selesai'] ?? 0;
+    final totalAktivitas = ringkasan['total_aktivitas'] ?? 6;
+    final progressPersen = (ringkasan['progress_persen'] ?? 0).toDouble();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Color(0xFF2C7EFF), Color(0xFF1A5CC8)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [BoxShadow(color: const Color(0xFF2C7EFF).withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 5))],
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              FaIcon(FontAwesomeIcons.calendarDay, color: Colors.white, size: 24),
+              const SizedBox(width: 12),
+              Expanded(child: Text(_formatTanggal(tanggal), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white))),
+            ]),
+            const SizedBox(height: 20),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text('Aktivitas Selesai', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                Text('$aktivitasSelesai / $totalAktivitas', style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+              ]),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(20)),
+                child: Text('${progressPersen.toStringAsFixed(0)}%', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              ),
+            ]),
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(value: progressPersen / 100, minHeight: 12, backgroundColor: Colors.white.withValues(alpha: 0.3), valueColor: const AlwaysStoppedAnimation<Color>(Colors.white)),
+            ),
+          ]),
+        ),
+        const SizedBox(height: 20),
+        const Text('Detail Aktivitas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        ...aktivitas.map((item) => _buildDailyActivityCard(item as Map<String, dynamic>)),
+      ]),
+    );
+  }
+
+  Widget _buildDailyActivityCard(Map<String, dynamic> activity) {
+    final kode = (activity['aktivitas'] ?? activity['kode'] ?? '').toString();
+    final nama = activity['nama']?.toString() ?? kode;
+    final selesai = activity['selesai'] == true || (activity['tercapai'] as num?)?.toInt() == 1;
+    final bobot = activity['bobot'] ?? '';
+    final keterangan = activity['keterangan'] ?? activity['nama_lengkap'] ?? '';
+    final style = _tenangPointStyle(kode);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: selesai ? const Color(0xFF2C7EFF) : Colors.grey.shade300, width: 2),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 5, offset: const Offset(0, 2))],
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: style.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)), child: FaIcon(style.icon, color: style.color, size: 24)),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(nama, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            Text('Bobot: $bobot', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+            if (keterangan.toString().isNotEmpty) Text(keterangan.toString(), style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+          ])),
+          Icon(selesai ? Icons.check_circle : Icons.cancel, color: selesai ? const Color(0xFF2C7EFF) : Colors.grey, size: 32),
+        ]),
+      ]),
+    );
+  }
+
+  // =====================================================
+  // MINGGUAN
+  // =====================================================
+  Widget _buildWeeklyView() {
+    if (weeklyKPI == null) {
+      return Center(
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          const Icon(Icons.error_outline, size: 64, color: Colors.grey),
+          const SizedBox(height: 16),
+          const Text('Data mingguan tidak tersedia', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text('Tarik ke bawah untuk refresh', style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 16),
+          ElevatedButton(onPressed: loadAllKPIData, child: const Text('Coba Lagi')),
+        ]),
+      );
+    }
+    final periode = weeklyKPI!['periode'] ?? {};
+    final ringkasan = weeklyKPI!['ringkasan'] ?? {};
+    final aktivitas = weeklyKPI!['aktivitas'] as List<dynamic>? ?? [];
+    final mingguKe = periode['minggu_ke'] ?? 0;
+    final bulan = periode['bulan'] ?? 0;
+    final tahun = periode['tahun'] ?? 0;
+    final tanggalMulai = periode['tanggal_mulai'] ?? '';
+    final tanggalAkhir = periode['tanggal_akhir'] ?? '';
+    final tercapaiTotal = ringkasan['tercapai_total_hari'] ?? ringkasan['total_poin'] ?? 0;
+    final targetTotal = ringkasan['target_total_hari'] ?? ringkasan['maks_poin_minggu'] ?? 10;
+    final progressPersen = (ringkasan['progress_persen'] ?? 0).toDouble();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Color(0xFF5B5BF6), Color(0xFF3B3BCE)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [BoxShadow(color: const Color(0xFF5B5BF6).withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 5))],
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              FaIcon(FontAwesomeIcons.calendarWeek, color: Colors.white, size: 24),
+              const SizedBox(width: 12),
+              Expanded(child: Text('Minggu Ke-$mingguKe - ${_getBulanIndonesia(bulan)} $tahun', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white))),
+            ]),
+            const SizedBox(height: 8),
+            Text('$tanggalMulai - $tanggalAkhir', style: const TextStyle(color: Colors.white70, fontSize: 13)),
+            const SizedBox(height: 20),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text('Tercapai / Target', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                Text('$tercapaiTotal / $targetTotal poin', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+              ]),
+              Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(20)), child: Text('${progressPersen.toStringAsFixed(0)}%', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold))),
+            ]),
+            const SizedBox(height: 16),
+            ClipRRect(borderRadius: BorderRadius.circular(10), child: LinearProgressIndicator(value: progressPersen / 100, minHeight: 12, backgroundColor: Colors.white.withValues(alpha: 0.3), valueColor: const AlwaysStoppedAnimation<Color>(Colors.white))),
+          ]),
+        ),
+        const SizedBox(height: 20),
+        const Text('Detail Aktivitas Minggu Ini', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        ...aktivitas.map((item) => _buildWeeklyActivityCard(item as Map<String, dynamic>)),
+      ]),
+    );
+  }
+
+  Widget _buildWeeklyActivityCard(Map<String, dynamic> activity) {
+    final kode = (activity['aktivitas'] ?? activity['kode'] ?? '').toString();
+    final nama = activity['nama']?.toString() ?? kode;
+    final targetPerMinggu = (activity['target_per_minggu'] as num?)?.toInt() ?? 0;
+    final tercapai = (activity['tercapai'] as num?)?.toInt() ?? 0;
+    final progressPersen = (activity['progress_persen'] as num?)?.toDouble() ?? 0;
+    final bobot = activity['bobot'] ?? '';
+    final selesai = tercapai >= targetPerMinggu && targetPerMinggu > 0;
+    final style = _tenangPointStyle(kode);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: selesai ? const Color(0xFF5B5BF6) : Colors.grey.shade300, width: 2),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 5, offset: const Offset(0, 2))],
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: style.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)), child: FaIcon(style.icon, color: style.color, size: 24)),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(nama, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            Text('Target: $targetPerMinggu/minggu  Bobot: $bobot', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+          ])),
+          Icon(selesai ? Icons.check_circle : Icons.pending, color: selesai ? const Color(0xFF5B5BF6) : Colors.grey, size: 32),
+        ]),
+        const SizedBox(height: 12),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Tercapai', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)), Text('$tercapai poin', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2C7EFF)))]),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [Text('Progress', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)), Text('${progressPersen.toStringAsFixed(1)}%', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF5B5BF6)))]),
+        ]),
+        const SizedBox(height: 12),
+        ClipRRect(borderRadius: BorderRadius.circular(10), child: LinearProgressIndicator(value: progressPersen / 100, minHeight: 8, backgroundColor: Colors.grey.shade200, valueColor: AlwaysStoppedAnimation<Color>(style.color))),
+      ]),
+    );
+  }
+
+  // =====================================================
+  // BULANAN
+  // =====================================================
+  Widget _buildMonthlyView() {
+    if (monthlyKPI == null) {
+      return Center(
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          const Icon(Icons.error_outline, size: 64, color: Colors.grey),
+          const SizedBox(height: 16),
+          const Text('Data bulanan tidak tersedia', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text('Tarik ke bawah untuk refresh', style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 16),
+          ElevatedButton(onPressed: loadAllKPIData, child: const Text('Coba Lagi')),
+        ]),
+      );
+    }
+    final periode = monthlyKPI!['periode'] ?? {};
+    final ringkasan = monthlyKPI!['ringkasan'] ?? {};
+    final aktivitas = monthlyKPI!['aktivitas'] as List<dynamic>? ?? [];
+    final namaBulan = periode['nama_bulan'] ?? _getBulanIndonesia(periode['bulan'] ?? 0);
+    final tahun = periode['tahun'] ?? 0;
+    final jumlahMinggu = periode['jumlah_minggu'] ?? 0;
+    final jumlahHari = periode['jumlah_hari'] ?? 0;
+    final tercapaiTotal = ringkasan['tercapai_total_hari'] ?? ringkasan['total_poin'] ?? 0;
+    final targetTotal = ringkasan['target_total_hari'] ?? ringkasan['maks_poin_bulan'] ?? 40;
+    final progressPersen = (ringkasan['progress_persen'] ?? 0).toDouble();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Color(0xFF00A896), Color(0xFF00897B)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [BoxShadow(color: const Color(0xFF00A896).withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 5))],
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [FaIcon(FontAwesomeIcons.calendarDays, color: Colors.white, size: 24), const SizedBox(width: 12), Expanded(child: Text('$namaBulan $tahun', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)))]),
+            const SizedBox(height: 8),
+            Text('$jumlahMinggu minggu  $jumlahHari hari', style: const TextStyle(color: Colors.white70, fontSize: 14)),
+            const SizedBox(height: 20),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Tercapai / Target', style: TextStyle(color: Colors.white70, fontSize: 14)), Text('$tercapaiTotal / $targetTotal poin', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold))]),
+              Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(20)), child: Text('${progressPersen.toStringAsFixed(0)}%', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold))),
+            ]),
+            const SizedBox(height: 16),
+            ClipRRect(borderRadius: BorderRadius.circular(10), child: LinearProgressIndicator(value: progressPersen / 100, minHeight: 12, backgroundColor: Colors.white.withValues(alpha: 0.3), valueColor: const AlwaysStoppedAnimation<Color>(Colors.white))),
+          ]),
+        ),
+        const SizedBox(height: 20),
+        const Text('Detail Aktivitas Bulan Ini', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        ...aktivitas.map((item) => _buildMonthlyActivityCard(item as Map<String, dynamic>)),
+      ]),
+    );
+  }
+
+  Widget _buildMonthlyActivityCard(Map<String, dynamic> activity) {
+    final kode = (activity['aktivitas'] ?? '').toString();
+    final nama = activity['nama']?.toString() ?? kode;
+    final targetPerBulan = (activity['target_per_bulan'] as num?)?.toInt() ?? 0;
+    final tercapai = (activity['tercapai'] as num?)?.toInt() ?? 0;
+    final progressPersen = (activity['progress_persen'] as num?)?.toDouble() ?? 0;
+    final bobot = activity['bobot'] ?? '';
+    final style = _tenangPointStyle(kode);
+    final selesai = tercapai >= targetPerBulan && targetPerBulan > 0;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: selesai ? const Color(0xFF00A896) : Colors.grey.shade300, width: 2),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 5, offset: const Offset(0, 2))],
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: style.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)), child: FaIcon(style.icon, color: style.color, size: 24)),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(nama, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)), Text('Target: $targetPerBulan/bulan  Bobot: $bobot', style: TextStyle(fontSize: 12, color: Colors.grey.shade600))])),
+          Icon(selesai ? Icons.check_circle : Icons.pending, color: selesai ? const Color(0xFF00A896) : Colors.grey, size: 32),
+        ]),
+        const SizedBox(height: 12),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Tercapai', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)), Text('$tercapai poin', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2C7EFF)))]),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [Text('Progress', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)), Text('${progressPersen.toStringAsFixed(1)}%', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF00A896)))]),
+        ]),
+        const SizedBox(height: 12),
+        ClipRRect(borderRadius: BorderRadius.circular(10), child: LinearProgressIndicator(value: progressPersen / 100, minHeight: 8, backgroundColor: Colors.grey.shade200, valueColor: AlwaysStoppedAnimation<Color>(style.color))),
+      ]),
+    );
+  }
+
+  String _formatTanggal(String tanggal) {
+    try {
+      if (tanggal.isEmpty) return '-';
+      final d = DateTime.parse(tanggal);
+      const bulanList = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+      const hariList = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+      return '${hariList[d.weekday - 1]}, ${d.day} ${bulanList[d.month - 1]} ${d.year}';
+    } catch (_) {
+      return tanggal;
+    }
+  }
+
+  String _getBulanIndonesia(int bulan) {
+    const bulanList = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    return bulan > 0 && bulan <= 12 ? bulanList[bulan] : '';
+  }
+
+  ({FaIconData icon, Color color}) _tenangPointStyle(String kode) {
+    switch (kode) {
+      case 'tahan_emosi':
+        return (icon: FontAwesomeIcons.handHoldingHeart, color: const Color(0xFF7141FC));
+      case 'ekspresi_sehat':
+        return (icon: FontAwesomeIcons.music, color: const Color(0xFFF20868));
+      case 'harmoni_keluarga':
+        return (icon: FontAwesomeIcons.houseUser, color: Colors.amber);
+      case 'akui_emosi':
+        return (icon: FontAwesomeIcons.comments, color: const Color(0xff00a896));
+      case 'kendali_diri':
+        return (icon: FontAwesomeIcons.shieldHalved, color: const Color(0xFF2C7EFF));
+      case 'koneksi_sosial':
+        return (icon: FontAwesomeIcons.users, color: const Color(0xff00c368));
+      default:
+        return (icon: FontAwesomeIcons.heartPulse, color: const Color(0xFF2C7EFF));
+    }
   }
 }
