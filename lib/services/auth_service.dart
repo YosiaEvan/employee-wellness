@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -242,6 +241,41 @@ class AuthService {
   static Future<bool> isLoggedIn() async {
     final token = await AuthStorage.getToken();
     return token != null;
+  }
+
+  /// Force logout & redirect ke Login saat session tidak valid
+  /// (mis. 401 terjadi dan auto-refresh token gagal).
+  /// Menghentikan pelacak langkah, membersihkan data lokal, lalu navigasi ke /login.
+  static Future<void> forceLogoutAndGoToLogin() async {
+    debugPrint(' Session invalid - forcing logout...');
+
+    try {
+      await BackgroundStepsTracker.stop();
+    } catch (e) {
+      debugPrint(' Could not stop background tracker: $e');
+    }
+    try {
+      await StepForegroundService.stop();
+    } catch (e) {
+      debugPrint(' Could not stop step foreground service: $e');
+    }
+    try {
+      await LocalDatabaseService.instance.clearAll();
+    } catch (e) {
+      debugPrint(' Could not clear local database: $e');
+    }
+    await AuthStorage.clearAll();
+
+    debugPrint(' Auth storage cleared, redirecting to login...');
+
+    // Navigate ke Login. Aman jika dipanggil dari background isolate
+    // (navigatorKey.currentState bernilai null di sana).
+    final navigator = appNavigatorKey.currentState;
+    if (navigator == null) {
+      debugPrint(' Navigator key not attached yet - skipping redirect');
+      return;
+    }
+    navigator.pushNamedAndRemoveUntil('/login', (route) => false);
   }
 }
 

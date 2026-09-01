@@ -70,6 +70,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Employee Wellness',
+      navigatorKey: appNavigatorKey,
       locale: languageProvider.currentLocale,
       supportedLocales: const [
         Locale('en', 'US'),
@@ -81,6 +82,10 @@ class MyApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      routes: {
+        '/login': (context) => const LoginPage(),
+        '/home': (context) => const HomePage(),
+      },
       home: FutureBuilder(
         future: checkLogin(),
         builder: (context, snapshot) {

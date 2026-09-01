@@ -239,11 +239,14 @@ class ApiService {
         debugPrint(' Token refreshed successfully');
         return true;
       } else {
-        debugPrint(' Failed to refresh token, credentials not found');
+        debugPrint(' Failed to refresh token, session invalid');
+        // Session tidak valid & tidak bisa auto-refresh -> redirect ke Login.
+        await AuthService.forceLogoutAndGoToLogin();
         return false;
       }
     } catch (e) {
       debugPrint(' Error refreshing token: $e');
+      await AuthService.forceLogoutAndGoToLogin();
       return false;
     }
   }

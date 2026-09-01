@@ -59,8 +59,8 @@ class _ModuleKpiProgressCardState extends State<ModuleKpiProgressCard> {
         final periode = data['periode'] ?? {};
         if (!mounted) return;
         setState(() {
-          _poinBulan = (ringkasan['total_poin_tercapai'] ?? 0).toInt();
-          _poinMaks = (ringkasan['total_poin_maksimal'] ?? 0).toInt();
+          _poinBulan = (ringkasan['total_poin'] ?? 0).toInt();
+          _poinMaks = (ringkasan['maks_poin_bulan'] ?? 0).toInt();
           _namaBulan = periode['nama_bulan'] ?? '';
           _predikat = ringkasan['predikat'] ?? '';
           _loading = false;

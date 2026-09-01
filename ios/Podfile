@@ -54,7 +54,8 @@ post_install do |installer|
         '$(inherited)',
         'PERMISSION_CAMERA=1',
         'PERMISSION_PHOTOS=1',
-        'PERMISSION_MOTION=1',
+        'PERMISSION_SENSORS=1',
+        'PERMISSION_NOTIFICATIONS=1',
       ]
     end
   end

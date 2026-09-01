@@ -68,5 +68,11 @@
 		<string>fetch</string>
 		<string>processing</string>
 	</array>
+
+	<!-- BGTaskScheduler identifiers for flutter_background_service (iOS 13+) -->
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>dev.flutter.background.refresh</string>
+	</array>
 </dict>
 </plist>
