@@ -386,7 +386,7 @@ class _WellnessKPIDashboardState extends State<WellnessKPIDashboard> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Predikat: 90% Sangat Baik  7589,9% Baik  6074,9% Cukup  <60% Perlu Perbaikan',
+            'Predikat: ≥80% Sangat Baik · ≥60% Baik · ≥40% Cukup · <40% Perlu Perbaikan',
             style: TextStyle(fontSize: 12, color: Colors.grey[600], height: 1.4),
           ),
         ],
