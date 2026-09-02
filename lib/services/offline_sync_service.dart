@@ -155,8 +155,11 @@ class OfflineSyncService {
               'date': row['tanggal'],
               if (row['kategori'] != null) 'kategori': row['kategori'],
               'points': row['poin'],
-              if (row['carbon_saved'] != null)
-                'carbon_saved': row['carbon_saved'],
+              if (row['carbon_saved'] != null) 'carbon_saved': row['carbon_saved'],
+              // AR verification fields (PromptARHijau §7)
+              'metode_verifikasi': row['metode_verifikasi'] ?? 'manual',
+              if (row['confidence_score'] != null) 'confidence_score': row['confidence_score'],
+              if (row['bukti_foto_url'] != null) 'bukti_foto_url': row['bukti_foto_url'],
             });
             return _resolve(res.statusCode);
           }

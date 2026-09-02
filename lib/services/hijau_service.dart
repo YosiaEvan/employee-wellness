@@ -30,18 +30,24 @@ class HijauService {
   }) =>
       getHijauData(tanggal: startDate);
 
-  /// POST - Catat aktivitas HIJAU ke tabel canonical.
+  /// POST - Catat aktivitas HIJAU ke tabel canonical — dengan verifikasi AR (PromptARHijau §7).
   /// Offline-first: disimpan ke SQLite dulu, lalu disinkronkan.
+  /// `metodeVerifikasi`: 'ar_scan' | 'manual' (default manual untuk backward compat)
+  /// `confidenceScore`: 0..1 (hanya untuk ar_scan), `buktiFotoUrl`: path/URL foto bukti (opsional, disimpan lokal lalu di-upload saat sync)
   static Future<Map<String, dynamic>> recordGreenActivity({
     required String activityType,
     required String description,
     double? carbonSaved,
     int? points,
     String? category,
+    String? metodeVerifikasi,
+    double? confidenceScore,
+    String? buktiFotoUrl,
   }) async {
     final tgl = LocalDatabaseService.todayStr();
+    final metode = metodeVerifikasi == 'ar_scan' ? 'ar_scan' : 'manual';
 
-    // 1. Simpan ke antrean lokal dulu (agar tidak hilang saat offline).
+    // 1. Simpan ke antrean lokal dulu (agar tidak hilang saat offline) — termasuk kolom verifikasi AR
     int? rowId;
     try {
       rowId = await _db.insert('aktivitas_poin', {
@@ -52,22 +58,42 @@ class HijauService {
         'poin': points ?? 1,
         'deskripsi': description,
         'carbon_saved': carbonSaved,
+        'metode_verifikasi': metode,
+        'confidence_score': confidenceScore,
+        'bukti_foto_url': buktiFotoUrl,
         'synced': 0,
       });
     } catch (_) {
-      rowId = null;
+      // Fallback jika kolom baru belum ada (belum migrasi v5): coba tanpa kolom verifikasi
+      try {
+        rowId = await _db.insert('aktivitas_poin', {
+          'modul': 'hijau',
+          'aktivitas': activityType,
+          'kategori': category,
+          'tanggal': tgl,
+          'poin': points ?? 1,
+          'deskripsi': description,
+          'carbon_saved': carbonSaved,
+          'synced': 0,
+        });
+      } catch (_) {
+        rowId = null;
+      }
     }
 
-    // 2. Coba push ke server
+    // 2. Coba push ke server (dengan field verifikasi AR)
     try {
       final body = <String, dynamic>{
         'activity_type': activityType,
         'description': description,
         'date': tgl,
+        'metode_verifikasi': metode,
       };
       if (category != null) body['kategori'] = category;
       if (points != null) body['points'] = points;
       if (carbonSaved != null) body['carbon_saved'] = carbonSaved;
+      if (confidenceScore != null) body['confidence_score'] = confidenceScore;
+      if (buktiFotoUrl != null) body['bukti_foto_url'] = buktiFotoUrl;
 
       final response = await ApiService.post('/user/hijau', body: body);
 

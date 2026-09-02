@@ -31,6 +31,10 @@ class HijauScanPoint {
   /// Target poin per bulan.
   final int targetPerMonth;
 
+  /// Label ML Kit yang dianggap valid untuk kategori ini (case-insensitive, substring match).
+  /// Digunakan di `hijau_scan_page.dart` untuk matching objek terdeteksi → kode aktivitas.
+  final List<String> arLabels;
+
   const HijauScanPoint({
     required this.kode,
     required this.kategori,
@@ -44,6 +48,7 @@ class HijauScanPoint {
     this.videoAsset,
     this.targetPerWeek = 1,
     this.targetPerMonth = 4,
+    this.arLabels = const [],
   });
 }
 
@@ -66,6 +71,7 @@ class HijauScanPoints {
     videoAsset: 'assets/videos/keran.mp4',
     targetPerWeek: 1,
     targetPerMonth: 4,
+    arLabels: ['faucet', 'tap', 'sink', 'bucket', 'pale', 'ember', 'gayung', 'shower', 'water'],
   );
 
   static const hematListrik = HijauScanPoint(
@@ -84,6 +90,7 @@ class HijauScanPoints {
     videoAsset: 'assets/videos/listrik.mp4',
     targetPerWeek: 1,
     targetPerMonth: 4,
+    arLabels: ['light', 'lamp', 'light bulb', 'switch', 'saklar', 'outlet', 'plug', 'socket', 'colokan', 'steker'],
   );
 
   static const gayaHidupHijau = HijauScanPoint(
@@ -101,6 +108,7 @@ class HijauScanPoints {
     confirmLabel: 'Sudah Melakukan',
     targetPerWeek: 1,
     targetPerMonth: 4,
+    arLabels: ['bottle', 'tumbler', 'cup', 'mug', 'bag', 'tas', 'tote', 'bicycle', 'bike', 'sepeda', 'recycling', 'cloth'],
   );
 
   static const zeroWaste = HijauScanPoint(
@@ -135,6 +143,8 @@ class HijauScanPoints {
     confirmLabel: 'Sudah Mengajak',
     targetPerWeek: 1,
     targetPerMonth: 4,
+    // AR: aksi sosial — gunakan face detection ≥2 wajah sebagai sinyal pendukung (tidak full-auto)
+    arLabels: ['person', 'people', 'face', 'group'],
   );
 
   static const ubahKebiasaan = HijauScanPoint(
@@ -152,6 +162,7 @@ class HijauScanPoints {
     confirmLabel: 'Sudah Jadi Kebiasaan',
     targetPerWeek: 1,
     targetPerMonth: 4,
+    arLabels: ['trash can', 'bin', 'recycling bin', 'sampah', 'pilah', 'stairs', 'staircase', 'tangga', 'litter'],
   );
 
   /// Semua titik penilaian HIJAU (5 aktivitas unik backend).
@@ -168,4 +179,19 @@ class HijauScanPoints {
 
   /// Maksimal poin per bulan (5 aktivitas  4 = 20).
   static const int maksPerBulan = 20;
+
+  /// Helper: cek apakah label ML Kit cocok untuk kode tertentu (case-insensitive, substring).
+  static bool isLabelMatch(String label, String kode) {
+    final q = label.toLowerCase();
+    final point = semua.firstWhere((p) => p.kode == kode, orElse: () => semua.first);
+    if (point.kode != kode) return false;
+    if (point.arLabels.isEmpty) return false;
+    return point.arLabels.any((kw) => q.contains(kw.toLowerCase()));
+  }
+
+  /// Threshold rekomendasi MVP (Prompt §9): confidence ≥0.7 + N frame berturut-turut.
+  static const double confidenceThreshold = 0.7;
+  static const int requiredConsecutiveFrames = 3;
+  /// Timeout auto-fallback ke manual jika tidak terdeteksi dalam durasi ini.
+  static const Duration scanTimeout = Duration(seconds: 30);
 }

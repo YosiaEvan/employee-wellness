@@ -14,7 +14,7 @@ class LocalDatabaseService {
   static Database? _database;
   static const _storage = FlutterSecureStorage();
 
-  static const int _version = 4;
+  static const int _version = 5;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -161,6 +161,9 @@ class LocalDatabaseService {
             poin INTEGER NOT NULL DEFAULT 1,
             deskripsi TEXT,
             carbon_saved REAL,
+            metode_verifikasi TEXT DEFAULT 'manual',
+            confidence_score REAL,
+            bukti_foto_url TEXT,
             synced INTEGER NOT NULL DEFAULT 0
           )
         ''');
@@ -189,6 +192,9 @@ class LocalDatabaseService {
                 poin INTEGER NOT NULL DEFAULT 1,
                 deskripsi TEXT,
                 carbon_saved REAL,
+                metode_verifikasi TEXT DEFAULT 'manual',
+                confidence_score REAL,
+                bukti_foto_url TEXT,
                 synced INTEGER NOT NULL DEFAULT 0
               )
             ''');
@@ -231,6 +237,18 @@ class LocalDatabaseService {
           } catch (e) {
             debugPrint('Migration v4 langkah warning: $e');
           }
+        }
+        if (oldVersion < 5) {
+          // AR verification untuk HIJAU: tambah kolom metode_verifikasi, confidence_score, bukti_foto_url
+          try {
+            await db.execute("ALTER TABLE aktivitas_poin ADD COLUMN metode_verifikasi TEXT DEFAULT 'manual'");
+          } catch (_) {}
+          try {
+            await db.execute("ALTER TABLE aktivitas_poin ADD COLUMN confidence_score REAL");
+          } catch (_) {}
+          try {
+            await db.execute("ALTER TABLE aktivitas_poin ADD COLUMN bukti_foto_url TEXT");
+          } catch (_) {}
         }
       },
     );

@@ -41,16 +41,28 @@ class AuthRegisterService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
+        // Jika backend sertakan debug_code (SMTP gagal / dev mode), tampilkan ke user agar tetap bisa verifikasi
+        final debugCode = data['data']?['debug_code'] ?? data['debug_code'];
+        String msg = data['message'] ?? "Registrasi berhasil! Silakan cek email untuk verifikasi.";
+        if (debugCode != null) {
+          msg += " [DEBUG code: $debugCode]";
+        }
+        if (data['data']?['email_sent'] == false) {
+          msg += " (Email gagal terkirim - cek SPAM atau gunakan debug code di atas / minta admin cek log server & env SMTP di Netlify)";
+        }
         return {
           "success": true,
-          "message": "Registrasi berhasil! Silakan cek email untuk verifikasi.",
+          "message": msg,
           "data": data,
+          "debug_code": debugCode,
         };
       } else {
         final data = jsonDecode(response.body);
+        // Jika 429 throttling dari resend, tampilkan wait message
         return {
           "success": false,
           "message": data['message'] ?? "Registrasi gagal",
+          "statusCode": response.statusCode,
         };
       }
     } catch (e) {
@@ -127,15 +139,24 @@ class AuthRegisterService {
       debugPrint(" Response: ${response.statusCode}");
 
       if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final debugCode = data['data']?['debug_code'] ?? data['debug_code'];
+        String msg = data['message'] ?? "Kode OTP berhasil dikirim ulang";
+        if (debugCode != null) msg += " [DEBUG code: $debugCode]";
         return {
           "success": true,
-          "message": "Kode OTP berhasil dikirim ulang",
+          "message": msg,
+          "data": data,
+          "debug_code": debugCode,
         };
       } else {
         final data = jsonDecode(response.body);
+        // 429 = throttling resend
+        final isThrottle = response.statusCode == 429;
         return {
           "success": false,
-          "message": data['message'] ?? "Gagal mengirim ulang OTP",
+          "message": data['message'] ?? (isThrottle ? "Tunggu sebelum resend lagi" : "Gagal mengirim ulang OTP"),
+          "statusCode": response.statusCode,
         };
       }
     } catch (e) {
