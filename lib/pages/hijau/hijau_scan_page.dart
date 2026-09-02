@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
+import 'package:google_mlkit_object_detection/google_mlkit_object_detection.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// Halaman scan HIJAU 360 — verifikasi 100% by kamera AR (tanpa fallback manual).
@@ -53,8 +54,12 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
   Rect? _lastBoundingBox;
   String? _snapshotPath;
   Timer? _autoScanTimer;
+  Timer? _fallbackTimer;
   ImageLabeler? _labeler;
   FaceDetector? _faceDetector;
+  ObjectDetector? _objectDetector;
+  int _failedAttempts = 0;
+  bool _showFallback = false;
 
   HijauScanPoint get point => widget.point;
 
@@ -74,6 +79,7 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _autoScanTimer?.cancel();
+    _fallbackTimer?.cancel();
     _disposeCamera();
     _disposeMlKit();
     super.dispose();
@@ -98,6 +104,7 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
     if (!isInit) return;
     if (state == AppLifecycleState.inactive) {
       _autoScanTimer?.cancel();
+      _fallbackTimer?.cancel();
       // Jangan panggil dispose langsung tanpa clear state — akan trigger "disposed controller buildPreview"
       ctrl.dispose();
       if (mounted) {
@@ -120,6 +127,16 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
       if (point.kode == 'ajak_orang_lain') {
         _faceDetector = FaceDetector(options: FaceDetectorOptions(performanceMode: FaceDetectorMode.fast, enableLandmarks: false, enableClassification: false));
       }
+      // ObjectDetector untuk hemat_listrik & hemat_air — membantu objek kecil (saklar/colokan/keran)
+      if (point.kode == 'hemat_listrik' || point.kode == 'hemat_air') {
+        _objectDetector = ObjectDetector(
+          options: ObjectDetectorOptions(
+            mode: DetectionMode.single,
+            classifyObjects: true,
+            multipleObjects: true,
+          ),
+        );
+      }
     } catch (e) {
       debugPrint('[HijauScan AR] ML Kit init failed: $e');
     }
@@ -128,6 +145,25 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
   void _disposeMlKit() {
     try { _labeler?.close(); } catch (_) {}
     try { _faceDetector?.close(); } catch (_) {}
+    try { _objectDetector?.close(); } catch (_) {}
+  }
+
+  void _startFallbackTimer() {
+    _fallbackTimer?.cancel();
+    _fallbackTimer = Timer(HijauScanPoints.scanTimeout, () {
+      if (!mounted || _arSuccess || _doneThisWeek) return;
+      setState(() => _showFallback = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Scan belum terverifikasi — Anda bisa tetap kirim manual'), backgroundColor: Colors.orange, duration: Duration(seconds: 3)),
+      );
+    });
+  }
+
+  void _onFailedAttempt() {
+    _failedAttempts += 1;
+    if (_failedAttempts >= 2 && !_showFallback && !_arSuccess) {
+      if (mounted) setState(() => _showFallback = true);
+    }
   }
 
   Future<void> _loadKpi() async {
@@ -189,6 +225,9 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
       _autoScanTimer = Timer.periodic(const Duration(seconds: 3), (_) {
         if (!_arSuccess && !_isDetecting && _canShowPreview) _takeSnapshotAndDetect();
       });
+      _failedAttempts = 0;
+      _showFallback = false;
+      _startFallbackTimer();
     } catch (e) {
       debugPrint('[HijauScan AR] camera init error: $e');
       if (mounted) setState(() { _cameraError = e.toString(); _cameraReady = false; });
@@ -197,6 +236,7 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
 
   Future<void> _disposeCamera() async {
     _autoScanTimer?.cancel();
+    _fallbackTimer?.cancel();
     try { await _cameraController?.dispose(); } catch (_) {}
     _cameraController = null;
     _cameraReady = false;
@@ -250,6 +290,7 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
         _onArCandidateDetected(label: 'people ($count wajah)', confidence: 0.82, box: faces.first.boundingBox, snapshotPath: path);
       } else {
         _consecutiveFrames = 0;
+        _onFailedAttempt();
         if (mounted) {
           setState(() { _lastLabel = 'Terdeteksi $count wajah — butuh ≥2 orang'; _lastConfidence = 0; _lastBoundingBox = null; });
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Butuh foto bersama ≥2 orang (terdeteksi $count) — arahkan ke foto bersama'), backgroundColor: Colors.orange, duration: const Duration(seconds: 2)));
@@ -267,6 +308,8 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
       final input = InputImage.fromFilePath(path);
       final labels = await labeler.processImage(input);
       debugPrint('[HijauScan AR] labels: ${labels.map((l) => "${l.label}:${l.confidence.toStringAsFixed(2)}").join(", ")}');
+
+      // 1) strict match dengan threshold kanonik (0.55)
       ImageLabel? best;
       for (final l in labels) {
         if (l.confidence < HijauScanPoints.confidenceThreshold) continue;
@@ -274,6 +317,7 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
           if (best == null || l.confidence > best.confidence) best = l;
         }
       }
+      // 2) fallback: substring langsung ke arLabels (sama threshold)
       ImageLabel? fallbackBest;
       if (best == null) {
         for (final l in labels) {
@@ -285,19 +329,96 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
         }
         best = fallbackBest;
       }
+      // 3) permissive fallback: turun ke 0.45 untuk objek kecil seperti saklar/colokan
+      if (best == null) {
+        const permissive = 0.45;
+        ImageLabel? lowBest;
+        for (final l in labels) {
+          if (l.confidence < permissive) continue;
+          final q = l.label.toLowerCase();
+          for (final kw in point.arLabels) {
+            if (q.contains(kw.toLowerCase())) { if (lowBest == null || l.confidence > lowBest.confidence) lowBest = l; break; }
+          }
+        }
+        if (lowBest != null) {
+          debugPrint('[HijauScan AR] permissive match: ${lowBest.label}:${lowBest.confidence}');
+          best = lowBest;
+        }
+      }
       if (best != null) {
         _onArCandidateDetected(label: best.label, confidence: best.confidence, box: null, snapshotPath: path);
-      } else {
-        final top = labels.isNotEmpty ? labels.first.label : 'tidak ada objek';
-        _consecutiveFrames = 0;
-        if (mounted) {
-          setState(() { _lastLabel = top; _lastConfidence = labels.isNotEmpty ? labels.first.confidence : 0; _lastBoundingBox = null; });
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Objek tidak cocok ($top) — arahkan ke ${_getScanInstruction()}'), backgroundColor: Colors.orange, duration: const Duration(seconds: 2)));
+        return;
+      }
+
+      // 4) coba ObjectDetector sebagai sumber kedua (khusus hemat_listrik / hemat_air)
+      if (_objectDetector != null) {
+        final objHit = await _tryObjectDetection(path);
+        if (objHit != null) {
+          _onArCandidateDetected(label: objHit.$1, confidence: objHit.$2, box: objHit.$3, snapshotPath: path);
+          return;
         }
+      }
+
+      final top = labels.isNotEmpty ? labels.first.label : 'tidak ada objek';
+      _consecutiveFrames = 0;
+      _onFailedAttempt();
+      if (mounted) {
+        setState(() { _lastLabel = top; _lastConfidence = labels.isNotEmpty ? labels.first.confidence : 0; _lastBoundingBox = null; });
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Objek tidak cocok ($top) — arahkan ke ${_getScanInstruction()}'), backgroundColor: Colors.orange, duration: const Duration(seconds: 2)));
       }
     } catch (e) {
       debugPrint('[HijauScan AR] label error: $e');
     }
+  }
+
+  Future<(String, double, Rect?)?> _tryObjectDetection(String path) async {
+    final detector = _objectDetector;
+    if (detector == null) return null;
+    try {
+      final input = InputImage.fromFilePath(path);
+      final objects = await detector.processImage(input);
+      debugPrint('[HijauScan AR] objects: ${objects.map((o) => o.labels.map((l) => "${l.text}:${l.confidence.toStringAsFixed(2)}").join("|")).join(", ")}');
+      String? bestLabel;
+      double bestConf = 0;
+      Rect? bestBox;
+      for (final obj in objects) {
+        for (final lb in obj.labels) {
+          if (lb.confidence < 0.45) continue;
+          final q = lb.text.toLowerCase();
+          for (final kw in point.arLabels) {
+            if (q.contains(kw.toLowerCase())) {
+              if (lb.confidence > bestConf) {
+                bestConf = lb.confidence;
+                bestLabel = lb.text;
+                bestBox = obj.boundingBox;
+              }
+              break;
+            }
+          }
+        }
+        // juga cek label "Home appliance" / "Lighting" generic dengan conf tinggi
+        if (bestLabel == null) {
+          for (final lb in obj.labels) {
+            if (lb.confidence >= 0.6 && (qContainsAny(lb.text, ['home', 'light', 'electric', 'appliance']))) {
+              if (lb.confidence > bestConf) {
+                bestConf = lb.confidence;
+                bestLabel = lb.text;
+                bestBox = obj.boundingBox;
+              }
+            }
+          }
+        }
+      }
+      if (bestLabel != null) return (bestLabel, bestConf, bestBox);
+    } catch (e) {
+      debugPrint('[HijauScan AR] object detect error: $e');
+    }
+    return null;
+  }
+
+  bool qContainsAny(String label, List<String> kws) {
+    final q = label.toLowerCase();
+    return kws.any((k) => q.contains(k));
   }
 
   void _onArCandidateDetected({required String label, required double confidence, Rect? box, required String snapshotPath}) {
@@ -309,6 +430,7 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
     }
     if (mounted) setState(() { _arSuccess = true; });
     _autoScanTimer?.cancel();
+    _fallbackTimer?.cancel();
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Terdeteksi $label (${(confidence*100).toStringAsFixed(0)}%) — siap kirim +1 poin'), backgroundColor: point.color, duration: const Duration(seconds: 1)));
     Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted && _arSuccess) _confirmArScan();
@@ -316,6 +438,38 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
   }
 
   // ── CONFIRM AR ─────────────────────────────────────────────────────
+
+  Future<void> _confirmManualScan() async {
+    if (_recording || _doneThisWeek) return;
+    setState(() => _recording = true);
+    try {
+      final result = await HijauService.recordGreenActivity(
+        activityType: point.kode,
+        description: point.title,
+        points: 1,
+        category: point.kategori,
+        metodeVerifikasi: 'manual',
+        confidenceScore: _lastConfidence > 0 ? _lastConfidence : null,
+        buktiFotoUrl: _snapshotPath,
+      );
+      if (!mounted) return;
+      setState(() => _recording = false);
+      final ok = result['success'] == true;
+      final msg = result['message']?.toString();
+      final isCap = result['statusCode'] == 409;
+      ScaffoldMessenger.of(context)..hideCurrentSnackBar()..showSnackBar(SnackBar(
+        content: Text(ok ? ' ${point.title} tercatat! +1 poin (manual)' : (msg?.isNotEmpty == true ? ' $msg' : ' Gagal mencatat')),
+        backgroundColor: ok ? point.color : (isCap ? Colors.orange.shade700 : Colors.red), duration: const Duration(seconds: 3)));
+      if (ok || isCap) {
+        _loadKpi();
+        setState(() { _arSuccess = false; _showFallback = false; _failedAttempts = 0; });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _recording = false);
+      debugPrint('[HijauScan manual] error: $e');
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+    }
+  }
 
   Future<void> _confirmArScan() async {
     if (_recording || _doneThisWeek || !_arSuccess) return;
@@ -451,6 +605,25 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
               const SizedBox(width: 10),
               Expanded(child: ElevatedButton.icon(onPressed: _arSuccess && !_recording && !_doneThisWeek ? _confirmArScan : null, icon: _recording ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const FaIcon(FontAwesomeIcons.circleCheck, size: 16), label: Text(_recording ? 'Mengirim...' : '+1 Poin (AR)', style: const TextStyle(fontWeight: FontWeight.bold)), style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, disabledBackgroundColor: Colors.grey.shade200, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))))),
             ]),
+            if (_showFallback && !_doneThisWeek && !_arSuccess) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _recording ? null : _confirmManualScan,
+                  icon: const FaIcon(FontAwesomeIcons.handPointUp, size: 16),
+                  label: Text(_recording ? 'Mengirim...' : 'Tetap Kirim Manual (+1 Poin)', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: point.color,
+                    side: BorderSide(color: point.color, width: 1.5),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text('AR tidak mengenali? Pastikan cahaya terang & dekatkan ke ${_getScanInstruction()}. Tombol manual muncul setelah 2x gagal / 30 dtk.', style: TextStyle(fontSize: 10, color: Colors.grey[600]), textAlign: TextAlign.center),
+            ],
             const SizedBox(height: 8),
             Text('Kamera AR aktif otomatis — $_weekCount/1 minggu • $_monthCount/4 bulan • Tap Scan jika belum auto-terdeteksi', style: TextStyle(fontSize: 11, color: Colors.grey[600]), textAlign: TextAlign.center),
             if (_snapshotPath != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text('Bukti: ${_snapshotPath!.split('/').last}', style: TextStyle(fontSize: 10, color: Colors.grey[500]), maxLines: 1, overflow: TextOverflow.ellipsis)),

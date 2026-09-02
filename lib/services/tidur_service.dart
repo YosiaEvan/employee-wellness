@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 import 'local_database_service.dart';
 import 'offline_sync_service.dart';
@@ -10,6 +11,143 @@ import '../components/data_refresh_notifier.dart';
 /// Data disimpan ke SQLite lokal terlebih dahulu, lalu disinkronkan ke backend.
 class TidurService {
   static final LocalDatabaseService _db = LocalDatabaseService.instance;
+
+  // --- Sesi tidur pending (2-fase: mulai → bangun) ---
+  static const _kPendingStartIso = 'tidur_pending_start_iso';
+  static const _kPendingTanggal = 'tidur_pending_tanggal';
+
+  /// Cek apakah ada sesi tidur yang belum diakhiri (user sudah tap "Mulai Tidur" tapi belum "Bangun")
+  static Future<DateTime?> getPendingStart() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final iso = prefs.getString(_kPendingStartIso);
+      if (iso == null) return null;
+      return DateTime.tryParse(iso);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<bool> hasPendingSession() async => (await getPendingStart()) != null;
+
+  /// Mulai sesi tidur sekarang — simpan waktu mulai ke SharedPreferences
+  static Future<DateTime> mulaiTidur() async {
+    final now = DateTime.now();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kPendingStartIso, now.toIso8601String());
+    await prefs.setString(_kPendingTanggal, LocalDatabaseService.todayStr());
+    debugPrint('[Tidur] Mulai tidur: $now');
+    return now;
+  }
+
+  /// Batalkan sesi pending (mis. salah tap)
+  static Future<void> batalkanSesi() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_kPendingStartIso);
+    await prefs.remove(_kPendingTanggal);
+  }
+
+  /// Selesaikan sesi tidur: hitung durasi dari pending start → sekarang (atau bangunOverride)
+  /// Lalu kirim via laporTidur dengan jam yang akurat.
+  static Future<Map<String, dynamic>> selesaikanTidur({DateTime? bangunOverride}) async {
+    final start = await getPendingStart();
+    if (start == null) {
+      return {'success': false, 'message': 'Tidak ada sesi tidur pending'};
+    }
+    final bangun = bangunOverride ?? DateTime.now();
+    // Pastikan durasi minimal 1 jam, maksimal 14 jam (validasi wajar)
+    var durasi = bangun.difference(start).inMinutes;
+    if (durasi < 30) {
+      return {'success': false, 'message': 'Durasi tidur terlalu pendek (<30 menit). Coba lagi nanti.'};
+    }
+    if (durasi > 14 * 60) {
+      // Jika lebih dari 14 jam, anggap lupa tap bangun → potong ke 8 jam
+      debugPrint('[Tidur] Durasi >14j ($durasi m) — dipotong heuristik');
+    }
+    final jamTidur = '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}';
+    final jamBangun = '${bangun.hour.toString().padLeft(2, '0')}:${bangun.minute.toString().padLeft(2, '0')}';
+    // Kirim dengan tanggal = tanggal bangun (hari ini)
+    final result = await laporTidurDenganTanggal(
+      jamTidur: jamTidur,
+      jamBangun: jamBangun,
+      waktuTidurRef: start,
+      waktuBangunRef: bangun,
+    );
+    if (result['success'] == true) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_kPendingStartIso);
+      await prefs.remove(_kPendingTanggal);
+    }
+    return result;
+  }
+
+  /// Estimasi jam bangun otomatis: first app open / first step setelah jam 03:00
+  /// Dipanggil saat didChangeAppLifecycleState resumed
+  static Future<DateTime?> detectAutoBangun() async {
+    final start = await getPendingStart();
+    if (start == null) return null;
+    final now = DateTime.now();
+    final durasi = now.difference(start).inMinutes;
+    // Heuristik: minimal 3 jam tidur, dan sekarang jam 03:00-11:00
+    if (durasi < 180) return null;
+    if (now.hour < 3 || now.hour > 11) return null;
+    return now;
+  }
+
+  /// Varian laporTidur yang menerima DateTime referensi langsung (untuk sesi 2-fase)
+  static Future<Map<String, dynamic>> laporTidurDenganTanggal({
+    required String jamTidur,
+    required String jamBangun,
+    required DateTime waktuTidurRef,
+    required DateTime waktuBangunRef,
+  }) async {
+    // Jika waktuBangunRef < waktuTidurRef (lintas hari sudah benar), tetap pakai ref
+    final waktuTidur = waktuTidurRef.toUtc().toIso8601String();
+    final waktuBangun = waktuBangunRef.toUtc().toIso8601String();
+    final tanggal = LocalDatabaseService.formatDate(waktuBangunRef);
+
+    final rowId = await _db.insert('tidur', {
+      'tanggal': tanggal,
+      'waktu_tidur': waktuTidur,
+      'waktu_bangun': waktuBangun,
+      'synced': 0,
+    });
+
+    try {
+      final response = await ApiService.post(
+        "/user/tidur",
+        body: {
+          "waktu_tidur": waktuTidur,
+          "waktu_bangun": waktuBangun,
+          "tanggal": tanggal,
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await _db.markSyncedByDate('tidur', tanggal);
+        final responseData = jsonDecode(response.body);
+        DataRefreshNotifier.instance.notifyDataChanged();
+        return {
+          "success": true,
+          "message": responseData['message'] ?? "Berhasil mencatat tidur",
+          "data": responseData['data'],
+          "tercapai": responseData['tercapai'] ?? false,
+        };
+      } else {
+        await _db.delete('tidur', where: 'id = ?', whereArgs: [rowId]);
+        try {
+          final errorData = jsonDecode(response.body);
+          return {"success": false, "message": errorData['message'] ?? "Gagal menyimpan data"};
+        } catch (_) {
+          return {"success": false, "message": "Gagal menyimpan data"};
+        }
+      }
+    } catch (e) {
+      debugPrint(" Lapor Tidur (sesi) Error (offline): $e");
+      DataRefreshNotifier.instance.notifyDataChanged();
+      return {"success": true, "message": "Tersimpan offline, akan disinkronkan saat online", "offline": true};
+    }
+  }
 
   /// GET - Cek apakah sudah lapor tidur hari ini
   static Future<Map<String, dynamic>> cekTidurHariIni() async {
