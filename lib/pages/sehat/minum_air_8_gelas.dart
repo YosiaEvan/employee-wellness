@@ -218,26 +218,29 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                           SizedBox(height: 20,),
                           Column(
                             children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    "$jumlahGelas",
-                                    style: TextStyle(
-                                      color: Color(0xff0069f0),
-                                      fontSize: 60,
-                                      fontWeight: FontWeight.bold,
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      "$jumlahGelas",
+                                      style: TextStyle(
+                                        color: Color(0xff0069f0),
+                                        fontSize: 60,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    " / $targetGelas",
-                                    style: TextStyle(
-                                      fontSize: 28,
-                                      color: Color(0xff6a7282),
-                                    ),
-                                  )
-                                ],
+                                    Text(
+                                      " / $targetGelas",
+                                      style: TextStyle(
+                                        fontSize: 28,
+                                        color: Color(0xff6a7282),
+                                      ),
+                                    )
+                                  ],
+                                ),
                               ),
                               SizedBox(height: 12,),
                               Text(
@@ -286,30 +289,38 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.transparent,
                                       shadowColor: Colors.transparent,
+                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                     ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        FaIcon(
-                                          FontAwesomeIcons.plus,
-                                          size: 16,
-                                          color: Colors.white,
-                                        ),
-                                        SizedBox(width: 8,),
-                                        Text(
-                                          "Tambah Gelas",
-                                          style: TextStyle(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          FaIcon(
+                                            FontAwesomeIcons.plus,
+                                            size: 14,
                                             color: Colors.white,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
                                           ),
-                                        )
-                                      ],
+                                          SizedBox(width: 6,),
+                                          Text(
+                                            "Tambah Gelas",
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          )
+                                        ],
+                                      ),
                                     )
                                   )
                                 )
                               ),
-                              SizedBox(width: 12,),
+                              SizedBox(width: 8,),
                               Expanded(
                                 child: Container(
                                   decoration: BoxDecoration(
@@ -324,26 +335,34 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.transparent,
                                       shadowColor: Colors.transparent,
+                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                     ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        FaIcon(
-                                          FontAwesomeIcons.rotateRight,
-                                          size: 16,
-                                          color: Colors.black,
-                                        ),
-                                        SizedBox(width: 8,),
-                                        Text(
-                                          "Reset",
-                                          style: TextStyle(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          FaIcon(
+                                            FontAwesomeIcons.rotateRight,
+                                            size: 14,
                                             color: Colors.black,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
                                           ),
-                                        )
-                                      ],
-                                    ),
+                                          SizedBox(width: 6,),
+                                          Text(
+                                            "Reset",
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                    )
                                   )
                                 )
                               )
@@ -397,8 +416,10 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                   children: [
                                     Text(
                                       "Tracker Harian",
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
-                                        fontSize: 20,
+                                        fontSize: 18,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -412,30 +433,30 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                             crossAxisCount: 4,
                             shrinkWrap: true,
                             physics: NeverScrollableScrollPhysics(),
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 8,
+                            crossAxisSpacing: 8,
+                            childAspectRatio: 1,
                             children: List.generate(targetGelas, (index) {
                               final id = index + 1;
                               final isActive = index < jumlahGelas;
 
-                              return SizedBox.square(
-                                dimension: 60,
-                                child: Container(
-                                  padding: EdgeInsets.all(20),
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                      color: isActive ? Color(0xff00affd) : Color(0xfff3f4f6),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: isActive ? Color(0xff2b7fff) : Color(0xffd1d5dc),
-                                        width: 4,
-                                        style: BorderStyle.solid,
-                                      )
-                                  ),
+                              return Container(
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                    color: isActive ? Color(0xff00affd) : Color(0xfff3f4f6),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isActive ? Color(0xff2b7fff) : Color(0xffd1d5dc),
+                                      width: 2,
+                                      style: BorderStyle.solid,
+                                    )
+                                ),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
                                   child: Text(
                                     "$id",
                                     style: TextStyle(
-                                      fontSize: 20,
+                                      fontSize: 18,
                                       color: isActive ? Colors.white : Color(0xff99a1af),
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -501,8 +522,10 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                   children: [
                                     Text(
                                       "Manfaat Minum Air 8 Gelas/Hari",
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
-                                        fontSize: 20,
+                                        fontSize: 18,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -755,8 +778,10 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                                   children: [
                                     Text(
                                       "Tips Tetap Terhidrasi",
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
-                                        fontSize: 20,
+                                        fontSize: 18,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -981,13 +1006,19 @@ class _MinumAir8GelasState extends State<MinumAir8Gelas> with AutoRefreshMixin<M
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
                             shadowColor: Colors.transparent,
+                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                           ),
-                          child: Text(
-                            "Lanjut ke Udara Segar",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              "Lanjut ke Udara Segar",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           )
                       ),
