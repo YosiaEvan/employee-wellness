@@ -37,6 +37,9 @@ class _AktivitasKlikPageState extends State<AktivitasKlikPage> {
 
   PenilaianPoint get point => widget.point;
 
+  // Pola makan tanpa_minyak / tanpa_gula / porsi_kalori kini otomatis dari log makanan — tidak perlu klik manual
+  bool get isOtomatis => point.kode == 'tanpa_minyak' || point.kode == 'tanpa_gula' || point.kode == 'porsi_kalori';
+
   @override
   void initState() {
     super.initState();
@@ -167,6 +170,29 @@ class _AktivitasKlikPageState extends State<AktivitasKlikPage> {
   }
 
   Widget _buildStatusBanner() {
+    if (isOtomatis) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xffeefdf5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xff00c368).withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          children: [
+            const FaIcon(FontAwesomeIcons.robot, color: Color(0xff00c368), size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Otomatis dari log makanan — ${point.targetPerWeek} poin/minggu (maks ${point.targetPerMonth}/bulan). Poin berkurang jika ada makanan mengandung ${point.kode == 'tanpa_minyak' ? 'minyak' : point.kode == 'tanpa_gula' ? 'gula' : 'kalori berlebih'}. Tidak perlu klik manual.',
+                style: const TextStyle(fontSize: 12, color: Color(0xff065f46)),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -249,28 +275,44 @@ class _AktivitasKlikPageState extends State<AktivitasKlikPage> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: (_doneThisWeek || _recording) ? null : _confirm,
+              onPressed: (isOtomatis || _doneThisWeek || _recording) ? null : _confirm,
               icon: _recording
                   ? const SizedBox.square(
                       dimension: 18,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
-                  : FaIcon(FontAwesomeIcons.circleCheck, size: 18, color: Colors.white),
+                  : FaIcon(
+                      isOtomatis ? FontAwesomeIcons.robot : FontAwesomeIcons.circleCheck,
+                      size: 18,
+                      color: Colors.white,
+                    ),
               label: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 child: Text(
-                  _doneThisWeek ? 'Selesai Minggu Ini' : '${point.confirmLabel} +1 Poin',
+                  isOtomatis
+                      ? 'Otomatis via Log Makanan — Tidak Perlu Klik'
+                      : _doneThisWeek
+                          ? 'Selesai Minggu Ini'
+                          : '${point.confirmLabel} +1 Poin',
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: point.color,
+                backgroundColor: isOtomatis ? Colors.grey.shade400 : point.color,
                 foregroundColor: Colors.white,
                 disabledBackgroundColor: Colors.grey.shade300,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
             ),
           ),
+          if (isOtomatis) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Cukup catat makanan harian di halaman Pola Makan Sehat. Sistem otomatis mendeteksi mengandung_minyak / mengandung_gula dari food_nutrition.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11, color: Colors.grey),
+            ),
+          ],
           const SizedBox(height: 12),
           const Center(
             child: Text(

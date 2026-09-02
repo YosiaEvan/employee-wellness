@@ -2,8 +2,6 @@ import 'package:employee_wellness/components/header.dart';
 import 'package:employee_wellness/components/module_kpi_progress_card.dart';
 import 'package:employee_wellness/components/module_section_card.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
-import 'package:employee_wellness/config/penilaian_points.dart';
-import 'package:employee_wellness/pages/penilaian/aktivitas_klik_page.dart';
 import 'package:employee_wellness/pages/sehat/jalan_10000_langkah.dart';
 import 'package:employee_wellness/pages/sehat/minum_air_8_gelas.dart';
 import 'package:employee_wellness/pages/sehat/pola_makan_sehat.dart';
@@ -174,38 +172,38 @@ class SehatHomepage extends StatelessWidget {
                         targetText: loc.translate('sleep_target'),
                       ),
                       const SizedBox(height: 20),
-                      ModuleSectionCard(
-                        destination: AktivitasKlikPage(
-                          point: SehatPenilaianPoints.tanpaMinyak,
-                          heading: loc.translate('sehat_title'),
-                          subHeading: 'Pola Makan',
-                          destination: const SehatHomepage(),
+                      // INFO: Tanpa Minyak & Tanpa Gula kini OTOMATIS dari log makanan (2 poin/minggu, maks 8/bulan)
+                      // Tidak perlu input manual — deduksi otomatis jika mengandung minyak/gula
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xffeefdf5),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xff00c368).withValues(alpha: 0.3), width: 1.5),
                         ),
-                        backgroundColor: const Color(0xffeefdf5),
-                        sectionColor: const Color(0xff00c368),
-                        icon: FontAwesomeIcons.bowlRice,
-                        heading: 'Makan Tanpa Minyak',
-                        subHeading: 'Self-report klik',
-                        description: 'Pilih makanan rebus/kukus/panggang untuk '
-                            'mengurangi asupan lemak jenuh.',
-                        targetText: '${SehatPenilaianPoints.tanpaMinyak.targetPerWeek}x/minggu',
-                      ),
-                      const SizedBox(height: 20),
-                      ModuleSectionCard(
-                        destination: AktivitasKlikPage(
-                          point: SehatPenilaianPoints.tanpaGula,
-                          heading: loc.translate('sehat_title'),
-                          subHeading: 'Pola Makan',
-                          destination: const SehatHomepage(),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xff00c368).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const FaIcon(FontAwesomeIcons.bowlRice, size: 22, color: Color(0xff00c368)),
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Makan Tanpa Minyak & Tanpa Gula', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xff065f46))),
+                                  SizedBox(height: 2),
+                                  Text('Otomatis dari makanan harian — 2 poin/minggu (maks 8/bulan) per indikator. Poin berkurang jika ada makanan mengandung minyak/gula. Tidak perlu input manual.', style: TextStyle(fontSize: 11, color: Color(0xff047857))),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        backgroundColor: const Color(0xffe6faf7),
-                        sectionColor: const Color(0xff00a896),
-                        icon: FontAwesomeIcons.cookie,
-                        heading: 'Tanpa Gula',
-                        subHeading: 'Self-report klik',
-                        description: 'Hindari gula tambahan untuk menjaga gula '
-                            'darah tetap stabil.',
-                        targetText: '${SehatPenilaianPoints.tanpaGula.targetPerWeek}x/minggu',
                       ),
                       const SizedBox(height: 20),
                       _buildAboutCard(context),

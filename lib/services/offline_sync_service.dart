@@ -143,6 +143,11 @@ class OfflineSyncService {
           return _resolve(res.statusCode);
 
         case 'aktivitas_poin':
+          // Tanpa minyak/gula/porsi_kalori kini otomatis dari log makanan — jangan sync pending lama, langsung anggap selesai
+          if (row['modul'] == 'sehat' && (row['aktivitas'] == 'tanpa_minyak' || row['aktivitas'] == 'tanpa_gula' || row['aktivitas'] == 'porsi_kalori')) {
+            debugPrint(' Skip offline sync for otomatis ${row['aktivitas']} — dihitung dari makanan');
+            return true;
+          }
           if (row['modul'] == 'hijau') {
             final res = await ApiService.post('/user/hijau', body: {
               'activity_type': row['aktivitas'],

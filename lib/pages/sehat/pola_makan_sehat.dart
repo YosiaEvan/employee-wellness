@@ -5,6 +5,7 @@ import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/components/smart_food_search.dart';
 import 'package:employee_wellness/pages/sehat/udara_segar.dart';
 import 'package:employee_wellness/pages/sehat_homepage.dart';
+import 'package:employee_wellness/services/sehat_kpi_service.dart';
 import 'package:employee_wellness/services/tracking_kalori_service.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -44,6 +45,12 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> with AutoRefreshMixin<P
   int hariTanpaGula = 0;
   bool isChallengeAchieved = false;
 
+  // KPI Bulanan Pola Makan Otomatis (deduksi jika mengandung minyak/gula)
+  Map<String, dynamic>? monthlyKPI;
+  int kpiTanpaMinyakTercapai = 0;
+  int kpiTanpaGulaTercapai = 0;
+  int kpiPorsiKaloriTercapai = 0;
+
   double get totalCalories => konsumsiData['kalori']?.toDouble() ?? 0.0;
   double get targetCalories => targetData['kalori']?.toDouble() ?? 2000.0;
   double get remainingCalories => sisaData['kalori']?.toDouble() ?? 0.0;
@@ -68,7 +75,29 @@ class _PolaMakanSehatState extends State<PolaMakanSehat> with AutoRefreshMixin<P
   void initState() {
     super.initState();
     loadTodayFood();
-    startAutoRefresh(refresh: loadTodayFood);
+    loadMonthlyKPI();
+    startAutoRefresh(refresh: () async { await loadTodayFood(); await loadMonthlyKPI(); });
+  }
+
+  Future<void> loadMonthlyKPI() async {
+    final res = await SehatKPIService.getMonthlyKPI();
+    if (!mounted) return;
+    if (res['success'] == true && res['data'] != null) {
+      final data = res['data'] as Map<String, dynamic>;
+      final aktivitas = (data['aktivitas'] as List?) ?? [];
+      Map<String, dynamic>? find(String kode) {
+        for (final a in aktivitas) {
+          if (a is Map && (a['aktivitas'] ?? a['kode']).toString() == kode) return Map<String, dynamic>.from(a);
+        }
+        return null;
+      }
+      setState(() {
+        monthlyKPI = data;
+        kpiTanpaMinyakTercapai = (find('tanpa_minyak')?['tercapai'] as num?)?.toInt() ?? 0;
+        kpiTanpaGulaTercapai = (find('tanpa_gula')?['tercapai'] as num?)?.toInt() ?? 0;
+        kpiPorsiKaloriTercapai = (find('porsi_kalori')?['tercapai'] as num?)?.toInt() ?? 0;
+      });
+    }
   }
 
   Future<void> loadTodayFood() async {
@@ -164,6 +193,7 @@ void _checkHealthChallenge() {
     debugPrint("   Calling loadTodayFood()...");
     // Force reload data dari API (bypass any cache)
     await loadTodayFood();
+    await loadMonthlyKPI();
 
     debugPrint("   loadTodayFood() completed, forcing UI rebuild...");
     // Extra safety: Force rebuild UI setelah data loaded
@@ -1313,6 +1343,68 @@ void _checkHealthChallenge() {
 
                     SizedBox(height: 20,),
 
+                    // KPI BULANAN OTOMATIS — 2 poin/minggu untuk tanpa minyak/gula (deduksi otomatis)
+                    Container(
+                      padding: EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Color(0xff00c368).withValues(alpha: 0.3), width: 1.5),
+                        boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.15), blurRadius: 8, offset: Offset(0, 4))],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(8),
+                                decoration: BoxDecoration(color: Color(0xff00c368), borderRadius: BorderRadius.circular(10)),
+                                child: FaIcon(FontAwesomeIcons.chartSimple, size: 18, color: Colors.white),
+                              ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("KPI Bulanan Pola Makan", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                    Text("Otomatis dari log makanan — poin berkurang jika mengandung minyak/gula", style: TextStyle(fontSize: 11, color: Colors.grey)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 4),
+                          Container(
+                            padding: EdgeInsets.all(10),
+                            decoration: BoxDecoration(color: Color(0xffeefdf5), borderRadius: BorderRadius.circular(12)),
+                            child: Row(
+                              children: [
+                                FaIcon(FontAwesomeIcons.circleInfo, size: 14, color: Color(0xff00c368)),
+                                SizedBox(width: 8),
+                                Expanded(child: Text("Tanpa Minyak & Tanpa Gula: 2 poin/minggu, maks 8/bulan per indikator. Hari dengan makanan berminyak/bergula otomatis tidak dapat poin. Tidak perlu input manual.", style: TextStyle(fontSize: 11, color: Color(0xff065f46)))),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 14),
+                          _buildKpiMinyakGulaRow("Tanpa Minyak", kpiTanpaMinyakTercapai, 8, FontAwesomeIcons.bowlRice, Color(0xff00c368)),
+                          SizedBox(height: 12),
+                          _buildKpiMinyakGulaRow("Tanpa Gula", kpiTanpaGulaTercapai, 8, FontAwesomeIcons.cookieBite, Color(0xff00a896)),
+                          SizedBox(height: 12),
+                          _buildKpiMinyakGulaRow("Sesuai Kalori", kpiPorsiKaloriTercapai, 20, FontAwesomeIcons.scaleBalanced, Color(0xfff59e0b)),
+                          SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(10),
+                            decoration: BoxDecoration(color: Color(0xFFF9FAFB), borderRadius: BorderRadius.circular(12), border: Border.all(color: Color(0xFFE5E7EB))),
+                            child: Text("Total Pola Makan: ${kpiTanpaMinyakTercapai + kpiTanpaGulaTercapai + kpiPorsiKaloriTercapai} / 36 poin bulan ini", textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xff374151))),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: 20,),
+
                     // Navigation to Udara Segar
                     Container(
                       width: double.infinity,
@@ -1351,6 +1443,50 @@ void _checkHealthChallenge() {
       ),
     ),
   );
+  }
+
+  Widget _buildKpiMinyakGulaRow(String label, int tercapai, int target, FaIconData icon, Color color) {
+    final pct = target > 0 ? (tercapai / target).clamp(0.0, 1.0) : 0.0;
+    final isMax = tercapai >= target;
+    return Container(
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
+            child: FaIcon(icon, size: 16, color: color),
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    Text("$tercapai / $target", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+                  ],
+                ),
+                SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(value: pct, minHeight: 6, backgroundColor: Colors.grey.shade200, valueColor: AlwaysStoppedAnimation<Color>(color)),
+                ),
+                SizedBox(height: 4),
+                Text(isMax ? "Target tercapai" : "${target - tercapai} poin lagi menuju maks", style: TextStyle(fontSize: 10, color: Colors.grey)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // Build Smart Food Search Dialog

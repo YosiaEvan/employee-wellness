@@ -84,9 +84,10 @@ class SehatPenilaianPoints {
     icon: FontAwesomeIcons.bowlRice,
     color: Color(0xff00c368),
     softColor: Color(0xffeefdf5),
-    description: 'Memilih makanan rebus/kukus/panggang mengurangi asupan '
-        'lemak jenuh dan kalori harian.',
-    confirmLabel: 'Sudah Makan Tanpa Minyak',
+    description: 'OTOMATIS dari log makanan (food_nutrition.mengandung_minyak). '
+        'Poin 2/minggu (maks 8/bulan) — akan berkurang otomatis jika hari itu ada makanan mengandung minyak. '
+        'Tidak perlu input manual, cukup catat makanan harian.',
+    confirmLabel: 'Otomatis via Log Makanan',
     targetPerWeek: 2,
     targetPerMonth: 8,
   );
@@ -99,9 +100,10 @@ class SehatPenilaianPoints {
     icon: FontAwesomeIcons.cookie,
     color: Color(0xff00a896),
     softColor: Color(0xffe6faf7),
-    description: 'Menghindari gula tambahan menjaga gula darah stabil '
-        'dan mengurangi risiko diabetes.',
-    confirmLabel: 'Sudah Tanpa Gula',
+    description: 'OTOMATIS dari log makanan (food_nutrition.mengandung_gula). '
+        'Poin 2/minggu (maks 8/bulan) — akan berkurang otomatis jika hari itu ada makanan mengandung gula. '
+        'Tidak perlu input manual, cukup catat makanan harian.',
+    confirmLabel: 'Otomatis via Log Makanan',
     targetPerWeek: 2,
     targetPerMonth: 8,
   );
@@ -114,9 +116,9 @@ class SehatPenilaianPoints {
     icon: FontAwesomeIcons.scaleBalanced,
     color: Color(0xfff59e0b),
     softColor: Color(0xfffff8e1),
-    description: 'Menyesuaikan porsi makan dengan target kalori harian '
-        'membantu menjaga berat badan ideal.',
-    confirmLabel: 'Sudah Sesuai Porsi Kalori',
+    description: 'OTOMATIS: tercapai jika total kalori harian ≤ target_kalori_harian user. '
+        'Di-hitung dari tracking_kalori_harian. Tidak perlu input manual terpisah.',
+    confirmLabel: 'Otomatis via Log Makanan',
     targetPerWeek: 5,
     targetPerMonth: 20,
   );

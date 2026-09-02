@@ -15,6 +15,16 @@ class AktivitasService {
     String? tanggal,
     String? deskripsi,
   }) async {
+    // Pola makan tanpa_minyak / tanpa_gula / porsi_kalori kini otomatis dari log makanan — blok input manual di client
+    if (modul == 'sehat' && (aktivitas == 'tanpa_minyak' || aktivitas == 'tanpa_gula' || aktivitas == 'porsi_kalori')) {
+      final label = aktivitas == 'tanpa_minyak' ? 'minyak' : aktivitas == 'tanpa_gula' ? 'gula' : 'kalori berlebih';
+      return {
+        'success': false,
+        'statusCode': 400,
+        'message': 'Otomatis dari log makanan — $aktivitas 2 poin/minggu (maks 8/bulan) akan berkurang jika ada makanan mengandung $label. Tidak perlu input manual, cukup catat makanan di Pola Makan Sehat.',
+        'otomatis': true,
+      };
+    }
     final tgl = tanggal ?? LocalDatabaseService.todayStr();
 
     // Simpan ke antrean lokal dulu (agar tidak hilang saat offline).
