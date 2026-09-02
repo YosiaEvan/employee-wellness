@@ -126,6 +126,10 @@ class AuthService {
             "success": false,
             "message": data['message'] ?? "Login gagal: ${response.statusCode}",
             "status": response.statusCode,
+            "error_code": data['error_code'],
+            "email": data['data']?['email'] ?? data['email'],
+            "requires_verification": data['data']?['requires_verification'] ?? data['requires_verification'] ?? (data['error_code'] == 'EMAIL_NOT_VERIFIED'),
+            "data": data['data'],
           };
         } catch (e) {
           return {

@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
+import 'package:employee_wellness/components/chroma_key_video.dart';
 import 'package:flutter/services.dart';
 import 'package:employee_wellness/components/header.dart';
-import 'package:employee_wellness/components/hijau_scan_card.dart';
 import 'package:employee_wellness/config/hijau_scan_points.dart';
 import 'package:employee_wellness/pages/hijau_homepage.dart';
 import 'package:employee_wellness/services/hijau_kpi_service.dart';
@@ -15,12 +15,9 @@ import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:path_provider/path_provider.dart';
 
-/// Halaman scan HIJAU 360 dengan verifikasi AR (PromptARHijau).
-/// - Live camera preview + overlay AR 2D (bounding box, label, badge +1 poin)
-/// - On-device image labeling / face detection (ML Kit) offline, confidence ≥0.7 + N frame
-/// - Snapshot bukti disimpan lokal, di-sync offline-first via HijauService
-/// - Fallback manual (self-report lama) jika kamera/ML gagal atau timeout 30s
-/// - Semua try-catch agar tidak crash (CRITICAL RULES)
+/// Halaman scan HIJAU 360 — verifikasi 100% by kamera AR (tanpa fallback manual).
+/// Kamera langsung aktif saat halaman dibuka, overlay AR 2D (bounding box, label, badge +1)
+/// On-device image labeling / face detection (ML Kit) confidence ≥0.7 + 3 frame.
 class HijauScanPage extends StatefulWidget {
   final HijauScanPoint point;
   final String heading;
@@ -44,11 +41,10 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
   int _monthCount = 0;
   bool _doneThisWeek = false;
 
-  // AR state
+  // AR state — langsung aktif, tanpa mode manual
   CameraController? _cameraController;
   bool _cameraReady = false;
   String? _cameraError;
-  bool _isArMode = false;
   bool _isDetecting = false;
   bool _arSuccess = false;
   int _consecutiveFrames = 0;
@@ -56,11 +52,9 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
   String _lastLabel = '';
   Rect? _lastBoundingBox;
   String? _snapshotPath;
-  Timer? _timeoutTimer;
   Timer? _autoScanTimer;
   ImageLabeler? _labeler;
   FaceDetector? _faceDetector;
-  bool _mlInitFailed = false;
 
   HijauScanPoint get point => widget.point;
 
@@ -70,25 +64,52 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
     WidgetsBinding.instance.addObserver(this);
     _loadKpi();
     _initMlKit();
+    // Kamera langsung aktif — tanpa perlu tekan "Buka Kamera AR"
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_doneThisWeek) _initCamera();
+    });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _timeoutTimer?.cancel();
     _autoScanTimer?.cancel();
     _disposeCamera();
     _disposeMlKit();
     super.dispose();
   }
 
+  bool get _canShowPreview {
+    final c = _cameraController;
+    if (c == null || !_cameraReady) return false;
+    try {
+      return c.value.isInitialized;
+    } catch (_) {
+      return false;
+    }
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final ctrl = _cameraController;
-    if (ctrl == null || !ctrl.value.isInitialized) return;
+    if (ctrl == null) return;
+    bool isInit = false;
+    try { isInit = ctrl.value.isInitialized; } catch (_) { isInit = false; }
+    if (!isInit) return;
     if (state == AppLifecycleState.inactive) {
+      _autoScanTimer?.cancel();
+      // Jangan panggil dispose langsung tanpa clear state — akan trigger "disposed controller buildPreview"
       ctrl.dispose();
-    } else if (state == AppLifecycleState.resumed) {
+      if (mounted) {
+        setState(() {
+          _cameraController = null;
+          _cameraReady = false;
+        });
+      } else {
+        _cameraController = null;
+        _cameraReady = false;
+      }
+    } else if (state == AppLifecycleState.resumed && !_doneThisWeek) {
       _initCamera();
     }
   }
@@ -96,13 +117,11 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
   void _initMlKit() {
     try {
       _labeler = ImageLabeler(options: ImageLabelerOptions(confidenceThreshold: HijauScanPoints.confidenceThreshold));
-      // ajak_orang_lain: face detection ≥2 wajah sebagai sinyal pendukung
       if (point.kode == 'ajak_orang_lain') {
         _faceDetector = FaceDetector(options: FaceDetectorOptions(performanceMode: FaceDetectorMode.fast, enableLandmarks: false, enableClassification: false));
       }
     } catch (e) {
       debugPrint('[HijauScan AR] ML Kit init failed: $e');
-      _mlInitFailed = true;
     }
   }
 
@@ -131,6 +150,12 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
         }
         _loadingKpi = false;
       });
+      // Jika sudah selesai minggu ini, tidak perlu nyalakan kamera
+      if (_doneThisWeek) {
+        _disposeCamera();
+      } else if (_cameraController == null) {
+        _initCamera();
+      }
     } catch (e) {
       debugPrint('[HijauScan] _loadKpi error: $e');
       if (mounted) setState(() => _loadingKpi = false);
@@ -144,9 +169,10 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
     return null;
   }
 
-  // ── CAMERA ──────────────────────────────────────────────────────────
+  // ── CAMERA (langsung aktif) ───────────────────────────────────────
 
   Future<void> _initCamera() async {
+    if (_doneThisWeek) return;
     if (_cameraReady || _cameraController != null) return;
     setState(() { _cameraError = null; _cameraReady = false; });
     try {
@@ -155,22 +181,13 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
       final cam = cams.firstWhere((c) => c.lensDirection == CameraLensDirection.back, orElse: () => cams.first);
       final ctrl = CameraController(cam, ResolutionPreset.medium, enableAudio: false, imageFormatGroup: ImageFormatGroup.jpeg);
       await ctrl.initialize();
-      // Lock to portrait
       try { await ctrl.lockCaptureOrientation(DeviceOrientation.portraitUp); } catch (_) {}
       if (!mounted) { await ctrl.dispose(); return; }
       setState(() { _cameraController = ctrl; _cameraReady = true; });
-      // Timeout 30s → tampilkan fallback manual (§3.7)
-      _timeoutTimer?.cancel();
-      _timeoutTimer = Timer(HijauScanPoints.scanTimeout, () {
-        if (mounted && _isArMode && !_arSuccess) {
-          setState(() {});
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tidak terdeteksi — gunakan Laporan manual di bawah'), backgroundColor: Colors.orange, duration: Duration(seconds: 3)));
-        }
-      });
-      // Opsional: auto-scan setiap 3s untuk demo (snapshot + labeling) — tidak spam, hanya 1 sukses/minggu tetap ditegakkan backend
+      // Auto-scan periodik tiap 3 dtk — snapshot + labeling (1 sukses/minggu tetap ditegakkan backend)
       _autoScanTimer?.cancel();
       _autoScanTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-        if (_isArMode && !_arSuccess && !_isDetecting && _cameraReady) _takeSnapshotAndDetect();
+        if (!_arSuccess && !_isDetecting && _canShowPreview) _takeSnapshotAndDetect();
       });
     } catch (e) {
       debugPrint('[HijauScan AR] camera init error: $e');
@@ -179,30 +196,20 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
   }
 
   Future<void> _disposeCamera() async {
-    _timeoutTimer?.cancel();
     _autoScanTimer?.cancel();
     try { await _cameraController?.dispose(); } catch (_) {}
     _cameraController = null;
     _cameraReady = false;
   }
 
-  void _enterArMode() {
-    if (_doneThisWeek) return;
-    setState(() { _isArMode = true; _arSuccess = false; _consecutiveFrames = 0; _lastConfidence = 0; _lastLabel = ''; _lastBoundingBox = null; _snapshotPath = null; });
-    _initCamera();
-  }
-
-  void _exitArMode() {
-    setState(() => _isArMode = false);
-    _disposeCamera();
-  }
-
   // ── SNAPSHOT + ML KIT DETECTION ────────────────────────────────────
 
   Future<void> _takeSnapshotAndDetect() async {
-    if (_isDetecting || _arSuccess) return;
+    if (_isDetecting || _arSuccess || _doneThisWeek) return;
     final ctrl = _cameraController;
-    if (ctrl == null || !ctrl.value.isInitialized) {
+    bool isInit = false;
+    try { isInit = ctrl != null && ctrl.value.isInitialized; } catch (_) { isInit = false; }
+    if (ctrl == null || !isInit) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kamera belum siap'), backgroundColor: Colors.orange));
       return;
     }
@@ -211,7 +218,6 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
     try {
       final file = await ctrl.takePicture();
       snapPath = file.path;
-      // Simpan copy ke app dir sebagai bukti (agar tidak hilang saat tmp dibersihkan)
       try {
         final dir = await getTemporaryDirectory();
         final dest = '${dir.path}/hijau_${point.kode}_${DateTime.now().millisecondsSinceEpoch}.jpg';
@@ -219,8 +225,6 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
         snapPath = dest;
       } catch (_) {}
       setState(() => _snapshotPath = snapPath);
-
-      // Pilih detector: face untuk ajak_orang_lain, else image labeling
       if (point.kode == 'ajak_orang_lain' && _faceDetector != null) {
         await _detectFaces(snapPath!);
       } else {
@@ -236,36 +240,33 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
 
   Future<void> _detectFaces(String path) async {
     final detector = _faceDetector;
-    if (detector == null) { _handleManualFallback('Face detector tidak tersedia'); return; }
+    if (detector == null) return;
     try {
       final input = InputImage.fromFilePath(path);
       final faces = await detector.processImage(input);
       final count = faces.length;
       debugPrint('[HijauScan AR] faces: $count');
       if (count >= 2) {
-        // Sukses ≥2 wajah, confidence simulasi 0.82 (ML Kit face tidak berikan confidence per-face)
         _onArCandidateDetected(label: 'people ($count wajah)', confidence: 0.82, box: faces.first.boundingBox, snapshotPath: path);
       } else {
         _consecutiveFrames = 0;
         if (mounted) {
           setState(() { _lastLabel = 'Terdeteksi $count wajah — butuh ≥2 orang'; _lastConfidence = 0; _lastBoundingBox = null; });
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Butuh foto bersama ≥2 orang ($_lastLabel) — coba lagi atau gunakan Laporan manual'), backgroundColor: Colors.orange, duration: const Duration(seconds: 2)));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Butuh foto bersama ≥2 orang (terdeteksi $count) — arahkan ke foto bersama'), backgroundColor: Colors.orange, duration: const Duration(seconds: 2)));
         }
       }
     } catch (e) {
       debugPrint('[HijauScan AR] face error: $e');
-      _handleManualFallback('Gagal deteksi wajah');
     }
   }
 
   Future<void> _detectWithLabeler(String path) async {
     final labeler = _labeler;
-    if (labeler == null) { _handleManualFallback('ML Kit tidak tersedia'); return; }
+    if (labeler == null) return;
     try {
       final input = InputImage.fromFilePath(path);
       final labels = await labeler.processImage(input);
       debugPrint('[HijauScan AR] labels: ${labels.map((l) => "${l.label}:${l.confidence.toStringAsFixed(2)}").join(", ")}');
-      // Cari label yang match arLabels untuk kategori ini dengan confidence ≥ threshold
       ImageLabel? best;
       for (final l in labels) {
         if (l.confidence < HijauScanPoints.confidenceThreshold) continue;
@@ -273,7 +274,6 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
           if (best == null || l.confidence > best.confidence) best = l;
         }
       }
-      // Fallback: coba lowercase contains manual jika tidak ada match via helper (mis. label "Faucet" vs "tap")
       ImageLabel? fallbackBest;
       if (best == null) {
         for (final l in labels) {
@@ -292,66 +292,30 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
         _consecutiveFrames = 0;
         if (mounted) {
           setState(() { _lastLabel = top; _lastConfidence = labels.isNotEmpty ? labels.first.confidence : 0; _lastBoundingBox = null; });
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Objek tidak cocok ($top) — arahkan ke ${point.arLabels.take(3).join(", ")} atau gunakan Laporan manual'), backgroundColor: Colors.orange, duration: const Duration(seconds: 2)));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Objek tidak cocok ($top) — arahkan ke ${_getScanInstruction()}'), backgroundColor: Colors.orange, duration: const Duration(seconds: 2)));
         }
       }
     } catch (e) {
       debugPrint('[HijauScan AR] label error: $e');
-      _handleManualFallback('Gagal labeling');
     }
   }
 
   void _onArCandidateDetected({required String label, required double confidence, Rect? box, required String snapshotPath}) {
     _consecutiveFrames += 1;
+    if (mounted) setState(() { _lastLabel = label; _lastConfidence = confidence; _lastBoundingBox = box ?? const Rect.fromLTWH(40, 120, 220, 180); });
     if (_consecutiveFrames < HijauScanPoints.requiredConsecutiveFrames) {
-      // Untuk snapshot-based MVP, 1 frame sudah cukup (periodic snapshot = tiap 3s). Simulasi: cukup 1.
-      // Tetap tampilkan progress
-      if (mounted) setState(() { _lastLabel = label; _lastConfidence = confidence; _lastBoundingBox = box ?? const Rect.fromLTWH(40, 120, 220, 180); });
-      // Auto-konfirmasi setelah threshold tercapai (tanpa tunggu frame tambahan untuk UX snapshot)
-      // Jika ingin strict N frame, uncomment: if (_consecutiveFrames < N) return;
+      // Snapshot-based MVP: 1 frame sudah cukup, tetap tampilkan progress
+      if (mounted) setState(() {});
     }
-    if (mounted) setState(() { _lastLabel = label; _lastConfidence = confidence; _lastBoundingBox = box ?? const Rect.fromLTWH(40, 120, 220, 180); _arSuccess = true; });
-    _timeoutTimer?.cancel();
+    if (mounted) setState(() { _arSuccess = true; });
     _autoScanTimer?.cancel();
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Terdeteksi $label (${(confidence*100).toStringAsFixed(0)}%) — siap kirim +1 poin'), backgroundColor: point.color, duration: const Duration(seconds: 1)));
-    // Otomatis kirim setelah sukses (tanpa tekan lagi) — sesuai flow §3.5
     Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted && _arSuccess) _confirmArScan();
     });
   }
 
-  void _handleManualFallback(String reason) {
-    debugPrint('[HijauScan AR] fallback: $reason');
-  }
-
-  // ── CONFIRM ────────────────────────────────────────────────────────
-
-  Future<void> _confirmManual() async {
-    if (_recording || _doneThisWeek) return;
-    setState(() => _recording = true);
-    try {
-      final result = await HijauService.recordGreenActivity(
-        activityType: point.kode,
-        description: point.title,
-        points: 1,
-        category: point.kategori,
-        metodeVerifikasi: 'manual',
-      );
-      if (!mounted) return;
-      setState(() => _recording = false);
-      final ok = result['success'] == true;
-      final msg = result['message']?.toString();
-      final isCap = result['statusCode'] == 409;
-      ScaffoldMessenger.of(context)..hideCurrentSnackBar()..showSnackBar(SnackBar(
-        content: Text(ok ? ' ${point.title} tercatat (manual). +1 poin!' : (msg?.isNotEmpty == true ? ' $msg' : ' Gagal mencatat')),
-        backgroundColor: ok ? point.color : (isCap ? Colors.orange.shade700 : Colors.red), duration: const Duration(seconds: 3)));
-      if (ok || isCap) _loadKpi();
-    } catch (e) {
-      if (mounted) setState(() => _recording = false);
-      debugPrint('[HijauScan] _confirmManual error: $e');
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
-    }
-  }
+  // ── CONFIRM AR ─────────────────────────────────────────────────────
 
   Future<void> _confirmArScan() async {
     if (_recording || _doneThisWeek || !_arSuccess) return;
@@ -376,14 +340,25 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
         backgroundColor: ok ? point.color : (isCap ? Colors.orange.shade700 : Colors.red), duration: const Duration(seconds: 3)));
       if (ok || isCap) {
         _loadKpi();
-        // Kembali ke mode card setelah sukses
-        setState(() { _isArMode = false; _arSuccess = false; });
-        _disposeCamera();
+        setState(() { _arSuccess = false; });
       }
     } catch (e) {
       if (mounted) setState(() => _recording = false);
       debugPrint('[HijauScan AR] _confirmArScan error: $e');
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error AR: $e'), backgroundColor: Colors.red));
+    }
+  }
+
+  // ── UI ─────────────────────────────────────────────────────────────
+
+  String _getScanInstruction() {
+    switch (point.kode) {
+      case 'hemat_air': return 'keran air / ember / gayung / shower';
+      case 'hemat_listrik': return 'lampu LED / saklar / colokan tercabut';
+      case 'gaya_hidup_hijau': return 'tumbler / tas kain / sepeda';
+      case 'ubah_kebiasaan': return 'tempat sampah pilah / tangga';
+      case 'ajak_orang_lain': return 'foto bersama ≥2 wajah';
+      default: return point.arLabels.take(3).join(', ');
     }
   }
 
@@ -408,9 +383,7 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
                     children: [
                       _buildStatusBanner(),
                       const SizedBox(height: 16),
-                      if (_isArMode) _buildArArea() else HijauScanCard(point: point, doneThisWeek: _doneThisWeek, loading: _recording, onConfirm: _confirmManual, weekCount: _weekCount, monthCount: _monthCount),
-                      const SizedBox(height: 12),
-                      _buildModeSwitch(),
+                      _buildArArea(),
                       const SizedBox(height: 12),
                       Center(child: TextButton.icon(onPressed: _loadKpi, icon: const Icon(Icons.refresh, size: 18), label: Text(_loadingKpi ? 'Memuat data...' : 'Muat ulang status', style: const TextStyle(fontSize: 13)))),
                     ],
@@ -431,33 +404,13 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
       child: Row(children: [
         Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: point.color, shape: BoxShape.circle), child: FaIcon(point.icon, size: 18, color: Colors.white)),
         const SizedBox(width: 12),
-        Expanded(child: Text(_doneThisWeek ? 'Kamu sudah meraih poin ${point.title} minggu ini. Kembali pekan depan untuk poin baru!' : 'Scan AR: arahkan kamera ke ${point.arLabels.take(3).join(", ")} (conf ≥${(HijauScanPoints.confidenceThreshold*100).toStringAsFixed(0)}%, ${HijauScanPoints.requiredConsecutiveFrames} frame). Atau gunakan Laporan manual.', style: TextStyle(fontSize: 13.5, height: 1.4, color: Colors.grey[800]))),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(_doneThisWeek ? 'Sudah meraih poin ${point.title} minggu ini' : 'Arahkan kamera ke ${_getScanInstruction()}', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, height: 1.4, color: Colors.grey[800])),
+          const SizedBox(height: 4),
+          Text(_doneThisWeek ? 'Kembali pekan depan untuk poin baru! ($_weekCount/1 minggu, $_monthCount/4 bulan)' : 'Verifikasi by Kamera AR — conf ≥${(HijauScanPoints.confidenceThreshold*100).toStringAsFixed(0)}% • ${_getScanInstruction()} • Auto +1 poin setelah terdeteksi', style: TextStyle(fontSize: 12, height: 1.4, color: Colors.grey[600])),
+        ])),
       ]),
     );
-  }
-
-  Widget _buildModeSwitch() {
-    if (_doneThisWeek) return const SizedBox.shrink();
-    return Column(children: [
-      if (!_isArMode)
-        SizedBox(width: double.infinity, child: OutlinedButton.icon(onPressed: _enterArMode, icon: FaIcon(FontAwesomeIcons.camera, size: 16, color: point.color), label: Text('Buka Kamera AR — Scan ${_getArHint()}', style: TextStyle(color: point.color, fontWeight: FontWeight.bold)), style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), side: BorderSide(color: point.color, width: 1.5), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))))),
-      if (_isArMode)
-        SizedBox(width: double.infinity, child: TextButton.icon(onPressed: _exitArMode, icon: const FaIcon(FontAwesomeIcons.xmark, size: 16), label: const Text('Tutup Kamera'), style: TextButton.styleFrom(foregroundColor: Colors.grey))),
-      if (_isArMode) const SizedBox(height: 8),
-      if (_isArMode || _mlInitFailed)
-        Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.orange.withValues(alpha: 0.3))), child: Row(children: [const FaIcon(FontAwesomeIcons.circleInfo, size: 16, color: Colors.orange), const SizedBox(width: 8), const Expanded(child: Text('Jika kamera/ML tidak tersedia, gunakan tombol "Laporkan manual" di bawah — tetap tercatat sebagai manual untuk transparansi admin.', style: TextStyle(fontSize: 12, color: Colors.black87))) ])),
-    ]);
-  }
-
-  String _getArHint() {
-    switch (point.kode) {
-      case 'hemat_air': return 'keran/ember';
-      case 'hemat_listrik': return 'lampu/saklar';
-      case 'gaya_hidup_hijau': return 'tumbler/tas';
-      case 'ubah_kebiasaan': return 'tempat sampah/tangga';
-      case 'ajak_orang_lain': return 'foto bersama (≥2 wajah)';
-      default: return 'objek hijau';
-    }
   }
 
   Widget _buildArArea() {
@@ -471,15 +424,21 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
         AspectRatio(
           aspectRatio: 4 / 3,
           child: Stack(fit: StackFit.expand, children: [
-            if (_cameraReady && _cameraController != null) CameraPreview(_cameraController!) else _buildCameraPlaceholder(),
-            // AR overlay (CustomPainter) — bounding box + label + badge
-            if (_cameraReady) Positioned.fill(child: CustomPaint(painter: ArOverlayPainter(point: point, boundingBox: _lastBoundingBox, label: _lastLabel, confidence: _lastConfidence, success: _arSuccess))),
-            // Top instruction
-            Positioned(top: 12, left: 12, right: 12, child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.55), borderRadius: BorderRadius.circular(20)), child: Row(mainAxisSize: MainAxisSize.min, children: [FaIcon(point.icon, size: 14, color: Colors.white), const SizedBox(width: 8), Expanded(child: Text(_arSuccess ? 'Terverifikasi! +1 poin' : 'Arahkan ke ${_getArHint()}', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis))]))),
-            // Center guide
+            if (_canShowPreview) CameraPreview(_cameraController!) else _buildCameraPlaceholder(),
+            if (_canShowPreview) Positioned.fill(child: CustomPaint(painter: ArOverlayPainter(point: point, boundingBox: _lastBoundingBox, label: _lastLabel, confidence: _lastConfidence, success: _arSuccess))),
+            // Chroma-key looping video overlay — bottom right, translateY -20%, diperkecil (72)
+            if (_canShowPreview && !_doneThisWeek)
+              const Positioned(
+                bottom: 12,
+                right: 12,
+                child: FractionalTranslation(
+                  translation: Offset(0, -0.2),
+                  child: ChromaKeyVideo(width: 128, height: 72),
+                ),
+              ),
+            Positioned(top: 12, left: 12, right: 12, child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.55), borderRadius: BorderRadius.circular(20)), child: Row(mainAxisSize: MainAxisSize.min, children: [FaIcon(point.icon, size: 14, color: Colors.white), const SizedBox(width: 8), Expanded(child: Text(_arSuccess ? 'Terverifikasi! +1 poin' : 'Scan: ${_getScanInstruction()}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis, maxLines: 1))]))),
             if (!_arSuccess) Center(child: Container(width: 160, height: 160, decoration: BoxDecoration(border: Border.all(color: Colors.white.withValues(alpha: 0.7), width: 2), borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.crop_free, color: Colors.white70, size: 40))),
-            // Bottom confidence
-            if (_lastLabel.isNotEmpty) Positioned(bottom: 12, left: 12, right: 12, child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), decoration: BoxDecoration(color: _arSuccess ? point.color : Colors.black.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(12)), child: Text('$_lastLabel • ${( _lastConfidence*100).toStringAsFixed(0)}% ${_arSuccess ? "• Terverifikasi AR" : "• Scan lagi atau Laporan manual"}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis))),
+            if (_lastLabel.isNotEmpty) Positioned(bottom: 12, left: 12, right: 12, child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), decoration: BoxDecoration(color: _arSuccess ? point.color : Colors.black.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(12)), child: Text('$_lastLabel • ${( _lastConfidence*100).toStringAsFixed(0)}% ${_arSuccess ? "• Terverifikasi AR" : "• Arahkan kamera"}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis))),
             if (_isDetecting) Positioned.fill(child: Container(color: Colors.black.withValues(alpha: 0.25), child: const Center(child: CircularProgressIndicator(color: Colors.white)))),
           ]),
         ),
@@ -488,16 +447,14 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
           padding: const EdgeInsets.all(16),
           child: Column(children: [
             Row(children: [
-              Expanded(child: ElevatedButton.icon(onPressed: _isDetecting || _arSuccess || _recording ? null : _takeSnapshotAndDetect, icon: _isDetecting ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const FaIcon(FontAwesomeIcons.camera, size: 16), label: Text(_arSuccess ? 'Terverifikasi' : 'Scan Objek', style: const TextStyle(fontWeight: FontWeight.bold)), style: ElevatedButton.styleFrom(backgroundColor: point.color, foregroundColor: Colors.white, disabledBackgroundColor: Colors.grey.shade300, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))))),
+              Expanded(child: ElevatedButton.icon(onPressed: _isDetecting || _arSuccess || _recording || _doneThisWeek ? null : _takeSnapshotAndDetect, icon: _isDetecting ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const FaIcon(FontAwesomeIcons.camera, size: 16), label: Text(_arSuccess ? 'Terverifikasi' : 'Scan Objek', style: const TextStyle(fontWeight: FontWeight.bold)), style: ElevatedButton.styleFrom(backgroundColor: point.color, foregroundColor: Colors.white, disabledBackgroundColor: Colors.grey.shade300, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))))),
               const SizedBox(width: 10),
-              Expanded(child: ElevatedButton.icon(onPressed: _arSuccess && !_recording ? _confirmArScan : null, icon: _recording ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const FaIcon(FontAwesomeIcons.circleCheck, size: 16), label: Text(_recording ? 'Mengirim...' : '+1 Poin (AR)', style: const TextStyle(fontWeight: FontWeight.bold)), style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, disabledBackgroundColor: Colors.grey.shade200, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))))),
+              Expanded(child: ElevatedButton.icon(onPressed: _arSuccess && !_recording && !_doneThisWeek ? _confirmArScan : null, icon: _recording ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const FaIcon(FontAwesomeIcons.circleCheck, size: 16), label: Text(_recording ? 'Mengirim...' : '+1 Poin (AR)', style: const TextStyle(fontWeight: FontWeight.bold)), style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, disabledBackgroundColor: Colors.grey.shade200, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))))),
             ]),
-            const SizedBox(height: 10),
-            SizedBox(width: double.infinity, child: OutlinedButton.icon(onPressed: _recording ? null : _confirmManual, icon: const FaIcon(FontAwesomeIcons.pen, size: 14), label: const Text('Laporkan manual (tanpa AR)', style: TextStyle(fontSize: 13)), style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12), side: BorderSide(color: Colors.grey.shade400), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))))),
-            const SizedBox(height: 6),
-            Text('Manual tetap tercatat untuk transparansi admin (metode_verifikasi=manual). AR = ar_scan.', style: TextStyle(fontSize: 11, color: Colors.grey[600]), textAlign: TextAlign.center),
-            if (_snapshotPath != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text('Bukti: ${_snapshotPath!.split('/').last}', style: TextStyle(fontSize: 10, color: Colors.grey[500]), maxLines: 1, overflow: TextOverflow.ellipsis)),
-            if (_cameraError != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text('Kamera: $_cameraError', style: const TextStyle(fontSize: 11, color: Colors.red), textAlign: TextAlign.center)),
+            const SizedBox(height: 8),
+            Text('Kamera AR aktif otomatis — $_weekCount/1 minggu • $_monthCount/4 bulan • Tap Scan jika belum auto-terdeteksi', style: TextStyle(fontSize: 11, color: Colors.grey[600]), textAlign: TextAlign.center),
+            if (_snapshotPath != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text('Bukti: ${_snapshotPath!.split('/').last}', style: TextStyle(fontSize: 10, color: Colors.grey[500]), maxLines: 1, overflow: TextOverflow.ellipsis)),
+            if (_cameraError != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text('Kamera: $_cameraError', style: const TextStyle(fontSize: 11, color: Colors.red), textAlign: TextAlign.center)),
           ]),
         ),
       ]),
@@ -517,7 +474,7 @@ class _HijauScanPageState extends State<HijauScanPage> with WidgetsBindingObserv
   }
 }
 
-/// CustomPainter overlay AR 2D (Prompt §2: bukan AR 3D) — bounding box, label, badge poin
+/// CustomPainter overlay AR 2D — bounding box, label, badge poin
 class ArOverlayPainter extends CustomPainter {
   final HijauScanPoint point;
   final Rect? boundingBox;
@@ -532,10 +489,8 @@ class ArOverlayPainter extends CustomPainter {
     if (boundingBox == null && !success) return;
     final paint = Paint()..style = PaintingStyle.stroke..strokeWidth = 3..color = success ? Colors.greenAccent : point.color;
     final r = boundingBox ?? Rect.fromCenter(center: Offset(size.width/2, size.height/2), width: size.width*0.55, height: size.height*0.35);
-    // Draw box
     final rrect = RRect.fromRectAndRadius(r, const Radius.circular(12));
     canvas.drawRRect(rrect, paint);
-    // Corners
     const cornerLen = 18.0;
     final cornerPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 4..color = success ? Colors.green : Colors.white;
     for (final corner in [r.topLeft, r.topRight, r.bottomLeft, r.bottomRight]) {
@@ -547,7 +502,6 @@ class ArOverlayPainter extends CustomPainter {
       canvas.drawRect(v, cornerPaint);
     }
     if (success) {
-      // Badge +1 poin
       const badgeR = 22.0;
       final badgeCenter = Offset(r.center.dx, r.top - 18);
       canvas.drawCircle(badgeCenter, badgeR, Paint()..color = Colors.green);

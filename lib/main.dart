@@ -1,6 +1,7 @@
 import 'package:employee_wellness/home.dart';
 import 'package:employee_wellness/register.dart';
 import 'package:employee_wellness/forgot_password.dart';
+import 'package:employee_wellness/verify_email.dart';
 import 'package:employee_wellness/services/auth_service.dart';
 import 'package:employee_wellness/services/background_steps_tracker.dart';
 import 'package:employee_wellness/services/battery_optimization_service.dart';
@@ -225,7 +226,40 @@ class _LoginPageState extends State<LoginPage> {
         );
       }
     } else {
-      debugPrint(" Login FAILED: ${result['message']}");
+      debugPrint(" Login FAILED: ${result['message']} status=${result['status']} error_code=${result['error_code']} requires_verification=${result['requires_verification']}");
+      // Jika email belum diverifikasi -> langsung redirect ke halaman verifikasi (sesuai request)
+      final bool needsVerification = result["requires_verification"] == true ||
+          result["error_code"] == "EMAIL_NOT_VERIFIED" ||
+          (result["message"]?.toString().toLowerCase().contains("belum diverifikasi") ?? false) ||
+          (result["message"]?.toString().toLowerCase().contains("verifikasi") ?? false) && (result["status"] == 403);
+      if (needsVerification) {
+        final String redirectEmail = (result["email"]?.toString().isNotEmpty == true)
+            ? result["email"].toString()
+            : emailController.text.trim();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.mark_email_unread_outlined, color: Colors.white),
+                const SizedBox(width: 12),
+                const Expanded(child: Text("Email belum diverifikasi. Mengalihkan ke halaman verifikasi...", style: TextStyle(fontSize: 14))),
+              ],
+            ),
+            backgroundColor: Colors.orange.shade700,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        // Delay sedikit agar snackbar terlihat lalu redirect
+        await Future.delayed(const Duration(milliseconds: 800));
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => VerifyEmail(email: redirectEmail)),
+        );
+        return;
+      }
+
       String errorMessage = result["message"] ?? loc.translate('login_failed');
       errorIcon = Icons.error_outline;
       Color errorColor = Colors.red;

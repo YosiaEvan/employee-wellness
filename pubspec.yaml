@@ -88,8 +88,7 @@ flutter:
    - assets/img/
    - assets/sounds/done.wav
    - assets/lang/
-   - assets/videos/keran.mp4
-   - assets/videos/listrik.mp4
+   - assets/videos/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

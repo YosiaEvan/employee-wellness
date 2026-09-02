@@ -1,6 +1,6 @@
 class ApiConfig {
-  // Production API URL (HTTPS)
-  static String baseUrl = "https://employee-wellness.netlify.app/api";
+  // Production API URL (Vercel) — diarahkan ke kesehatankaryawan.vercel.app
+  static String baseUrl = "https://kesehatankaryawan.vercel.app/api";
 
   // Development URL (uncomment untuk testing lokal)
   // static String baseUrl = "http://localhost:3000/api";
