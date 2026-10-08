@@ -105,17 +105,44 @@ class HijauScanPoints {
     videoAsset: 'assets/videos/listrik.mp4',
     targetPerWeek: 1,
     targetPerMonth: 4,
+    // Diperluas: ML Kit sering label "Light fixture", "Ceiling", "Wall", "Electricity",
+    // "Cord/Wire" — bukan hanya "switch/outlet". Tambah sinonim Indonesia juga.
     arLabels: [
       'light',
       'lamp',
       'light bulb',
+      'light fixture',
+      'ceiling light',
+      'lamp shade',
+      'light switch',
       'switch',
       'saklar',
       'outlet',
-      'plug',
+      'electrical outlet',
+      'power outlet',
+      'wall socket',
       'socket',
-      'colokan',
+      'plug',
+      'power plug',
       'steker',
+      'colokan',
+      'stopkontak',
+      'stop kontak',
+      'terminal',
+      'power strip',
+      'extension cord',
+      'cord',
+      'wire',
+      'cable',
+      'kabel',
+      'electric',
+      'electricity',
+      'electronic',
+      'power',
+      'charger',
+      'adapter',
+      'lampu',
+      'listrik',
     ],
   );
 
@@ -245,9 +272,10 @@ class HijauScanPoints {
     return point.arLabels.any((kw) => q.contains(kw.toLowerCase()));
   }
 
-  /// Threshold rekomendasi MVP (Prompt §9): confidence ≥0.7 + N frame berturut-turut.
-  static const double confidenceThreshold = 0.7;
-  static const int requiredConsecutiveFrames = 3;
+  /// Threshold awal: 0.55 terbukti lebih robust untuk objek kecil (saklar/colokan)
+  /// tanpa banyak false positive. Tetap disaring per-kata kunci, bukan global.
+  static const double confidenceThreshold = 0.55;
+  static const int requiredConsecutiveFrames = 2;
 
   /// Timeout auto-fallback ke manual jika tidak terdeteksi dalam durasi ini.
   static const Duration scanTimeout = Duration(seconds: 30);

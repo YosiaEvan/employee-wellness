@@ -9,9 +9,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('animated webp decodes with alpha and multiple frames', () async {
-    final data = await rootBundle.load(
-      'assets/videos/animasi_transparent.webp',
-    );
+    final data = await rootBundle.load('assets/videos/keranAir-vr.webp');
     final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
     debugPrint('frameCount=${codec.frameCount}');
     expect(codec.frameCount, greaterThan(1));
@@ -71,7 +69,11 @@ void main() {
   testWidgets('ChromaKeyVideo hanya merender satu frame aktif', (tester) async {
     await tester.runAsync(() async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: ChromaKeyVideo())),
+        const MaterialApp(
+          home: Scaffold(
+            body: ChromaKeyVideo(assetPath: 'assets/videos/keranAir-vr.webp'),
+          ),
+        ),
       );
       await Future<void>.delayed(const Duration(milliseconds: 400));
       await tester.pump();

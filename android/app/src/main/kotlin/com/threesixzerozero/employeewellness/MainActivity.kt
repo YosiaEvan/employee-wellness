@@ -1,4 +1,4 @@
-package com.example.employee_wellness
+package com.threesixzerozero.employeewellness
 
 import android.annotation.SuppressLint
 import android.app.NotificationChannel

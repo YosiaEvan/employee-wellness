@@ -17,7 +17,7 @@ class ChromaKeyVideo extends StatefulWidget {
 
   const ChromaKeyVideo({
     super.key,
-    this.assetPath = 'assets/videos/animasi_transparent.webp',
+    required this.assetPath,
     this.width = 128,
     this.height = 72,
   });
