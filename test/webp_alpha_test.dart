@@ -9,7 +9,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('animated webp decodes with alpha and multiple frames', () async {
-    final data = await rootBundle.load('assets/videos/animasi_transparent.webp');
+    final data = await rootBundle.load(
+      'assets/videos/animasi_transparent.webp',
+    );
     final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
     debugPrint('frameCount=${codec.frameCount}');
     expect(codec.frameCount, greaterThan(1));
@@ -29,9 +31,48 @@ void main() {
     expect(center[3], greaterThan(200));
   });
 
+  test(
+    'HIJAU animated WebP overlays keep the object and remove green background',
+    () async {
+      for (final asset in [
+        'assets/videos/keranAir-vr.webp',
+        'assets/videos/tempat-sampah-vr.webp',
+      ]) {
+        final data = await rootBundle.load(asset);
+        final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+        expect(codec.frameCount, greaterThan(1), reason: asset);
+
+        final frame = await codec.getNextFrame();
+        final imageBytes = (await frame.image.toByteData())!.buffer
+            .asUint8List();
+        var transparentPixels = 0;
+        var visiblePixels = 0;
+        for (var i = 3; i < imageBytes.length; i += 4) {
+          if (imageBytes[i] == 0) transparentPixels++;
+          if (imageBytes[i] > 200) visiblePixels++;
+        }
+
+        expect(
+          transparentPixels,
+          greaterThan(0),
+          reason: '$asset should key out green',
+        );
+        expect(
+          visiblePixels,
+          greaterThan(1000),
+          reason: '$asset should retain the object',
+        );
+        frame.image.dispose();
+        codec.dispose();
+      }
+    },
+  );
+
   testWidgets('ChromaKeyVideo hanya merender satu frame aktif', (tester) async {
     await tester.runAsync(() async {
-      await tester.pumpWidget(const MaterialApp(home: Scaffold(body: ChromaKeyVideo())));
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: ChromaKeyVideo())),
+      );
       await Future<void>.delayed(const Duration(milliseconds: 400));
       await tester.pump();
       expect(find.byType(RawImage), findsOneWidget);
@@ -44,10 +85,14 @@ void main() {
       expect(second, isNotNull);
       expect(identical(first, second), isFalse);
 
-      WidgetsBinding.instance.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      WidgetsBinding.instance.handleAppLifecycleStateChanged(
+        AppLifecycleState.paused,
+      );
       await Future<void>.delayed(const Duration(milliseconds: 200));
 
-      WidgetsBinding.instance.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      WidgetsBinding.instance.handleAppLifecycleStateChanged(
+        AppLifecycleState.resumed,
+      );
       await Future<void>.delayed(const Duration(milliseconds: 300));
       await tester.pump();
       expect(find.byType(RawImage), findsOneWidget);

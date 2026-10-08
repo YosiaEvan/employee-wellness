@@ -27,8 +27,7 @@ class HijauService {
   static Future<Map<String, dynamic>> getCarbonFootprint({
     String? startDate,
     String? endDate,
-  }) =>
-      getHijauData(tanggal: startDate);
+  }) => getHijauData(tanggal: startDate);
 
   /// POST - Catat aktivitas HIJAU ke tabel canonical — dengan verifikasi AR (PromptARHijau §7).
   /// Offline-first: disimpan ke SQLite dulu, lalu disinkronkan.
@@ -113,24 +112,30 @@ class HijauService {
         };
       }
 
-      // 4xx: ditolak permanen (cap 409 / 400) -> hapus antrean lokal
-      if (rowId != null) {
-        try {
-          await _db.delete(
-            'aktivitas_poin',
-            where: 'id = ?',
-            whereArgs: [rowId],
-          );
-        } catch (_) {}
-      }
-
       String message = 'Gagal mencatat aktivitas';
       try {
-        final body = jsonDecode(response.body);
-        if (body is Map && body['message'] != null) {
-          message = body['message'].toString();
-        }
+        final responseData = jsonDecode(response.body);
+        message = responseData['message']?.toString() ?? message;
       } catch (_) {}
+
+      // Keep the local record. Validation/cap errors are retained for review;
+      // server/network errors stay queued and will be retried automatically.
+      if (rowId != null &&
+          !const [400, 409, 422].contains(response.statusCode)) {
+        DataRefreshNotifier.instance.notifyDataChanged();
+        return {
+          'success': true,
+          'offline': true,
+          'pending': true,
+          'message': 'Tersimpan di perangkat, sinkronisasi akan dicoba kembali',
+        };
+      }
+      if (rowId != null &&
+          const [400, 409, 422].contains(response.statusCode)) {
+        try {
+          await _db.markRejected('aktivitas_poin', rowId, message);
+        } catch (_) {}
+      }
       return {
         'success': false,
         'statusCode': response.statusCode,

@@ -18,7 +18,7 @@ class TidurService {
       final userId = await LocalDatabaseService.getCurrentUserId();
       final todayRows = await _db.query(
         'tidur',
-        where: 'tanggal = ? AND user_id = ?',
+        where: 'tanggal = ? AND user_id = ? AND synced != 2',
         whereArgs: [tanggal, userId],
         orderBy: 'id ASC',
       );
@@ -84,14 +84,11 @@ class TidurService {
     try {
       final response = await ApiService.post(
         "/user/tidur",
-        body: {
-          "waktu_tidur": waktuTidur,
-          "waktu_bangun": waktuBangun,
-        },
+        body: {"waktu_tidur": waktuTidur, "waktu_bangun": waktuBangun},
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        await _db.markSyncedByDate('tidur', tanggal);
+        await _db.markSynced('tidur', rowId);
         final responseData = jsonDecode(response.body);
         DataRefreshNotifier.instance.notifyDataChanged();
         return {
@@ -101,16 +98,41 @@ class TidurService {
           "tercapai": responseData['tercapai'] ?? false,
         };
       } else {
-        // Ditolak server -> batalkan catatan lokal
-        await _db.delete('tidur', where: 'id = ?', whereArgs: [rowId]);
+        // Simpan catatan lokal; tandai hanya penolakan permanen (4xx).
+        DataRefreshNotifier.instance.notifyDataChanged();
+        if (!const [400, 409, 422].contains(response.statusCode)) {
+          return {
+            'success': true,
+            'offline': true,
+            'pending': true,
+            'message':
+                'Tersimpan di perangkat, sinkronisasi akan dicoba kembali',
+          };
+        }
         try {
           final errorData = jsonDecode(response.body);
+          final message = errorData['message'] ?? "Gagal menyimpan data";
+          if (const [400, 409, 422].contains(response.statusCode)) {
+            await _db.markRejected('tidur', rowId, message.toString());
+          }
           return {
             "success": false,
-            "message": errorData['message'] ?? "Gagal menyimpan data",
+            "message": message,
+            "pending": response.statusCode >= 500,
           };
         } catch (_) {
-          return {"success": false, "message": "Gagal menyimpan data"};
+          if (const [400, 409, 422].contains(response.statusCode)) {
+            await _db.markRejected(
+              'tidur',
+              rowId,
+              'HTTP ${response.statusCode}',
+            );
+          }
+          return {
+            "success": false,
+            "message": "Gagal menyimpan data",
+            "pending": response.statusCode >= 500,
+          };
         }
       }
     } catch (e) {
@@ -130,7 +152,8 @@ class TidurService {
   // =====================================================
 
   static Future<Map<String, dynamic>> _buildFromLocal(
-      Map<String, dynamic> row) async {
+    Map<String, dynamic> row,
+  ) async {
     final durasiMenit = _durasiMenit(row['waktu_tidur'], row['waktu_bangun']);
     return {
       "success": true,
@@ -158,7 +181,7 @@ class TidurService {
     final userId = await LocalDatabaseService.getCurrentUserId();
     final rows = await _db.query(
       'tidur',
-      where: 'tanggal >= ? AND user_id = ?',
+      where: 'tanggal >= ? AND user_id = ? AND synced != 2',
       whereArgs: [start, userId],
     );
 
@@ -190,8 +213,10 @@ class TidurService {
     }).toList();
 
     final dicatat = kalender.where((k) => k['sudah_dicatat'] == true).toList();
-    final totalMenit =
-        dicatat.fold<int>(0, (sum, k) => sum + (k['durasi_menit'] as int));
+    final totalMenit = dicatat.fold<int>(
+      0,
+      (sum, k) => sum + (k['durasi_menit'] as int),
+    );
 
     return {
       'jumlah_hari_dicatat': dicatat.length,
@@ -210,7 +235,16 @@ class TidurService {
   }
 
   static String _dayName(int weekday) {
-    const names = ['', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+    const names = [
+      '',
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+      'Minggu',
+    ];
     return weekday >= 1 && weekday <= 7 ? names[weekday] : '';
   }
 
@@ -257,7 +291,11 @@ class TidurService {
           final existing = await _db.query(
             'tidur',
             where: 'tanggal = ? AND waktu_tidur = ? AND user_id = ?',
-            whereArgs: [tanggal, waktuTidur, await LocalDatabaseService.getCurrentUserId()],
+            whereArgs: [
+              tanggal,
+              waktuTidur,
+              await LocalDatabaseService.getCurrentUserId(),
+            ],
           );
           if (existing.isEmpty) {
             await _db.insert('tidur', {

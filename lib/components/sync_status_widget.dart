@@ -38,7 +38,7 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
 
     try {
       // Sync SQLite  Server
-      await OfflineSyncService.autoSyncOnAppStart();
+      await OfflineSyncService.syncAllPending();
       // Sync langkah ke server
       final result = await BackgroundStepsTracker.syncNow();
 
@@ -76,9 +76,7 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
     return Card(
       margin: const EdgeInsets.all(16),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -137,10 +135,7 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
                 else
                   IconButton(
                     onPressed: _syncNow,
-                    icon: const FaIcon(
-                      FontAwesomeIcons.arrowsRotate,
-                      size: 16,
-                    ),
+                    icon: const FaIcon(FontAwesomeIcons.arrowsRotate, size: 16),
                     style: IconButton.styleFrom(
                       backgroundColor: const Color(0xFF00C97A),
                       foregroundColor: Colors.white,

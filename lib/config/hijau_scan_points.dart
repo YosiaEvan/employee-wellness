@@ -25,6 +25,9 @@ class HijauScanPoint {
   /// Aset video animasi (bisa null bila tidak ada).
   final String? videoAsset;
 
+  /// Animasi transparan untuk ditampilkan sebagai objek AR di atas kamera.
+  final String? arOverlayAsset;
+
   /// Target poin per minggu (cap).
   final int targetPerWeek;
 
@@ -46,6 +49,7 @@ class HijauScanPoint {
     required this.insight,
     required this.confirmLabel,
     this.videoAsset,
+    this.arOverlayAsset,
     this.targetPerWeek = 1,
     this.targetPerMonth = 4,
     this.arLabels = const [],
@@ -68,10 +72,21 @@ class HijauScanPoints {
         'liter air per hari. Air bersih adalah sumber daya terbatas  hemat hari '
         'ini berarti masa depan yang lebih berkelanjutan.',
     confirmLabel: 'Sudah Hemat Air',
-    videoAsset: 'assets/videos/keran.mp4',
+    videoAsset: 'assets/videos/keranAir.mp4',
+    arOverlayAsset: 'assets/videos/keranAir-vr.webp',
     targetPerWeek: 1,
     targetPerMonth: 4,
-    arLabels: ['faucet', 'tap', 'sink', 'bucket', 'pale', 'ember', 'gayung', 'shower', 'water'],
+    arLabels: [
+      'faucet',
+      'tap',
+      'sink',
+      'bucket',
+      'pale',
+      'ember',
+      'gayung',
+      'shower',
+      'water',
+    ],
   );
 
   static const hematListrik = HijauScanPoint(
@@ -90,7 +105,18 @@ class HijauScanPoints {
     videoAsset: 'assets/videos/listrik.mp4',
     targetPerWeek: 1,
     targetPerMonth: 4,
-    arLabels: ['light', 'lamp', 'light bulb', 'switch', 'saklar', 'outlet', 'plug', 'socket', 'colokan', 'steker'],
+    arLabels: [
+      'light',
+      'lamp',
+      'light bulb',
+      'switch',
+      'saklar',
+      'outlet',
+      'plug',
+      'socket',
+      'colokan',
+      'steker',
+    ],
   );
 
   static const gayaHidupHijau = HijauScanPoint(
@@ -108,7 +134,20 @@ class HijauScanPoints {
     confirmLabel: 'Sudah Melakukan',
     targetPerWeek: 1,
     targetPerMonth: 4,
-    arLabels: ['bottle', 'tumbler', 'cup', 'mug', 'bag', 'tas', 'tote', 'bicycle', 'bike', 'sepeda', 'recycling', 'cloth'],
+    arLabels: [
+      'bottle',
+      'tumbler',
+      'cup',
+      'mug',
+      'bag',
+      'tas',
+      'tote',
+      'bicycle',
+      'bike',
+      'sepeda',
+      'recycling',
+      'cloth',
+    ],
   );
 
   static const zeroWaste = HijauScanPoint(
@@ -124,6 +163,8 @@ class HijauScanPoints {
         'makan sendiri. Setiap benda yang tidak terbuang berarti satu langkah '
         'menjaga lingkungan.',
     confirmLabel: 'Sudah Melakukan',
+    videoAsset: 'assets/videos/tempat-sampah.mp4',
+    arOverlayAsset: 'assets/videos/tempat-sampah-vr.webp',
     targetPerWeek: 1,
     targetPerMonth: 4,
   );
@@ -160,9 +201,21 @@ class HijauScanPoints {
         'otomatis. Pilih satu kebiasaan hijau dan ulangi setiap hari sampai '
         'menjadi refleks.',
     confirmLabel: 'Sudah Jadi Kebiasaan',
+    videoAsset: 'assets/videos/tempat-sampah.mp4',
+    arOverlayAsset: 'assets/videos/tempat-sampah-vr.webp',
     targetPerWeek: 1,
     targetPerMonth: 4,
-    arLabels: ['trash can', 'bin', 'recycling bin', 'sampah', 'pilah', 'stairs', 'staircase', 'tangga', 'litter'],
+    arLabels: [
+      'trash can',
+      'bin',
+      'recycling bin',
+      'sampah',
+      'pilah',
+      'stairs',
+      'staircase',
+      'tangga',
+      'litter',
+    ],
   );
 
   /// Semua titik penilaian HIJAU (5 aktivitas unik backend).
@@ -183,7 +236,10 @@ class HijauScanPoints {
   /// Helper: cek apakah label ML Kit cocok untuk kode tertentu (case-insensitive, substring).
   static bool isLabelMatch(String label, String kode) {
     final q = label.toLowerCase();
-    final point = semua.firstWhere((p) => p.kode == kode, orElse: () => semua.first);
+    final point = semua.firstWhere(
+      (p) => p.kode == kode,
+      orElse: () => semua.first,
+    );
     if (point.kode != kode) return false;
     if (point.arLabels.isEmpty) return false;
     return point.arLabels.any((kw) => q.contains(kw.toLowerCase()));
@@ -192,6 +248,7 @@ class HijauScanPoints {
   /// Threshold rekomendasi MVP (Prompt §9): confidence ≥0.7 + N frame berturut-turut.
   static const double confidenceThreshold = 0.7;
   static const int requiredConsecutiveFrames = 3;
+
   /// Timeout auto-fallback ke manual jika tidak terdeteksi dalam durasi ini.
   static const Duration scanTimeout = Duration(seconds: 30);
 }

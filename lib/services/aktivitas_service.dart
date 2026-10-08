@@ -16,12 +16,20 @@ class AktivitasService {
     String? deskripsi,
   }) async {
     // Pola makan tanpa_minyak / tanpa_gula / porsi_kalori kini otomatis dari log makanan — blok input manual di client
-    if (modul == 'sehat' && (aktivitas == 'tanpa_minyak' || aktivitas == 'tanpa_gula' || aktivitas == 'porsi_kalori')) {
-      final label = aktivitas == 'tanpa_minyak' ? 'minyak' : aktivitas == 'tanpa_gula' ? 'gula' : 'kalori berlebih';
+    if (modul == 'sehat' &&
+        (aktivitas == 'tanpa_minyak' ||
+            aktivitas == 'tanpa_gula' ||
+            aktivitas == 'porsi_kalori')) {
+      final label = aktivitas == 'tanpa_minyak'
+          ? 'minyak'
+          : aktivitas == 'tanpa_gula'
+          ? 'gula'
+          : 'kalori berlebih';
       return {
         'success': false,
         'statusCode': 400,
-        'message': 'Otomatis dari log makanan — $aktivitas 2 poin/minggu (maks 8/bulan) akan berkurang jika ada makanan mengandung $label. Tidak perlu input manual, cukup catat makanan di Pola Makan Sehat.',
+        'message':
+            'Otomatis dari log makanan — $aktivitas 2 poin/minggu (maks 8/bulan) akan berkurang jika ada makanan mengandung $label. Tidak perlu input manual, cukup catat makanan di Pola Makan Sehat.',
         'otomatis': true,
       };
     }
@@ -56,8 +64,10 @@ class AktivitasService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (rowId != null) {
           try {
-            await LocalDatabaseService.instance
-                .markSynced('aktivitas_poin', rowId);
+            await LocalDatabaseService.instance.markSynced(
+              'aktivitas_poin',
+              rowId,
+            );
           } catch (_) {}
         }
         final resBody = jsonDecode(response.body);
@@ -70,24 +80,36 @@ class AktivitasService {
         };
       }
 
-      // 4xx: ditolak permanen (cap 409 / aktivitas 400) -> hapus antrean lokal
-      if (rowId != null) {
+      String message = 'Gagal mencatat aktivitas';
+      try {
+        final errorBody = jsonDecode(response.body);
+        if (errorBody is Map && errorBody['message'] != null) {
+          message = errorBody['message'].toString();
+        }
+      } catch (_) {}
+
+      // Keep rejected actions in SQLite for history; only retryable errors stay
+      // pending, while known validation/cap errors get a review status.
+      if (rowId != null &&
+          !const [400, 409, 422].contains(response.statusCode)) {
+        DataRefreshNotifier.instance.notifyDataChanged();
+        return {
+          'success': true,
+          'offline': true,
+          'pending': true,
+          'message': 'Tersimpan di perangkat, sinkronisasi akan dicoba kembali',
+        };
+      }
+      if (rowId != null &&
+          const [400, 409, 422].contains(response.statusCode)) {
         try {
-          await LocalDatabaseService.instance.delete(
+          await LocalDatabaseService.instance.markRejected(
             'aktivitas_poin',
-            where: 'id = ?',
-            whereArgs: [rowId],
+            rowId,
+            message,
           );
         } catch (_) {}
       }
-
-      String message = 'Gagal mencatat aktivitas';
-      try {
-        final body = jsonDecode(response.body);
-        if (body is Map && body['message'] != null) {
-          message = body['message'].toString();
-        }
-      } catch (_) {}
       return {
         'success': false,
         'statusCode': response.statusCode,
@@ -116,7 +138,10 @@ class AktivitasService {
       final qs = tanggal != null ? '&tanggal=$tanggal' : '';
       final response = await ApiService.get('/user/aktivitas?modul=$modul$qs');
       if (response.statusCode == 200) return jsonDecode(response.body);
-      return {'success': false, 'message': 'Gagal mengambil aktivitas (${response.statusCode})'};
+      return {
+        'success': false,
+        'message': 'Gagal mengambil aktivitas (${response.statusCode})',
+      };
     } catch (e) {
       return {'success': false, 'message': 'Error: $e'};
     }

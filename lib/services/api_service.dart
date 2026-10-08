@@ -56,15 +56,13 @@ class ApiService {
     Map<String, String>? additionalHeaders,
   }) async {
     // First attempt
-    final response = await _makeRequest(
-      () async {
-        final headers = await _getHeaders(additionalHeaders);
-        return await http.get(
-          Uri.parse('${ApiConfig.baseUrl}$endpoint'),
-          headers: headers,
-        );
-      },
-    );
+    final response = await _makeRequest(() async {
+      final headers = await _getHeaders(additionalHeaders);
+      return await http.get(
+        Uri.parse('${ApiConfig.baseUrl}$endpoint'),
+        headers: headers,
+      );
+    });
 
     // If 401 (Unauthorized), refresh token and retry
     if (response.statusCode == 401) {
@@ -89,16 +87,14 @@ class ApiService {
     Map<String, String>? additionalHeaders,
   }) async {
     // First attempt
-    final response = await _makeRequest(
-      () async {
-        final headers = await _getHeaders(additionalHeaders);
-        return await http.post(
-          Uri.parse('${ApiConfig.baseUrl}$endpoint'),
-          headers: headers,
-          body: body != null ? jsonEncode(body) : null,
-        );
-      },
-    );
+    final response = await _makeRequest(() async {
+      final headers = await _getHeaders(additionalHeaders);
+      return await http.post(
+        Uri.parse('${ApiConfig.baseUrl}$endpoint'),
+        headers: headers,
+        body: body != null ? jsonEncode(body) : null,
+      );
+    });
 
     // If 401, refresh token and retry
     if (response.statusCode == 401) {
@@ -124,16 +120,14 @@ class ApiService {
     Map<String, String>? additionalHeaders,
   }) async {
     // First attempt
-    final response = await _makeRequest(
-      () async {
-        final headers = await _getHeaders(additionalHeaders);
-        return await http.put(
-          Uri.parse('${ApiConfig.baseUrl}$endpoint'),
-          headers: headers,
-          body: body != null ? jsonEncode(body) : null,
-        );
-      },
-    );
+    final response = await _makeRequest(() async {
+      final headers = await _getHeaders(additionalHeaders);
+      return await http.put(
+        Uri.parse('${ApiConfig.baseUrl}$endpoint'),
+        headers: headers,
+        body: body != null ? jsonEncode(body) : null,
+      );
+    });
 
     // If 401, refresh token and retry
     if (response.statusCode == 401) {
@@ -158,15 +152,13 @@ class ApiService {
     Map<String, String>? additionalHeaders,
   }) async {
     // First attempt
-    final response = await _makeRequest(
-      () async {
-        final headers = await _getHeaders(additionalHeaders);
-        return await http.delete(
-          Uri.parse('${ApiConfig.baseUrl}$endpoint'),
-          headers: headers,
-        );
-      },
-    );
+    final response = await _makeRequest(() async {
+      final headers = await _getHeaders(additionalHeaders);
+      return await http.delete(
+        Uri.parse('${ApiConfig.baseUrl}$endpoint'),
+        headers: headers,
+      );
+    });
 
     // If 401, refresh token and retry
     if (response.statusCode == 401) {
@@ -202,7 +194,9 @@ class ApiService {
 
     // Log headers for debugging (token truncated for security)
     if (token != null) {
-      debugPrint(' Request headers include: Authorization: Bearer ${token.substring(0, 20)}...');
+      debugPrint(
+        ' Request headers include: Authorization: Bearer ${token.substring(0, 20)}...',
+      );
     } else {
       debugPrint(' No token found - request will be unauthorized');
     }
@@ -215,14 +209,11 @@ class ApiService {
     Future<http.Response> Function() requestFunc,
   ) async {
     try {
-      return await requestFunc();
+      return await requestFunc().timeout(const Duration(seconds: 15));
     } catch (e) {
       // Return error response
       return http.Response(
-        jsonEncode({
-          'success': false,
-          'message': 'Network error: $e',
-        }),
+        jsonEncode({'success': false, 'message': 'Network error: $e'}),
         500,
       );
     }

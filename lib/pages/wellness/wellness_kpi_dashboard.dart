@@ -84,57 +84,80 @@ class _WellnessKPIDashboardState extends State<WellnessKPIDashboard> {
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : _data == null
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const FaIcon(FontAwesomeIcons.circleExclamation,
-                                  size: 64, color: Colors.grey),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'Skor KPI Wellness tidak tersedia',
-                                style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold),
-                              ),
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const FaIcon(
+                            FontAwesomeIcons.circleExclamation,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Skor KPI Wellness tidak tersedia',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Pastikan Anda sudah login dan memiliki akses ke API',
+                            style: TextStyle(color: Colors.grey),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: _load,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Coba Lagi'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF00C368),
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _load,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildScoreHero(),
+                            if (_data?['source'] == 'sqlite_cache') ...[
                               const SizedBox(height: 8),
-                              const Text(
-                                'Pastikan Anda sudah login dan memiliki akses ke API',
-                                style: TextStyle(color: Colors.grey),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton.icon(
-                                onPressed: _load,
-                                icon: const Icon(Icons.refresh),
-                                label: const Text('Coba Lagi'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF00C368),
-                                  foregroundColor: Colors.white,
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF7E6),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Text(
+                                  'Menampilkan skor terakhir yang tersimpan. Aktivitas offline akan masuk ke skor setelah sinkronisasi.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF8A5A00),
+                                  ),
                                 ),
                               ),
                             ],
-                          ),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: _load,
-                          child: SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildScoreHero(),
-                                const SizedBox(height: 16),
-                                _buildDimensionList(),
-                                const SizedBox(height: 16),
-                                _buildPredikatCard(),
-                                const SizedBox(height: 16),
-                                _buildFormulaCard(),
-                                const SizedBox(height: 24),
-                              ],
-                            ),
-                          ),
+                            const SizedBox(height: 16),
+                            _buildDimensionList(),
+                            const SizedBox(height: 16),
+                            _buildPredikatCard(),
+                            const SizedBox(height: 16),
+                            _buildFormulaCard(),
+                            const SizedBox(height: 24),
+                          ],
                         ),
+                      ),
+                    ),
             ),
           ],
         ),
@@ -236,11 +259,15 @@ class _WellnessKPIDashboardState extends State<WellnessKPIDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Komponen Dimensi',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Komponen Dimensi',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 4),
-          Text('Total maksimal: $maksTotal poin/bulan',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+          Text(
+            'Total maksimal: $maksTotal poin/bulan',
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+          ),
           const SizedBox(height: 12),
           for (final item in dimensi) ...[
             _buildDimensionRow(item, config),
@@ -251,11 +278,13 @@ class _WellnessKPIDashboardState extends State<WellnessKPIDashboard> {
     );
   }
 
-  Widget _buildDimensionRow(Map<String, dynamic> item,
-      Map<String, (FaIconData, Color)> config) {
+  Widget _buildDimensionRow(
+    Map<String, dynamic> item,
+    Map<String, (FaIconData, Color)> config,
+  ) {
     final modul = item['modul'] ?? '';
-    final (icon, color) = config[modul] ??
-        (FontAwesomeIcons.circleInfo, const Color(0xFF00C368));
+    final (icon, color) =
+        config[modul] ?? (FontAwesomeIcons.circleInfo, const Color(0xFF00C368));
     final persen = (item['persen'] ?? 0).toDouble();
     final poin = item['poin_diperoleh'] ?? 0;
     final maks = item['maks_poin_bulan'] ?? 0;
@@ -282,7 +311,9 @@ class _WellnessKPIDashboardState extends State<WellnessKPIDashboard> {
                   Text(
                     '${item['nama'] ?? ''}',
                     style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   Text(
                     '$poin/$maks poin  $bobot%',
@@ -306,9 +337,10 @@ class _WellnessKPIDashboardState extends State<WellnessKPIDashboard> {
                 child: Text(
                   '${persen.toStringAsFixed(1)}%',
                   style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: color),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
                 ),
               ),
             ],
@@ -336,15 +368,20 @@ class _WellnessKPIDashboardState extends State<WellnessKPIDashboard> {
       ),
       child: Row(
         children: [
-          const FaIcon(FontAwesomeIcons.medal,
-              color: Color(0xFF00C368), size: 28),
+          const FaIcon(
+            FontAwesomeIcons.medal,
+            color: Color(0xFF00C368),
+            size: 28,
+          ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Predikat',
-                    style: TextStyle(fontSize: 13, color: Colors.grey)),
+                const Text(
+                  'Predikat',
+                  style: TextStyle(fontSize: 13, color: Colors.grey),
+                ),
                 Text(
                   predikat,
                   style: const TextStyle(
@@ -368,13 +405,17 @@ class _WellnessKPIDashboardState extends State<WellnessKPIDashboard> {
       decoration: BoxDecoration(
         color: const Color(0xFFEEFDF5),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF00C368).withValues(alpha: 0.3)),
+        border: Border.all(
+          color: const Color(0xFF00C368).withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Rumus Perhitungan',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+          const Text(
+            'Rumus Perhitungan',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           const Text(
             '(%SEHAT  50%) + (%TENANG  25%) + (%HIJAU  25%)',
@@ -387,7 +428,11 @@ class _WellnessKPIDashboardState extends State<WellnessKPIDashboard> {
           const SizedBox(height: 8),
           Text(
             'Predikat: ≥80% Sangat Baik · ≥60% Baik · ≥40% Cukup · <40% Perlu Perbaikan',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600], height: 1.4),
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+              height: 1.4,
+            ),
           ),
         ],
       ),

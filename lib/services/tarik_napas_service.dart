@@ -18,7 +18,7 @@ class TarikNapasService {
       final userId = await LocalDatabaseService.getCurrentUserId();
       final todayRows = await _db.query(
         'tarik_napas',
-        where: 'tanggal = ? AND user_id = ?',
+        where: 'tanggal = ? AND user_id = ? AND synced != 2',
         whereArgs: [tanggal, userId],
         orderBy: 'id ASC',
       );
@@ -62,26 +62,53 @@ class TarikNapasService {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        await _db.markSyncedByDate('tarik_napas', tanggal);
+        await _db.markSynced('tarik_napas', rowId);
         final responseData = jsonDecode(response.body);
         DataRefreshNotifier.instance.notifyDataChanged();
         return {
           "success": true,
-          "message": responseData['message'] ?? "Berhasil mencatat aktivitas tarik napas",
+          "message":
+              responseData['message'] ??
+              "Berhasil mencatat aktivitas tarik napas",
           "data": responseData['data'],
           "tercapai": responseData['tercapai'] ?? true,
         };
       } else {
-        // Ditolak server -> batalkan catatan lokal
-        await _db.delete('tarik_napas', where: 'id = ?', whereArgs: [rowId]);
+        // Simpan catatan lokal; tandai penolakan 4xx untuk ditinjau.
+        DataRefreshNotifier.instance.notifyDataChanged();
+        if (!const [400, 409, 422].contains(response.statusCode)) {
+          return {
+            'success': true,
+            'offline': true,
+            'pending': true,
+            'message':
+                'Tersimpan di perangkat, sinkronisasi akan dicoba kembali',
+          };
+        }
         try {
           final errorData = jsonDecode(response.body);
+          final message = errorData['message'] ?? "Gagal menyimpan aktivitas";
+          if (const [400, 409, 422].contains(response.statusCode)) {
+            await _db.markRejected('tarik_napas', rowId, message.toString());
+          }
           return {
             "success": false,
-            "message": errorData['message'] ?? "Gagal menyimpan aktivitas",
+            "message": message,
+            "pending": response.statusCode >= 500,
           };
         } catch (_) {
-          return {"success": false, "message": "Gagal menyimpan aktivitas"};
+          if (const [400, 409, 422].contains(response.statusCode)) {
+            await _db.markRejected(
+              'tarik_napas',
+              rowId,
+              'HTTP ${response.statusCode}',
+            );
+          }
+          return {
+            "success": false,
+            "message": "Gagal menyimpan aktivitas",
+            "pending": response.statusCode >= 500,
+          };
         }
       }
     } catch (e) {
@@ -123,14 +150,12 @@ class TarikNapasService {
     final userId = await LocalDatabaseService.getCurrentUserId();
     final rows = await _db.query(
       'tarik_napas',
-      where: 'tanggal = ? AND user_id = ?',
+      where: 'tanggal = ? AND user_id = ? AND synced != 2',
       whereArgs: [tanggal, userId],
       orderBy: 'waktu_selesai DESC',
     );
     if (rows.isEmpty) return null;
-    return {
-      'waktu_selesai': rows.first['waktu_selesai'],
-    };
+    return {'waktu_selesai': rows.first['waktu_selesai']};
   }
 
   static Future<Map<String, dynamic>> _buildMingguIni() async {
@@ -138,16 +163,14 @@ class TarikNapasService {
     final userId = await LocalDatabaseService.getCurrentUserId();
     final rows = await _db.query(
       'tarik_napas',
-      where: 'tanggal >= ? AND user_id = ?',
+      where: 'tanggal >= ? AND user_id = ? AND synced != 2',
       whereArgs: [start, userId],
     );
     final uniqueTanggal = <String>{};
     for (final row in rows) {
       uniqueTanggal.add(row['tanggal']?.toString() ?? '');
     }
-    return {
-      'jumlah_hari_dilakukan': uniqueTanggal.length,
-    };
+    return {'jumlah_hari_dilakukan': uniqueTanggal.length};
   }
 
   // =====================================================
@@ -187,12 +210,18 @@ class TarikNapasService {
     try {
       if (server['sudah_tarik_napas'] == true) {
         final tanggal = LocalDatabaseService.todayStr();
-        final waktu = (server['data']?['waktu_selesai'] ?? server['data']?['waktu'] ?? '').toString();
+        final waktu =
+            (server['data']?['waktu_selesai'] ?? server['data']?['waktu'] ?? '')
+                .toString();
         if (waktu.isNotEmpty) {
           final existing = await _db.query(
             'tarik_napas',
             where: 'tanggal = ? AND waktu_selesai = ? AND user_id = ?',
-            whereArgs: [tanggal, waktu, await LocalDatabaseService.getCurrentUserId()],
+            whereArgs: [
+              tanggal,
+              waktu,
+              await LocalDatabaseService.getCurrentUserId(),
+            ],
           );
           if (existing.isEmpty) {
             await _db.insert('tarik_napas', {

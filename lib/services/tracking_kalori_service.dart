@@ -28,11 +28,17 @@ class TrackingKaloriService {
   }) async {
     final tanggal = LocalDatabaseService.todayStr();
 
-    final nama = foodDetail?['nama_makanan']?.toString() ?? 'Makanan #$idFoodNutrition';
-    final protein = (foodDetail?['protein_gram'] ?? foodDetail?['protein'] ?? 0).toDouble();
-    final karbohidrat = (foodDetail?['karbohidrat_gram'] ?? foodDetail?['karbohidrat'] ?? 0).toDouble();
-    final serat = (foodDetail?['serat_gram'] ?? foodDetail?['serat'] ?? 0).toDouble();
-    final lemak = (foodDetail?['lemak_gram'] ?? foodDetail?['lemak'] ?? 0).toDouble();
+    final nama =
+        foodDetail?['nama_makanan']?.toString() ?? 'Makanan #$idFoodNutrition';
+    final protein = (foodDetail?['protein_gram'] ?? foodDetail?['protein'] ?? 0)
+        .toDouble();
+    final karbohidrat =
+        (foodDetail?['karbohidrat_gram'] ?? foodDetail?['karbohidrat'] ?? 0)
+            .toDouble();
+    final serat = (foodDetail?['serat_gram'] ?? foodDetail?['serat'] ?? 0)
+        .toDouble();
+    final lemak = (foodDetail?['lemak_gram'] ?? foodDetail?['lemak'] ?? 0)
+        .toDouble();
     // Kalori tidak selalu disediakan oleh sumber (DB/Gemini), jadi hitung sendiri
     // dari makronutrien dengan rumus yang sama dengan backend hitungKalori.
     final kalori = foodDetail?['kalori'] != null
@@ -42,7 +48,7 @@ class TrackingKaloriService {
     final bergula = foodDetail?['mengandung_gula'] == true ? 1 : 0;
 
     // 1. Simpan ke SQLite lokal dulu
-    await _db.insert('makanan', {
+    final rowId = await _db.insert('makanan', {
       'tanggal': tanggal,
       'id_food_nutrition': idFoodNutrition,
       'jenis_makan': jenisMakan,
@@ -72,7 +78,7 @@ class TrackingKaloriService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
         if (responseData['success'] == true) {
-          await _db.markSyncedByDate('makanan', tanggal);
+          await _db.markSynced('makanan', rowId);
           DataRefreshNotifier.instance.notifyDataChanged();
           return {
             "success": true,
@@ -83,21 +89,43 @@ class TrackingKaloriService {
         } else {
           // Server reject  keep local row for retry during sync
           debugPrint(" Server rejected food: ${responseData['message']}");
+          DataRefreshNotifier.instance.notifyDataChanged();
           return {
-            "success": false,
+            "success": true,
+            "offline": true,
+            "pending": true,
             "message": responseData['message'] ?? "Gagal menambahkan makanan",
           };
         }
       } else {
-        // Server error  keep local row for retry during sync
+        // Keep the row locally. Retry transient server errors and retain
+        // permanent validation failures with their reason for review.
         debugPrint(" Server error ${response.statusCode}, keeping local row");
+        DataRefreshNotifier.instance.notifyDataChanged();
+        if (!const [400, 409, 422].contains(response.statusCode)) {
+          return {
+            'success': true,
+            'offline': true,
+            'pending': true,
+            'message':
+                'Tersimpan di perangkat, sinkronisasi akan dicoba kembali',
+          };
+        }
         try {
           final errorData = jsonDecode(response.body);
-          return {
-            "success": false,
-            "message": errorData['message'] ?? "Gagal menambahkan makanan",
-          };
+          final message = errorData['message'] ?? "Gagal menambahkan makanan";
+          if (const [400, 409, 422].contains(response.statusCode)) {
+            await _db.markRejected('makanan', rowId, message.toString());
+          }
+          return {"success": false, "message": message};
         } catch (_) {
+          if (const [400, 409, 422].contains(response.statusCode)) {
+            await _db.markRejected(
+              'makanan',
+              rowId,
+              'HTTP ${response.statusCode}',
+            );
+          }
           return {"success": false, "message": "Gagal menambahkan makanan"};
         }
       }
@@ -120,7 +148,7 @@ class TrackingKaloriService {
       final userId = await LocalDatabaseService.getCurrentUserId();
       final todayRows = await _db.query(
         'makanan',
-        where: 'tanggal = ? AND user_id = ?',
+        where: 'tanggal = ? AND user_id = ? AND synced != 2',
         whereArgs: [tanggal, userId],
       );
 
@@ -152,7 +180,8 @@ class TrackingKaloriService {
   // =====================================================
 
   static Future<Map<String, dynamic>> _buildFromLocal(
-      List<Map<String, dynamic>> rows) async {
+    List<Map<String, dynamic>> rows,
+  ) async {
     const jenisList = ['sarapan', 'makan_siang', 'makan_malam', 'snack'];
 
     final daftarMakanan = <String, List<Map<String, dynamic>>>{
@@ -232,7 +261,7 @@ class TrackingKaloriService {
     final userId = await LocalDatabaseService.getCurrentUserId();
     final rows = await _db.query(
       'makanan',
-      where: 'tanggal >= ? AND user_id = ?',
+      where: 'tanggal >= ? AND user_id = ? AND synced != 2',
       whereArgs: [start, userId],
     );
 
@@ -266,8 +295,20 @@ class TrackingKaloriService {
     });
     return {
       'target': target,
-      'konsumsi': {'kalori': 0, 'protein': 0, 'karbohidrat': 0, 'lemak': 0, 'serat': 0},
-      'progress': {'kalori': 0, 'protein': 0, 'karbohidrat': 0, 'lemak': 0, 'serat': 0},
+      'konsumsi': {
+        'kalori': 0,
+        'protein': 0,
+        'karbohidrat': 0,
+        'lemak': 0,
+        'serat': 0,
+      },
+      'progress': {
+        'kalori': 0,
+        'protein': 0,
+        'karbohidrat': 0,
+        'lemak': 0,
+        'serat': 0,
+      },
       'sisa': sisa,
       'daftar_makanan': {
         'sarapan': [],
@@ -312,10 +353,7 @@ class TrackingKaloriService {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         if (responseData['success'] == true) {
-          return {
-            "success": true,
-            "data": responseData['data'],
-          };
+          return {"success": true, "data": responseData['data']};
         }
       }
     } catch (e) {
@@ -347,11 +385,19 @@ class TrackingKaloriService {
             'jenis_makan': jenis,
             'porsi': porsi,
             'nama_makanan': item['nama_makanan']?.toString(),
-            'kalori': (item['total_kalori'] ?? 0).toDouble() / (porsi > 0 ? porsi : 1),
-            'protein': (item['total_protein'] ?? 0).toDouble() / (porsi > 0 ? porsi : 1),
-            'karbohidrat': (item['total_karbohidrat'] ?? 0).toDouble() / (porsi > 0 ? porsi : 1),
-            'lemak': (item['total_lemak'] ?? 0).toDouble() / (porsi > 0 ? porsi : 1),
-            'serat': (item['total_serat'] ?? 0).toDouble() / (porsi > 0 ? porsi : 1),
+            'kalori':
+                (item['total_kalori'] ?? 0).toDouble() /
+                (porsi > 0 ? porsi : 1),
+            'protein':
+                (item['total_protein'] ?? 0).toDouble() /
+                (porsi > 0 ? porsi : 1),
+            'karbohidrat':
+                (item['total_karbohidrat'] ?? 0).toDouble() /
+                (porsi > 0 ? porsi : 1),
+            'lemak':
+                (item['total_lemak'] ?? 0).toDouble() / (porsi > 0 ? porsi : 1),
+            'serat':
+                (item['total_serat'] ?? 0).toDouble() / (porsi > 0 ? porsi : 1),
             'berminyak': item['mengandung_minyak'] == true ? 1 : 0,
             'bergula': item['mengandung_gula'] == true ? 1 : 0,
             'synced': 1,

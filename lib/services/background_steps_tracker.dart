@@ -23,6 +23,7 @@ class BackgroundStepsTracker {
   static int _accumulatedSteps = 0;
   static int _lastRawSteps = -1;
   static String _currentDate = '';
+  static String _activeUserId = 'unknown';
   static Timer? _syncTimer;
   static Timer? _saveTimer;
   static bool _isInitialized = false;
@@ -48,18 +49,22 @@ class BackgroundStepsTracker {
       _permissionStatus = switch (status) {
         PermissionStatus.granted ||
         PermissionStatus.limited => StepPermissionStatus.granted,
-        PermissionStatus.permanentlyDenied => StepPermissionStatus.permanentlyDenied,
+        PermissionStatus.permanentlyDenied =>
+          StepPermissionStatus.permanentlyDenied,
         _ => StepPermissionStatus.denied,
       };
-      
+
       // Save status to SharedPreferences so background isolate can read it safely
       try {
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('step_permission_granted', _permissionStatus == StepPermissionStatus.granted);
+        await prefs.setBool(
+          'step_permission_granted',
+          _permissionStatus == StepPermissionStatus.granted,
+        );
       } catch (e) {
         debugPrint(' Error saving permission status to SharedPreferences: $e');
       }
-      
+
       debugPrint(' Activity recognition permission: $_permissionStatus');
       return _permissionStatus;
     } catch (e) {
@@ -73,7 +78,9 @@ class BackgroundStepsTracker {
   ///
   /// [safeForBackground] jika true, akan membaca cache status dari SharedPreferences
   /// untuk menghindari crash akibat penggunaan permission_handler di background isolate.
-  static Future<bool> isStepPermissionGranted({bool safeForBackground = false}) async {
+  static Future<bool> isStepPermissionGranted({
+    bool safeForBackground = false,
+  }) async {
     if (safeForBackground) {
       try {
         final prefs = await SharedPreferences.getInstance();
@@ -127,7 +134,9 @@ class BackgroundStepsTracker {
       if (requestPermission) {
         final status = await requestStepPermission();
         if (status != StepPermissionStatus.granted) {
-          debugPrint(' Activity recognition permission not granted, tracking paused');
+          debugPrint(
+            ' Activity recognition permission not granted, tracking paused',
+          );
           _isInitialized = true;
           _isListening = false;
           return false;
@@ -135,7 +144,9 @@ class BackgroundStepsTracker {
       } else {
         final granted = await isStepPermissionGranted(safeForBackground: true);
         if (!granted) {
-          debugPrint(' Activity recognition permission not granted, tracking paused');
+          debugPrint(
+            ' Activity recognition permission not granted, tracking paused',
+          );
           _isInitialized = true;
           _isListening = false;
           return false;
@@ -163,7 +174,9 @@ class BackgroundStepsTracker {
   static Future<bool> ensureTracking({bool safeForBackground = false}) async {
     if (_isListening) return true;
     try {
-      final granted = await isStepPermissionGranted(safeForBackground: safeForBackground);
+      final granted = await isStepPermissionGranted(
+        safeForBackground: safeForBackground,
+      );
       if (!granted) return false;
 
       if (_currentDate.isEmpty) {
@@ -183,7 +196,10 @@ class BackgroundStepsTracker {
   /// Load today's steps from SQLite
   static Future<void> _loadTodaySteps() async {
     try {
-      final localData = await LocalDatabaseService.instance.getLangkah(_currentDate);
+      _activeUserId = await LocalDatabaseService.getCurrentUserId();
+      final localData = await LocalDatabaseService.instance.getLangkah(
+        _currentDate,
+      );
       if (localData != null) {
         _todaySteps = localData['total_steps'] ?? 0;
         debugPrint(' Loaded stored steps for today: $_todaySteps');
@@ -194,9 +210,10 @@ class BackgroundStepsTracker {
 
       // Load baseline/accumulated dari SharedPreferences
       final prefs = await SharedPreferences.getInstance();
-      _baselineSteps = prefs.getInt('baseline_steps_$_currentDate') ?? 0;
-      _accumulatedSteps = prefs.getInt('accumulated_steps_$_currentDate') ?? 0;
-      _lastRawSteps = prefs.getInt('last_raw_steps_$_currentDate') ?? -1;
+      _baselineSteps = await _readUserStepCounter(prefs, 'baseline_steps') ?? 0;
+      _accumulatedSteps =
+          await _readUserStepCounter(prefs, 'accumulated_steps') ?? 0;
+      _lastRawSteps = await _readUserStepCounter(prefs, 'last_raw_steps') ?? -1;
 
       debugPrint(' Baseline: $_baselineSteps, Accumulated: $_accumulatedSteps');
     } catch (e) {
@@ -212,12 +229,36 @@ class BackgroundStepsTracker {
   static Future<void> _saveBaseline() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('baseline_steps_$_currentDate', _baselineSteps);
-      await prefs.setInt('accumulated_steps_$_currentDate', _accumulatedSteps);
-      await prefs.setInt('last_raw_steps_$_currentDate', _lastRawSteps);
+      await prefs.setInt(_userStepCounterKey('baseline_steps'), _baselineSteps);
+      await prefs.setInt(
+        _userStepCounterKey('accumulated_steps'),
+        _accumulatedSteps,
+      );
+      await prefs.setInt(_userStepCounterKey('last_raw_steps'), _lastRawSteps);
     } catch (e) {
       debugPrint(' Error saving baseline: $e');
     }
+  }
+
+  static String _userStepCounterKey(String key) =>
+      '${key}_${_activeUserId}_$_currentDate';
+
+  /// One-time migration of the old date-only counter to the current account.
+  static Future<int?> _readUserStepCounter(
+    SharedPreferences prefs,
+    String key,
+  ) async {
+    final scopedKey = _userStepCounterKey(key);
+    final scopedValue = prefs.getInt(scopedKey);
+    if (scopedValue != null) return scopedValue;
+
+    final legacyKey = '${key}_$_currentDate';
+    final legacyValue = prefs.getInt(legacyKey);
+    if (legacyValue != null) {
+      await prefs.setInt(scopedKey, legacyValue);
+      await prefs.remove(legacyKey);
+    }
+    return legacyValue;
   }
 
   /// Start listening to pedometer
@@ -273,7 +314,9 @@ class BackgroundStepsTracker {
 
       // Sensor reset (reboot)
       if (_lastRawSteps > rawSteps) {
-        debugPrint(' Sensor reset detected (raw decreased). Preserving accumulated steps.');
+        debugPrint(
+          ' Sensor reset detected (raw decreased). Preserving accumulated steps.',
+        );
         _accumulatedSteps = _todaySteps;
         _baselineSteps = rawSteps;
         await _saveBaseline();
@@ -305,7 +348,9 @@ class BackgroundStepsTracker {
       // Notify parent (foreground service) of update
       onStepsUpdate?.call(_todaySteps, _currentDate);
 
-      debugPrint(' Steps: $_todaySteps (raw: $rawSteps, baseline: $_baselineSteps, acc: $_accumulatedSteps)');
+      debugPrint(
+        ' Steps: $_todaySteps (raw: $rawSteps, baseline: $_baselineSteps, acc: $_accumulatedSteps)',
+      );
     } catch (e) {
       debugPrint(' Error in _onStepCount: $e');
     }
@@ -355,7 +400,10 @@ class BackgroundStepsTracker {
       );
 
       if (result['success'] == true) {
-        await LocalDatabaseService.instance.markSyncedByDate('langkah', _currentDate);
+        await LocalDatabaseService.instance.markSyncedByDate(
+          'langkah',
+          _currentDate,
+        );
         debugPrint(' Synced $_todaySteps steps to server');
       }
     } catch (e) {

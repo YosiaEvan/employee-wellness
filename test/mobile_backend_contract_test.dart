@@ -70,15 +70,17 @@ class BackendMock {
       json = {'success': false, 'message': 'Method not allowed'};
     }
 
-    request.response.headers.contentType =
-        ContentType('application', 'json', charset: 'utf-8');
+    request.response.headers.contentType = ContentType(
+      'application',
+      'json',
+      charset: 'utf-8',
+    );
     request.response.statusCode = status;
     request.response.write(jsonEncode(json));
     await request.response.close();
   }
 
-  Map<String, dynamic> _handleGet(
-      String route, Map<String, String> query) {
+  Map<String, dynamic> _handleGet(String route, Map<String, String> query) {
     if (failWith401) return {'success': false, 'message': 'Unauthorized'};
 
     if (route == '/user/hijau') {
@@ -97,9 +99,13 @@ class BackendMock {
               'deskripsi': 'Hemat Listrik',
               'carbon_saved': '0.50',
               'created_at': '2026-08-07T09:00:00',
-            }
+            },
           ],
-          'ringkasan': {'total_aktivitas': 1, 'total_poin': 1, 'total_carbon_saved': 0.5},
+          'ringkasan': {
+            'total_aktivitas': 1,
+            'total_poin': 1,
+            'total_carbon_saved': 0.5,
+          },
         },
       };
     }
@@ -116,10 +122,24 @@ class BackendMock {
           'modul': modul,
           'aktivitas': isTenang
               ? [
-                  {'id': 11, 'modul': 'tenang', 'aktivitas': 'tahan_emosi', 'tanggal': tgl, 'poin': 1, 'created_at': '2026-08-07T09:00:00'},
+                  {
+                    'id': 11,
+                    'modul': 'tenang',
+                    'aktivitas': 'tahan_emosi',
+                    'tanggal': tgl,
+                    'poin': 1,
+                    'created_at': '2026-08-07T09:00:00',
+                  },
                 ]
               : [
-                  {'id': 21, 'modul': 'sehat', 'aktivitas': 'tanpa_minyak', 'tanggal': tgl, 'poin': 1, 'created_at': '2026-08-07T09:00:00'},
+                  {
+                    'id': 21,
+                    'modul': 'sehat',
+                    'aktivitas': 'tanpa_minyak',
+                    'tanggal': tgl,
+                    'poin': 1,
+                    'created_at': '2026-08-07T09:00:00',
+                  },
                 ],
           'ringkasan': {'total_aktivitas': 1, 'total_poin': 1},
         },
@@ -132,13 +152,53 @@ class BackendMock {
         'message': 'Data KPI HIJAU berhasil diambil',
         'data': {
           'tanggal': '2026-08-07',
-          'ringkasan': {'aktivitas_selesai': 1, 'total_aktivitas': 5, 'progress_persen': 20, 'total_poin': 1},
+          'ringkasan': {
+            'aktivitas_selesai': 1,
+            'total_aktivitas': 5,
+            'progress_persen': 20,
+            'total_poin': 1,
+          },
           'aktivitas': [
-            {'kode': 'hemat_air', 'nama': 'Hemat Air', 'target_harian': 1, 'selesai': false, 'poin': 0, 'bobot': '20%'},
-            {'kode': 'hemat_listrik', 'nama': 'Hemat Listrik', 'target_harian': 1, 'selesai': true, 'poin': 1, 'bobot': '20%'},
-            {'kode': 'gaya_hidup_hijau', 'nama': 'Gaya Hidup Hijau', 'target_harian': 1, 'selesai': false, 'poin': 0, 'bobot': '20%'},
-            {'kode': 'ajak_orang_lain', 'nama': 'Ajak Orang Lain Hidup Sehat', 'target_harian': 1, 'selesai': false, 'poin': 0, 'bobot': '20%'},
-            {'kode': 'ubah_kebiasaan', 'nama': 'Ubah Kebiasaan', 'target_harian': 1, 'selesai': false, 'poin': 0, 'bobot': '20%'},
+            {
+              'kode': 'hemat_air',
+              'nama': 'Hemat Air',
+              'target_harian': 1,
+              'selesai': false,
+              'poin': 0,
+              'bobot': '20%',
+            },
+            {
+              'kode': 'hemat_listrik',
+              'nama': 'Hemat Listrik',
+              'target_harian': 1,
+              'selesai': true,
+              'poin': 1,
+              'bobot': '20%',
+            },
+            {
+              'kode': 'gaya_hidup_hijau',
+              'nama': 'Gaya Hidup Hijau',
+              'target_harian': 1,
+              'selesai': false,
+              'poin': 0,
+              'bobot': '20%',
+            },
+            {
+              'kode': 'ajak_orang_lain',
+              'nama': 'Ajak Orang Lain Hidup Sehat',
+              'target_harian': 1,
+              'selesai': false,
+              'poin': 0,
+              'bobot': '20%',
+            },
+            {
+              'kode': 'ubah_kebiasaan',
+              'nama': 'Ubah Kebiasaan',
+              'target_harian': 1,
+              'selesai': false,
+              'poin': 0,
+              'bobot': '20%',
+            },
           ],
           'total': {'nama': 'TOTAL', 'bobot': '100%'},
         },
@@ -152,9 +212,30 @@ class BackendMock {
         'data': {
           'periode': {'bulan': 8, 'tahun': 2026, 'nama_bulan': 'Agustus'},
           'dimensi': [
-            {'modul': 'sehat', 'nama': 'SEHAT 360°', 'bobot_persen': 50, 'maks_poin_bulan': 136, 'poin_diperoleh': 122, 'persen': 89.7},
-            {'modul': 'tenang', 'nama': 'TENANG 360°', 'bobot_persen': 25, 'maks_poin_bulan': 40, 'poin_diperoleh': 34, 'persen': 85},
-            {'modul': 'hijau', 'nama': 'HIJAU 360°', 'bobot_persen': 25, 'maks_poin_bulan': 20, 'poin_diperoleh': 18, 'persen': 90},
+            {
+              'modul': 'sehat',
+              'nama': 'SEHAT 360°',
+              'bobot_persen': 50,
+              'maks_poin_bulan': 136,
+              'poin_diperoleh': 122,
+              'persen': 89.7,
+            },
+            {
+              'modul': 'tenang',
+              'nama': 'TENANG 360°',
+              'bobot_persen': 25,
+              'maks_poin_bulan': 40,
+              'poin_diperoleh': 34,
+              'persen': 85,
+            },
+            {
+              'modul': 'hijau',
+              'nama': 'HIJAU 360°',
+              'bobot_persen': 25,
+              'maks_poin_bulan': 20,
+              'poin_diperoleh': 18,
+              'persen': 90,
+            },
           ],
           'skor_kpi_wellness': 88.6,
           'predikat': 'Baik',
@@ -192,7 +273,9 @@ class BackendMock {
   }
 
   (int, Map<String, dynamic>) _handlePost(
-      String route, Map<String, dynamic>? body) {
+    String route,
+    Map<String, dynamic>? body,
+  ) {
     if (route == '/user/hijau') {
       if (forceHijau409) {
         return (
@@ -201,14 +284,18 @@ class BackendMock {
             'success': false,
             'message':
                 'Aktivitas hemat_listrik sudah dicapai minggu ini (maksimal 1 poin/minggu).',
-            'data': {'aktivitas': 'hemat_listrik', 'cap_tercapai': true, 'pekan': 2},
-          }
+            'data': {
+              'aktivitas': 'hemat_listrik',
+              'cap_tercapai': true,
+              'pekan': 2,
+            },
+          },
         );
       }
       if (forceHijau400) {
         return (
           400,
-          {'success': false, 'message': 'Parameter "aktivitas" diperlukan'}
+          {'success': false, 'message': 'Parameter "aktivitas" diperlukan'},
         );
       }
       return (
@@ -222,7 +309,7 @@ class BackendMock {
             'kategori': body?['kategori'],
             'poin': body?['points'] ?? 1,
           },
-        }
+        },
       );
     }
 
@@ -234,14 +321,23 @@ class BackendMock {
             'success': false,
             'message':
                 'Aktivitas "tanpa_minyak" sudah mencapai batas 2 poin/minggu pada pekan ke-1.',
-            'data': {'modul': body?['modul'], 'aktivitas': body?['aktivitas'], 'cap_tercapai': true, 'cap': 2, 'pekan': 1},
-          }
+            'data': {
+              'modul': body?['modul'],
+              'aktivitas': body?['aktivitas'],
+              'cap_tercapai': true,
+              'cap': 2,
+              'pekan': 1,
+            },
+          },
         );
       }
       if (forceAktivitas400) {
         return (
           400,
-          {'success': false, 'message': 'Aktivitas tidak dikenali untuk modul sehat.'}
+          {
+            'success': false,
+            'message': 'Aktivitas tidak dikenali untuk modul sehat.',
+          },
         );
       }
       return (
@@ -256,7 +352,7 @@ class BackendMock {
             'tanggal': '2026-08-07',
             'poin': 1,
           },
-        }
+        },
       );
     }
 
@@ -308,7 +404,9 @@ void main() {
       expect(result['success'], isTrue);
       final responseBody = result['data'] as Map<String, dynamic>;
       // HijauService returns inner data directly (body['data'])
-      final inner = responseBody.containsKey('data') ? responseBody['data'] as Map<String, dynamic> : responseBody;
+      final inner = responseBody.containsKey('data')
+          ? responseBody['data'] as Map<String, dynamic>
+          : responseBody;
       expect(inner['id'], 1);
       expect(inner['aktivitas'], 'hemat_listrik');
       expect(inner['kategori'], 'hemat_energi');
@@ -328,52 +426,65 @@ void main() {
       expect(body.containsKey('date'), isTrue);
     });
 
-    test('recordGreenActivity: body hanya wajib activity_type + description', () async {
-      final result = await HijauService.recordGreenActivity(
-        activityType: 'gaya_hidup_hijau',
-        description: 'Menerapkan gaya hidup hijau',
-      );
-      expect(result['success'], isTrue);
-      final body = backend.requests.last['body'] as Map<String, dynamic>;
-      expect(body['activity_type'], 'gaya_hidup_hijau');
-      expect(body.containsKey('kategori'), isFalse);
-      expect(body.containsKey('points'), isFalse);
-    });
+    test(
+      'recordGreenActivity: body hanya wajib activity_type + description',
+      () async {
+        final result = await HijauService.recordGreenActivity(
+          activityType: 'gaya_hidup_hijau',
+          description: 'Menerapkan gaya hidup hijau',
+        );
+        expect(result['success'], isTrue);
+        final body = backend.requests.last['body'] as Map<String, dynamic>;
+        expect(body['activity_type'], 'gaya_hidup_hijau');
+        expect(body.containsKey('kategori'), isFalse);
+        expect(body.containsKey('points'), isFalse);
+      },
+    );
 
-    test('recordGreenActivity: backend 400 (missing aktivitas) -> success=false', () async {
-      backend.forceHijau400 = true;
-      final result = await HijauService.recordGreenActivity(
-        activityType: '',
-        description: 'x',
-      );
-      expect(result['success'], isFalse);
-    });
+    test(
+      'recordGreenActivity: backend 400 (missing aktivitas) -> success=false',
+      () async {
+        backend.forceHijau400 = true;
+        final result = await HijauService.recordGreenActivity(
+          activityType: '',
+          description: 'x',
+        );
+        expect(result['success'], isFalse);
+      },
+    );
 
-    test('recordGreenActivity: cap mingguan backend 409 -> success=false + statusCode', () async {
-      backend.forceHijau409 = true;
-      final result = await HijauService.recordGreenActivity(
-        activityType: 'hemat_listrik',
-        description: 'Hemat Listrik',
-        points: 1,
-      );
-      expect(result['success'], isFalse);
-      expect(result['statusCode'], 409);
-      expect(
-        result['message'].toString().contains('maksimal 1 poin/minggu'),
-        isTrue,
-      );
-    });
+    test(
+      'recordGreenActivity: cap mingguan backend 409 -> success=false + statusCode',
+      () async {
+        backend.forceHijau409 = true;
+        final result = await HijauService.recordGreenActivity(
+          activityType: 'hemat_listrik',
+          description: 'Hemat Listrik',
+          points: 1,
+        );
+        expect(result['success'], isFalse);
+        expect(result['statusCode'], 409);
+        expect(
+          result['message'].toString().contains('maksimal 1 poin/minggu'),
+          isTrue,
+        );
+      },
+    );
 
-    test('getHijauData: GET /user/hijau, parse ringkasan dari backend', () async {
-      final result = await HijauService.getHijauData();
-      expect(result['success'], isTrue);
-      final data = (result['data'] as Map<String, dynamic>)['data']
-          as Map<String, dynamic>;
-      expect(data['tanggal'], '2026-08-07');
-      final ringkasan = data['ringkasan'] as Map<String, dynamic>;
-      expect(ringkasan['total_poin'], 1);
-      expect(data['aktivitas'], isA<List<dynamic>>());
-    });
+    test(
+      'getHijauData: GET /user/hijau, parse ringkasan dari backend',
+      () async {
+        final result = await HijauService.getHijauData();
+        expect(result['success'], isTrue);
+        final data =
+            (result['data'] as Map<String, dynamic>)['data']
+                as Map<String, dynamic>;
+        expect(data['tanggal'], '2026-08-07');
+        final ringkasan = data['ringkasan'] as Map<String, dynamic>;
+        expect(ringkasan['total_poin'], 1);
+        expect(data['aktivitas'], isA<List<dynamic>>());
+      },
+    );
 
     test('getCarbonFootprint: GET /user/hijau tanpa query params', () async {
       final result = await HijauService.getCarbonFootprint();
@@ -381,38 +492,52 @@ void main() {
       expect(backend.requests.last['path'], '/api/user/hijau');
     });
 
-    test('getWeeklyKPI: GET /user/kpi-hijau/mingguan -> 5 aktivitas HIJAU 360°', () async {
-      final result = await HijauKPIService.getWeeklyKPI();
-      expect(result['success'], isTrue);
-      final aktivitas = (result['data'] as Map<String, dynamic>)['aktivitas']
-          as List<dynamic>;
-      expect(aktivitas.length, 5);
-      final kodes = aktivitas
-          .map((a) => a['kode'])
-          .toSet();
-      expect(kodes, containsAll(['hemat_air', 'hemat_listrik', 'gaya_hidup_hijau', 'ajak_orang_lain', 'ubah_kebiasaan']));
-      final ringkasan = (result['data'] as Map<String, dynamic>)['ringkasan'];
-      expect(ringkasan['total_aktivitas'], 5);
-    });
+    test(
+      'getWeeklyKPI: GET /user/kpi-hijau/mingguan -> 5 aktivitas HIJAU 360°',
+      () async {
+        final result = await HijauKPIService.getWeeklyKPI();
+        expect(result['success'], isTrue);
+        final aktivitas =
+            (result['data'] as Map<String, dynamic>)['aktivitas']
+                as List<dynamic>;
+        expect(aktivitas.length, 5);
+        final kodes = aktivitas.map((a) => a['kode']).toSet();
+        expect(
+          kodes,
+          containsAll([
+            'hemat_air',
+            'hemat_listrik',
+            'gaya_hidup_hijau',
+            'ajak_orang_lain',
+            'ubah_kebiasaan',
+          ]),
+        );
+        final ringkasan = (result['data'] as Map<String, dynamic>)['ringkasan'];
+        expect(ringkasan['total_aktivitas'], 5);
+      },
+    );
   });
 
   group('SEHAT mobile -> backend', () {
-    test('updateStepsWithDate: POST /user/langkah, body cocok kontrak', () async {
-      final result = await SehatKPIService.updateStepsWithDate(
-        tanggal: '2026-08-07',
-        totalSteps: 8000,
-      );
-      expect(result['success'], isTrue);
+    test(
+      'updateStepsWithDate: POST /user/langkah, body cocok kontrak',
+      () async {
+        final result = await SehatKPIService.updateStepsWithDate(
+          tanggal: '2026-08-07',
+          totalSteps: 8000,
+        );
+        expect(result['success'], isTrue);
 
-      final req = backend.requests.last;
-      expect(req['method'], 'POST');
-      expect(req['path'], '/api/user/langkah');
-      expect(req['auth'], 'Bearer test-token-12345-abcdefghij');
+        final req = backend.requests.last;
+        expect(req['method'], 'POST');
+        expect(req['path'], '/api/user/langkah');
+        expect(req['auth'], 'Bearer test-token-12345-abcdefghij');
 
-      final body = req['body'] as Map<String, dynamic>;
-      expect(body['jumlah_langkah'], 8000);
-      expect(body['tanggal'], '2026-08-07');
-    });
+        final body = req['body'] as Map<String, dynamic>;
+        expect(body['jumlah_langkah'], 8000);
+        expect(body['tanggal'], '2026-08-07');
+      },
+    );
 
     test('getDailyKPI: GET /user/kpi-sehat/harian?tanggal=...', () async {
       final result = await SehatKPIService.getDailyKPI(tanggal: '2026-08-07');
@@ -424,16 +549,20 @@ void main() {
       expect((result['data'] as Map)['ringkasan'], isNotNull);
     });
 
-    test('getWeeklyKPI: GET /user/kpi-sehat/mingguan?minggu_ke&bulan&tahun', () async {
-      final result = await SehatKPIService.getWeeklyKPI(
-        mingguKe: 2, bulan: 8, tahun: 2026,
-      );
-      expect(result['success'], isTrue);
-      final req = backend.requests.last;
-      expect(req['path'], '/api/user/kpi-sehat/mingguan');
-      expect(req['query'],
-          {'minggu_ke': '2', 'bulan': '8', 'tahun': '2026'});
-    });
+    test(
+      'getWeeklyKPI: GET /user/kpi-sehat/mingguan?minggu_ke&bulan&tahun',
+      () async {
+        final result = await SehatKPIService.getWeeklyKPI(
+          mingguKe: 2,
+          bulan: 8,
+          tahun: 2026,
+        );
+        expect(result['success'], isTrue);
+        final req = backend.requests.last;
+        expect(req['path'], '/api/user/kpi-sehat/mingguan');
+        expect(req['query'], {'minggu_ke': '2', 'bulan': '8', 'tahun': '2026'});
+      },
+    );
 
     test('getMonthlyKPI: GET /user/kpi-sehat/bulanan?bulan&tahun', () async {
       final result = await SehatKPIService.getMonthlyKPI(bulan: 8, tahun: 2026);
@@ -469,7 +598,10 @@ void main() {
     });
 
     test('getMonthlyKPI: GET /user/kpi-tenang/bulanan?bulan&tahun', () async {
-      final result = await TenangKPIService.getMonthlyKPI(bulan: 8, tahun: 2026);
+      final result = await TenangKPIService.getMonthlyKPI(
+        bulan: 8,
+        tahun: 2026,
+      );
       expect(result['success'], isTrue);
       final req = backend.requests.last;
       expect(req['path'], '/api/user/kpi-tenang/bulanan');
@@ -478,30 +610,33 @@ void main() {
   });
 
   group('PENILAIAN mobile -> backend', () {
-    test('recordAktivitas SEHAT: POST /user/aktivitas, body cocok kontrak', () async {
-      final result = await AktivitasService.recordAktivitas(
-        modul: 'sehat',
-        aktivitas: 'tanpa_minyak',
-        deskripsi: 'Makan Tanpa Minyak',
-      );
+    test(
+      'recordAktivitas SEHAT: POST /user/aktivitas, body cocok kontrak',
+      () async {
+        final result = await AktivitasService.recordAktivitas(
+          modul: 'sehat',
+          aktivitas: 'napas_448',
+          deskripsi: 'Latihan napas 4-4-8',
+        );
 
-      expect(result['success'], isTrue);
-      final responseBody = result['data'] as Map<String, dynamic>;
-      expect(responseBody['id'], 2);
-      expect(responseBody['modul'], 'sehat');
-      expect(responseBody['aktivitas'], 'tanpa_minyak');
-      expect(responseBody['poin'], 1);
+        expect(result['success'], isTrue);
+        final responseBody = result['data'] as Map<String, dynamic>;
+        expect(responseBody['id'], 2);
+        expect(responseBody['modul'], 'sehat');
+        expect(responseBody['aktivitas'], 'napas_448');
+        expect(responseBody['poin'], 1);
 
-      final req = backend.requests.last;
-      expect(req['method'], 'POST');
-      expect(req['path'], '/api/user/aktivitas');
-      expect(req['auth'], 'Bearer test-token-12345-abcdefghij');
+        final req = backend.requests.last;
+        expect(req['method'], 'POST');
+        expect(req['path'], '/api/user/aktivitas');
+        expect(req['auth'], 'Bearer test-token-12345-abcdefghij');
 
-      final body = req['body'] as Map<String, dynamic>;
-      expect(body['modul'], 'sehat');
-      expect(body['aktivitas'], 'tanpa_minyak');
-      expect(body['deskripsi'], 'Makan Tanpa Minyak');
-    });
+        final body = req['body'] as Map<String, dynamic>;
+        expect(body['modul'], 'sehat');
+        expect(body['aktivitas'], 'napas_448');
+        expect(body['deskripsi'], 'Latihan napas 4-4-8');
+      },
+    );
 
     test('recordAktivitas TENANG: body hanya wajib modul + aktivitas', () async {
       final result = await AktivitasService.recordAktivitas(
@@ -517,65 +652,80 @@ void main() {
       expect(body.containsKey('deskripsi'), isFalse);
     });
 
-    test('recordAktivitas: cap mingguan backend 409 -> success=false + statusCode', () async {
-      backend.forceAktivitas409 = true;
-      final result = await AktivitasService.recordAktivitas(
-        modul: 'sehat',
-        aktivitas: 'tanpa_minyak',
-      );
-      expect(result['success'], isFalse);
-      expect(result['statusCode'], 409);
-      expect(
-        result['message'].toString().contains('batas 2 poin/minggu'),
-        isTrue,
-      );
-    });
+    test(
+      'recordAktivitas: cap mingguan backend 409 -> success=false + statusCode',
+      () async {
+        backend.forceAktivitas409 = true;
+        final result = await AktivitasService.recordAktivitas(
+          modul: 'sehat',
+          aktivitas: 'napas_448',
+        );
+        expect(result['success'], isFalse);
+        expect(result['statusCode'], 409);
+        expect(
+          result['message'].toString().contains('batas 2 poin/minggu'),
+          isTrue,
+        );
+      },
+    );
 
-    test('recordAktivitas: aktivitas tak dikenali 400 -> success=false', () async {
-      backend.forceAktivitas400 = true;
-      final result = await AktivitasService.recordAktivitas(
-        modul: 'sehat',
-        aktivitas: 'bukan_aktivitas',
-      );
-      expect(result['success'], isFalse);
-      expect(result['statusCode'], 400);
-    });
+    test(
+      'recordAktivitas: aktivitas tak dikenali 400 -> success=false',
+      () async {
+        backend.forceAktivitas400 = true;
+        final result = await AktivitasService.recordAktivitas(
+          modul: 'sehat',
+          aktivitas: 'bukan_aktivitas',
+        );
+        expect(result['success'], isFalse);
+        expect(result['statusCode'], 400);
+      },
+    );
 
-    test('getAktivitas: GET /user/aktivitas?modul=tenang&tanggal=...', () async {
-      final result = await AktivitasService.getAktivitas(
-        modul: 'tenang',
-        tanggal: '2026-08-07',
-      );
-      expect(result['success'], isTrue);
-      final req = backend.requests.last;
-      expect(req['method'], 'GET');
-      expect(req['path'], '/api/user/aktivitas');
-      expect(req['query'], {'modul': 'tenang', 'tanggal': '2026-08-07'});
+    test(
+      'getAktivitas: GET /user/aktivitas?modul=tenang&tanggal=...',
+      () async {
+        final result = await AktivitasService.getAktivitas(
+          modul: 'tenang',
+          tanggal: '2026-08-07',
+        );
+        expect(result['success'], isTrue);
+        final req = backend.requests.last;
+        expect(req['method'], 'GET');
+        expect(req['path'], '/api/user/aktivitas');
+        expect(req['query'], {'modul': 'tenang', 'tanggal': '2026-08-07'});
 
-      final data = result['data'] as Map<String, dynamic>;
-      final aktivitas = data['aktivitas'] as List<dynamic>;
-      expect(aktivitas.first['aktivitas'], 'tahan_emosi');
-      expect((data['ringkasan'] as Map<String, dynamic>)['total_poin'], 1);
-    });
+        final data = result['data'] as Map<String, dynamic>;
+        final aktivitas = data['aktivitas'] as List<dynamic>;
+        expect(aktivitas.first['aktivitas'], 'tahan_emosi');
+        expect((data['ringkasan'] as Map<String, dynamic>)['total_poin'], 1);
+      },
+    );
   });
 
   group('WELLNESS mobile -> backend', () {
-    test('getMonthlyWellness: GET /user/kpi-wellness/bulanan, parse skor + predikat', () async {
-      final result = await WellnessKPIService.getMonthlyWellness(bulan: 8, tahun: 2026);
-      expect(result['success'], isTrue);
-      final req = backend.requests.last;
-      expect(req['method'], 'GET');
-      expect(req['path'], '/api/user/kpi-wellness/bulanan');
-      expect(req['query'], {'bulan': '8', 'tahun': '2026'});
+    test(
+      'getMonthlyWellness: GET /user/kpi-wellness/bulanan, parse skor + predikat',
+      () async {
+        final result = await WellnessKPIService.getMonthlyWellness(
+          bulan: 8,
+          tahun: 2026,
+        );
+        expect(result['success'], isTrue);
+        final req = backend.requests.last;
+        expect(req['method'], 'GET');
+        expect(req['path'], '/api/user/kpi-wellness/bulanan');
+        expect(req['query'], {'bulan': '8', 'tahun': '2026'});
 
-      final data = result['data'] as Map<String, dynamic>;
-      expect(data['skor_kpi_wellness'], 88.6);
-      expect(data['predikat'], 'Baik');
-      final dimensi = data['dimensi'] as List<dynamic>;
-      expect(dimensi.length, 3);
-      expect(dimensi[0]['modul'], 'sehat');
-      expect(data['maks_poin_bulan'], 196);
-    });
+        final data = result['data'] as Map<String, dynamic>;
+        expect(data['skor_kpi_wellness'], 88.6);
+        expect(data['predikat'], 'Baik');
+        final dimensi = data['dimensi'] as List<dynamic>;
+        expect(dimensi.length, 3);
+        expect(dimensi[0]['modul'], 'sehat');
+        expect(data['maks_poin_bulan'], 196);
+      },
+    );
 
     test('skor wellness sesuai rumus (89,7×0,5)+(85×0,25)+(90×0,25)=88,6', () {
       final skor = (89.7 * 0.5) + (85 * 0.25) + (90 * 0.25);

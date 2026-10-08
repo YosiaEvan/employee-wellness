@@ -5,32 +5,32 @@ import 'package:flutter/material.dart';
 
 /// Overlay animasi landscape transparan di atas stream kamera AR.
 ///
-/// WebP ber-alpha diputar frame-per-frame: hanya frame aktif yang dirender,
+/// Animasi ber-alpha diputar frame-per-frame: hanya frame aktif yang dirender,
 /// frame sebelumnya langsung di-dispose (tidak ditumpuk), dan pemutaran
 /// dimatikan saat widget tidak berjalan (app inactive / dispose).
-/// Hanya video landscape animasi ini yang di-chroma; video lain
-/// (keran.mp4 / listrik.mp4) diputar normal tanpa chroma.
+/// Animated WebP AR keran/tempat sampah sudah di-chroma-key dari video sumber
+/// agar objek dapat melayang transparan di atas kamera.
 class ChromaKeyVideo extends StatefulWidget {
   final String assetPath;
   final double width;
   final double height;
-  final BorderRadius borderRadius;
 
   const ChromaKeyVideo({
     super.key,
     this.assetPath = 'assets/videos/animasi_transparent.webp',
     this.width = 128,
     this.height = 72,
-    this.borderRadius = const BorderRadius.all(Radius.circular(16)),
   });
 
   @override
   State<ChromaKeyVideo> createState() => _ChromaKeyVideoState();
 }
 
-class _ChromaKeyVideoState extends State<ChromaKeyVideo> with WidgetsBindingObserver {
+class _ChromaKeyVideoState extends State<ChromaKeyVideo>
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   static const Duration _fallbackFrameDuration = Duration(milliseconds: 66);
 
+  late final AnimationController _floatController;
   ui.Codec? _codec;
   ui.Image? _frame;
   Timer? _timer;
@@ -43,6 +43,10 @@ class _ChromaKeyVideoState extends State<ChromaKeyVideo> with WidgetsBindingObse
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _floatController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
     _running = true;
     _loadCodec();
   }
@@ -56,14 +60,20 @@ class _ChromaKeyVideoState extends State<ChromaKeyVideo> with WidgetsBindingObse
     _codec = null;
     _frame?.dispose();
     _frame = null;
+    _floatController.dispose();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      if (!_floatController.isAnimating) {
+        _floatController.repeat(reverse: true);
+      }
       _resume();
-    } else if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
+    } else if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      _floatController.stop();
       _stop();
     }
   }
@@ -146,8 +156,15 @@ class _ChromaKeyVideoState extends State<ChromaKeyVideo> with WidgetsBindingObse
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: widget.borderRadius,
+    return AnimatedBuilder(
+      animation: _floatController,
+      builder: (context, child) => Transform.translate(
+        offset: Offset(0, -5 * _floatController.value),
+        child: Transform.scale(
+          scale: 0.98 + (0.04 * _floatController.value),
+          child: child,
+        ),
+      ),
       child: SizedBox(
         width: widget.width,
         height: widget.height,
@@ -155,7 +172,7 @@ class _ChromaKeyVideoState extends State<ChromaKeyVideo> with WidgetsBindingObse
             ? const SizedBox.shrink()
             : RawImage(
                 image: _frame,
-                fit: BoxFit.cover,
+                fit: BoxFit.contain,
                 filterQuality: FilterQuality.medium,
               ),
       ),

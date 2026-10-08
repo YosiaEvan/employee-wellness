@@ -78,14 +78,15 @@ class TenangService {
     final tanggal = LocalDatabaseService.todayStr();
 
     // 1. Simpan ke SQLite lokal dulu
-    final rowId = await LocalDatabaseService.instance.insert('tenang_sessions', {
-      'tanggal': tanggal,
-      'kategori': kategori,
-      'sub_kategori': subKategori,
-      'durasi_detik': durasiDetik,
-      'selesai_at': selesaiAt,
-      'synced': 0,
-    });
+    final rowId = await LocalDatabaseService.instance
+        .insert('tenang_sessions', {
+          'tanggal': tanggal,
+          'kategori': kategori,
+          'sub_kategori': subKategori,
+          'durasi_detik': durasiDetik,
+          'selesai_at': selesaiAt,
+          'synced': 0,
+        });
 
     // 2. Coba push ke server
     try {
@@ -101,7 +102,10 @@ class TenangService {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        await LocalDatabaseService.instance.markSyncedByDate('tenang_sessions', tanggal);
+        await LocalDatabaseService.instance.markSynced(
+          'tenang_sessions',
+          rowId,
+        );
         final body = jsonDecode(response.body);
         DataRefreshNotifier.instance.notifyDataChanged();
         return {
@@ -112,9 +116,22 @@ class TenangService {
         };
       }
 
-      // Ditolak server -> batalkan catatan lokal
-      await LocalDatabaseService.instance.delete('tenang_sessions', where: 'id = ?', whereArgs: [rowId]);
-      return _errorFromStatus(response.statusCode, response.body);
+      if (!_isPermanentRejection(response.statusCode)) {
+        DataRefreshNotifier.instance.notifyDataChanged();
+        return {
+          'success': true,
+          'offline': true,
+          'pending': true,
+          'message': 'Tersimpan di perangkat, sinkronisasi akan dicoba kembali',
+        };
+      }
+      final error = _errorFromStatus(response.statusCode, response.body);
+      await LocalDatabaseService.instance.markRejected(
+        'tenang_sessions',
+        rowId,
+        error['message'].toString(),
+      );
+      return error;
     } catch (e) {
       // Offline -> tetap dianggap berhasil (tersimpan di SQLite)
       DataRefreshNotifier.instance.notifyDataChanged();
@@ -200,17 +217,27 @@ class TenangService {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        await LocalDatabaseService.instance.markSyncedByDate('stress_checkin', tanggal);
+        await LocalDatabaseService.instance.markSynced('stress_checkin', rowId);
+        DataRefreshNotifier.instance.notifyDataChanged();
+        return {'success': true, 'message': 'Level stres berhasil dicatat'};
+      }
+
+      if (!_isPermanentRejection(response.statusCode)) {
         DataRefreshNotifier.instance.notifyDataChanged();
         return {
           'success': true,
-          'message': 'Level stres berhasil dicatat',
+          'offline': true,
+          'pending': true,
+          'message': 'Tersimpan di perangkat, sinkronisasi akan dicoba kembali',
         };
       }
-
-      // Ditolak server -> batalkan catatan lokal
-      await LocalDatabaseService.instance.delete('stress_checkin', where: 'id = ?', whereArgs: [rowId]);
-      return _errorFromStatus(response.statusCode, response.body);
+      final error = _errorFromStatus(response.statusCode, response.body);
+      await LocalDatabaseService.instance.markRejected(
+        'stress_checkin',
+        rowId,
+        error['message'].toString(),
+      );
+      return error;
     } catch (e) {
       // Offline -> tetap dianggap berhasil (tersimpan di SQLite)
       DataRefreshNotifier.instance.notifyDataChanged();
@@ -246,10 +273,7 @@ class TenangService {
         final checkins = (body['data'] as List? ?? [])
             .map((e) => StressCheckIn.fromJson(e as Map<String, dynamic>))
             .toList();
-        return {
-          'success': true,
-          'checkins': checkins,
-        };
+        return {'success': true, 'checkins': checkins};
       }
 
       return _errorFromStatus(response.statusCode, response.body);
@@ -269,10 +293,7 @@ class TenangService {
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-        return {
-          'success': true,
-          'data': body['data'],
-        };
+        return {'success': true, 'data': body['data']};
       }
 
       return _errorFromStatus(response.statusCode, response.body);
@@ -301,10 +322,7 @@ class TenangService {
       );
 
       if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'message': 'Target berhasil diperbarui',
-        };
+        return {'success': true, 'message': 'Target berhasil diperbarui'};
       }
 
       return _errorFromStatus(response.statusCode, response.body);
@@ -333,7 +351,8 @@ class TenangService {
           final payload = parts[1];
           final normalized = base64.normalize(payload);
           final decoded = jsonDecode(utf8.decode(base64.decode(normalized)));
-          final userId = decoded['id']?.toString() ??
+          final userId =
+              decoded['id']?.toString() ??
               decoded['user_id']?.toString() ??
               decoded['userId']?.toString() ??
               decoded['sub']?.toString();
@@ -356,7 +375,8 @@ class TenangService {
       final decoded = jsonDecode(body);
       return {
         'success': false,
-        'message': decoded['message'] ?? 'Terjadi kesalahan server ($statusCode)',
+        'message':
+            decoded['message'] ?? 'Terjadi kesalahan server ($statusCode)',
       };
     } catch (_) {
       return {
@@ -366,8 +386,11 @@ class TenangService {
     }
   }
 
+  static bool _isPermanentRejection(int statusCode) =>
+      statusCode == 400 || statusCode == 409 || statusCode == 422;
+
   static Map<String, dynamic> _networkError(dynamic error) => {
-        'success': false,
-        'message': 'Gagal terhubung ke server: $error',
-      };
+    'success': false,
+    'message': 'Gagal terhubung ke server: $error',
+  };
 }

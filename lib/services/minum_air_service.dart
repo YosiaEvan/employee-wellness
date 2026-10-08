@@ -13,6 +13,7 @@ class MinumAirService {
   static const Duration intervalMinum = Duration(minutes: 45);
 
   static final LocalDatabaseService _db = LocalDatabaseService.instance;
+  static bool _catatMinumSedangDiproses = false;
 
   /// GET - Cek status minum air hari ini
   static Future<Map<String, dynamic>> getStatusMinum() async {
@@ -21,7 +22,7 @@ class MinumAirService {
       final userId = await LocalDatabaseService.getCurrentUserId();
       final todayRows = await _db.query(
         'minum',
-        where: 'tanggal = ? AND user_id = ?',
+        where: 'tanggal = ? AND user_id = ? AND synced != 2',
         whereArgs: [tanggal, userId],
         orderBy: 'waktu_minum ASC',
       );
@@ -47,9 +48,61 @@ class MinumAirService {
 
   /// POST - Catat minum air
   static Future<Map<String, dynamic>> catatMinum() async {
+    if (_catatMinumSedangDiproses) {
+      return {
+        'success': false,
+        'message':
+            'Pencatatan minum sedang diproses. Coba kembali sebentar lagi.',
+      };
+    }
+    _catatMinumSedangDiproses = true;
+    try {
+      return await _catatMinum();
+    } finally {
+      _catatMinumSedangDiproses = false;
+    }
+  }
+
+  static Future<Map<String, dynamic>> _catatMinum() async {
     final tanggal = LocalDatabaseService.todayStr();
     final now = DateTime.now().toUtc();
     final waktuMinum = now.toIso8601String();
+    final userId = await LocalDatabaseService.getCurrentUserId();
+    final todayRows = await _db.query(
+      'minum',
+      where: 'tanggal = ? AND user_id = ? AND synced != 2',
+      whereArgs: [tanggal, userId],
+      orderBy: 'waktu_minum DESC',
+    );
+
+    if (todayRows.length >= targetGelas) {
+      return {
+        'success': false,
+        'statusCode': 400,
+        'message': 'Target $targetGelas gelas per hari sudah tercapai!',
+        'jumlah_gelas_hari_ini': todayRows.length,
+      };
+    }
+
+    if (todayRows.isNotEmpty) {
+      final lastDrink = DateTime.tryParse(
+        todayRows.first['waktu_minum']?.toString() ?? '',
+      )?.toUtc();
+      if (lastDrink != null) {
+        final elapsed = now.difference(lastDrink);
+        if (elapsed < intervalMinum) {
+          final remaining = intervalMinum - elapsed;
+          return {
+            'success': false,
+            'statusCode': 400,
+            'message':
+                'Jarak minum terlalu dekat. Minimal jarak ${intervalMinum.inMinutes} menit antar minum.',
+            'menit_tersisa': (remaining.inSeconds / 60).ceil(),
+            'waktu_minum_terakhir': lastDrink.toIso8601String(),
+          };
+        }
+      }
+    }
 
     // 1. Simpan ke SQLite lokal dulu
     final rowId = await _db.insert('minum', {
@@ -57,6 +110,16 @@ class MinumAirService {
       'waktu_minum': waktuMinum,
       'synced': 0,
     });
+
+    if (!await OfflineSyncService.hasInternet()) {
+      DataRefreshNotifier.instance.notifyDataChanged();
+      return {
+        'success': true,
+        'offline': true,
+        'pending': true,
+        'message': 'Tersimpan offline, akan disinkronkan saat online',
+      };
+    }
 
     // 2. Coba push ke server
     try {
@@ -66,7 +129,7 @@ class MinumAirService {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        await _db.markSyncedByDate('minum', tanggal);
+        await _db.markSynced('minum', rowId);
         final responseData = jsonDecode(response.body);
         DataRefreshNotifier.instance.notifyDataChanged();
         return {
@@ -76,16 +139,41 @@ class MinumAirService {
           "tercapai": responseData['tercapai'] ?? false,
         };
       } else {
-        // Ditolak server (mis. interval 15 menit belum lewat) -> batalkan catatan lokal
-        await _db.delete('minum', where: 'id = ?', whereArgs: [rowId]);
+        // Jangan buang catatan lokal. 4xx ditandai untuk ditinjau, 5xx tetap antre.
+        DataRefreshNotifier.instance.notifyDataChanged();
+        if (!const [400, 409, 422].contains(response.statusCode)) {
+          return {
+            'success': true,
+            'offline': true,
+            'pending': true,
+            'message':
+                'Tersimpan di perangkat, sinkronisasi akan dicoba kembali',
+          };
+        }
         try {
           final errorData = jsonDecode(response.body);
+          final message = errorData['message'] ?? "Gagal menyimpan data";
+          if (const [400, 409, 422].contains(response.statusCode)) {
+            await _db.markRejected('minum', rowId, message.toString());
+          }
           return {
             "success": false,
-            "message": errorData['message'] ?? "Gagal menyimpan data",
+            "message": message,
+            "pending": response.statusCode >= 500,
           };
         } catch (_) {
-          return {"success": false, "message": "Gagal menyimpan data"};
+          if (const [400, 409, 422].contains(response.statusCode)) {
+            await _db.markRejected(
+              'minum',
+              rowId,
+              'HTTP ${response.statusCode}',
+            );
+          }
+          return {
+            "success": false,
+            "message": "Gagal menyimpan data",
+            "pending": response.statusCode >= 500,
+          };
         }
       }
     } catch (e) {
@@ -105,7 +193,8 @@ class MinumAirService {
   // =====================================================
 
   static Future<Map<String, dynamic>> _buildStatusFromLocal(
-      List<Map<String, dynamic>> rows) async {
+    List<Map<String, dynamic>> rows,
+  ) async {
     final jumlah = rows.length;
     final sisa = (targetGelas - jumlah) < 0 ? 0 : (targetGelas - jumlah);
     final sudahSelesai = jumlah >= targetGelas;
@@ -113,13 +202,15 @@ class MinumAirService {
     bool bisaMinumLagi = true;
     int menitTersisa = 0;
     if (rows.isNotEmpty) {
-      final last = DateTime.tryParse(rows.last['waktu_minum']?.toString() ?? '');
+      final last = DateTime.tryParse(
+        rows.last['waktu_minum']?.toString() ?? '',
+      );
       if (last != null) {
         final elapsed = DateTime.now().difference(last);
         if (elapsed < intervalMinum) {
           bisaMinumLagi = false;
-          menitTersisa =
-              ((intervalMinum.inSeconds - elapsed.inSeconds) / 60).ceil();
+          menitTersisa = ((intervalMinum.inSeconds - elapsed.inSeconds) / 60)
+              .ceil();
           if (menitTersisa < 0) menitTersisa = 0;
         }
       }
@@ -170,7 +261,11 @@ class MinumAirService {
   static Future<Map<String, dynamic>> _buildMingguIni() async {
     final start = LocalDatabaseService.weekStart();
     final userId = await LocalDatabaseService.getCurrentUserId();
-    final rows = await _db.query('minum', where: 'tanggal >= ? AND user_id = ?', whereArgs: [start, userId]);
+    final rows = await _db.query(
+      'minum',
+      where: 'tanggal >= ? AND user_id = ? AND synced != 2',
+      whereArgs: [start, userId],
+    );
 
     final perTanggal = <String, int>{};
     for (final row in rows) {
@@ -190,7 +285,9 @@ class MinumAirService {
     }).toList();
 
     return {
-      'hari_selesai_8_gelas': perTanggal.values.where((c) => c >= targetGelas).length,
+      'hari_selesai_8_gelas': perTanggal.values
+          .where((c) => c >= targetGelas)
+          .length,
       'kalender': kalender,
     };
   }
@@ -218,7 +315,9 @@ class MinumAirService {
     return null;
   }
 
-  static Map<String, dynamic> _buildStatusFromServer(Map<String, dynamic> server) {
+  static Map<String, dynamic> _buildStatusFromServer(
+    Map<String, dynamic> server,
+  ) {
     return {
       "success": true,
       "hari_ini": server['hari_ini'],
@@ -238,7 +337,11 @@ class MinumAirService {
         final existing = await _db.query(
           'minum',
           where: 'tanggal = ? AND waktu_minum = ? AND user_id = ?',
-          whereArgs: [tanggal, waktu, await LocalDatabaseService.getCurrentUserId()],
+          whereArgs: [
+            tanggal,
+            waktu,
+            await LocalDatabaseService.getCurrentUserId(),
+          ],
         );
         if (existing.isEmpty) {
           await _db.insert('minum', {

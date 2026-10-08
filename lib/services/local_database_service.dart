@@ -14,7 +14,7 @@ class LocalDatabaseService {
   static Database? _database;
   static const _storage = FlutterSecureStorage();
 
-  static const int _version = 5;
+  static const int _version = 6;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -36,7 +36,8 @@ class LocalDatabaseService {
           final payload = parts[1];
           final normalized = base64.normalize(payload);
           final decoded = jsonDecode(utf8.decode(base64.decode(normalized)));
-          final id = decoded['id']?.toString() ??
+          final id =
+              decoded['id']?.toString() ??
               decoded['user_id']?.toString() ??
               decoded['userId']?.toString() ??
               decoded['sub']?.toString();
@@ -62,6 +63,7 @@ class LocalDatabaseService {
             total_steps INTEGER NOT NULL DEFAULT 0,
             kalori_terbakar INTEGER,
             synced INTEGER NOT NULL DEFAULT 0,
+            sync_error TEXT,
             UNIQUE(user_id, tanggal)
           )
         ''');
@@ -71,7 +73,8 @@ class LocalDatabaseService {
             user_id TEXT NOT NULL DEFAULT 'unknown',
             tanggal TEXT NOT NULL,
             waktu_minum TEXT NOT NULL,
-            synced INTEGER NOT NULL DEFAULT 0
+            synced INTEGER NOT NULL DEFAULT 0,
+            sync_error TEXT
           )
         ''');
         await db.execute('''
@@ -81,7 +84,8 @@ class LocalDatabaseService {
             tanggal TEXT NOT NULL,
             waktu_tidur TEXT NOT NULL,
             waktu_bangun TEXT NOT NULL,
-            synced INTEGER NOT NULL DEFAULT 0
+            synced INTEGER NOT NULL DEFAULT 0,
+            sync_error TEXT
           )
         ''');
         await db.execute('''
@@ -90,7 +94,8 @@ class LocalDatabaseService {
             user_id TEXT NOT NULL DEFAULT 'unknown',
             tanggal TEXT NOT NULL,
             waktu_selesai TEXT NOT NULL,
-            synced INTEGER NOT NULL DEFAULT 0
+            synced INTEGER NOT NULL DEFAULT 0,
+            sync_error TEXT
           )
         ''');
         await db.execute('''
@@ -99,7 +104,8 @@ class LocalDatabaseService {
             user_id TEXT NOT NULL DEFAULT 'unknown',
             tanggal TEXT NOT NULL,
             waktu_selesai TEXT NOT NULL,
-            synced INTEGER NOT NULL DEFAULT 0
+            synced INTEGER NOT NULL DEFAULT 0,
+            sync_error TEXT
           )
         ''');
         await db.execute('''
@@ -118,7 +124,8 @@ class LocalDatabaseService {
             serat REAL NOT NULL DEFAULT 0,
             berminyak INTEGER NOT NULL DEFAULT 0,
             bergula INTEGER NOT NULL DEFAULT 0,
-            synced INTEGER NOT NULL DEFAULT 0
+            synced INTEGER NOT NULL DEFAULT 0,
+            sync_error TEXT
           )
         ''');
         await db.execute('''
@@ -130,7 +137,8 @@ class LocalDatabaseService {
             sub_kategori TEXT NOT NULL,
             durasi_detik INTEGER NOT NULL DEFAULT 0,
             selesai_at TEXT NOT NULL,
-            synced INTEGER NOT NULL DEFAULT 0
+            synced INTEGER NOT NULL DEFAULT 0,
+            sync_error TEXT
           )
         ''');
         await db.execute('''
@@ -140,7 +148,8 @@ class LocalDatabaseService {
             tanggal TEXT NOT NULL,
             stress_level INTEGER NOT NULL,
             created_at TEXT NOT NULL,
-            synced INTEGER NOT NULL DEFAULT 0
+            synced INTEGER NOT NULL DEFAULT 0,
+            sync_error TEXT
           )
         ''');
         await db.execute('''
@@ -164,7 +173,8 @@ class LocalDatabaseService {
             metode_verifikasi TEXT DEFAULT 'manual',
             confidence_score REAL,
             bukti_foto_url TEXT,
-            synced INTEGER NOT NULL DEFAULT 0
+            synced INTEGER NOT NULL DEFAULT 0,
+            sync_error TEXT
           )
         ''');
       },
@@ -172,9 +182,11 @@ class LocalDatabaseService {
         if (oldVersion < 2) {
           try {
             await db.execute(
-                'ALTER TABLE makanan ADD COLUMN berminyak INTEGER NOT NULL DEFAULT 0');
+              'ALTER TABLE makanan ADD COLUMN berminyak INTEGER NOT NULL DEFAULT 0',
+            );
             await db.execute(
-                'ALTER TABLE makanan ADD COLUMN bergula INTEGER NOT NULL DEFAULT 0');
+              'ALTER TABLE makanan ADD COLUMN bergula INTEGER NOT NULL DEFAULT 0',
+            );
           } catch (e) {
             debugPrint('Migration v2 warning: $e');
           }
@@ -205,17 +217,25 @@ class LocalDatabaseService {
         if (oldVersion < 4) {
           // Tambah kolom user_id ke semua tabel yang sudah ada
           final tables = [
-            'langkah', 'minum', 'tidur', 'sinar_matahari',
-            'tarik_napas', 'makanan', 'tenang_sessions',
-            'stress_checkin', 'aktivitas_poin',
+            'langkah',
+            'minum',
+            'tidur',
+            'sinar_matahari',
+            'tarik_napas',
+            'makanan',
+            'tenang_sessions',
+            'stress_checkin',
+            'aktivitas_poin',
           ];
           for (final table in tables) {
             try {
               await db.execute(
-                  "ALTER TABLE $table ADD COLUMN user_id TEXT NOT NULL DEFAULT 'unknown'");
+                "ALTER TABLE $table ADD COLUMN user_id TEXT NOT NULL DEFAULT 'unknown'",
+              );
             } catch (_) {}
           }
-  /// Fix langkah: tambah auto-increment id + UNIQUE constraint
+
+          /// Fix langkah: tambah auto-increment id + UNIQUE constraint
           try {
             // SQLite tidak support ALTER PRIMARY KEY, jadi recreate
             await db.execute('''
@@ -230,8 +250,9 @@ class LocalDatabaseService {
               )
             ''');
             await db.execute(
-                "INSERT INTO langkah_new (user_id, tanggal, total_steps, kalori_terbakar, synced) "
-                "SELECT 'unknown', tanggal, total_steps, kalori_terbakar, synced FROM langkah");
+              "INSERT INTO langkah_new (user_id, tanggal, total_steps, kalori_terbakar, synced) "
+              "SELECT 'unknown', tanggal, total_steps, kalori_terbakar, synced FROM langkah",
+            );
             await db.execute('DROP TABLE langkah');
             await db.execute('ALTER TABLE langkah_new RENAME TO langkah');
           } catch (e) {
@@ -241,14 +262,39 @@ class LocalDatabaseService {
         if (oldVersion < 5) {
           // AR verification untuk HIJAU: tambah kolom metode_verifikasi, confidence_score, bukti_foto_url
           try {
-            await db.execute("ALTER TABLE aktivitas_poin ADD COLUMN metode_verifikasi TEXT DEFAULT 'manual'");
+            await db.execute(
+              "ALTER TABLE aktivitas_poin ADD COLUMN metode_verifikasi TEXT DEFAULT 'manual'",
+            );
           } catch (_) {}
           try {
-            await db.execute("ALTER TABLE aktivitas_poin ADD COLUMN confidence_score REAL");
+            await db.execute(
+              "ALTER TABLE aktivitas_poin ADD COLUMN confidence_score REAL",
+            );
           } catch (_) {}
           try {
-            await db.execute("ALTER TABLE aktivitas_poin ADD COLUMN bukti_foto_url TEXT");
+            await db.execute(
+              "ALTER TABLE aktivitas_poin ADD COLUMN bukti_foto_url TEXT",
+            );
           } catch (_) {}
+        }
+        if (oldVersion < 6) {
+          // Keep rejected records on-device and retain the server's reason.
+          const tables = [
+            'langkah',
+            'minum',
+            'tidur',
+            'sinar_matahari',
+            'tarik_napas',
+            'makanan',
+            'tenang_sessions',
+            'stress_checkin',
+            'aktivitas_poin',
+          ];
+          for (final table in tables) {
+            try {
+              await db.execute('ALTER TABLE $table ADD COLUMN sync_error TEXT');
+            } catch (_) {}
+          }
         }
       },
     );
@@ -331,7 +377,22 @@ class LocalDatabaseService {
 
   /// Tandai satu baris sudah disinkronkan
   Future<int> markSynced(String table, int id) async {
-    return await update(table, {'synced': 1}, where: 'id = ?', whereArgs: [id]);
+    return await update(
+      table,
+      {'synced': 1, 'sync_error': null},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  /// Mark a permanent server rejection without deleting the locally saved row.
+  Future<int> markRejected(String table, int id, String reason) async {
+    return await update(
+      table,
+      {'synced': 2, 'sync_error': reason},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   /// Tandai semua baris pada tanggal tertentu sudah disinkronkan
@@ -356,17 +417,13 @@ class LocalDatabaseService {
   }) async {
     final db = await database;
     final userId = await getCurrentUserId();
-    await db.insert(
-      'langkah',
-      {
-        'user_id': userId,
-        'tanggal': tanggal,
-        'total_steps': totalSteps,
-        'kalori_terbakar': kaloriTerbakar,
-        'synced': 0,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('langkah', {
+      'user_id': userId,
+      'tanggal': tanggal,
+      'total_steps': totalSteps,
+      'kalori_terbakar': kaloriTerbakar,
+      'synced': 0,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<Map<String, dynamic>?> getLangkah(String tanggal) async {
@@ -386,15 +443,11 @@ class LocalDatabaseService {
 
   Future<void> cachePut(String key, String value) async {
     final db = await database;
-    await db.insert(
-      'cache',
-      {
-        'key': key,
-        'value': value,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('cache', {
+      'key': key,
+      'value': value,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<String?> cacheGet(String key) async {
@@ -437,7 +490,10 @@ class LocalDatabaseService {
   }
 
   /// Hitung jumlah gelas minum bulan ini per user
-  Future<int> getMinumMonthlyCount({required int year, required int month}) async {
+  Future<int> getMinumMonthlyCount({
+    required int year,
+    required int month,
+  }) async {
     final userId = await getCurrentUserId();
     final start = '$year-${month.toString().padLeft(2, '0')}-01';
     final endMonth = month == 12 ? 1 : month + 1;
@@ -453,7 +509,10 @@ class LocalDatabaseService {
   }
 
   /// Hitung jumlah hari langkah >= 10000 bulan ini
-  Future<int> getLangkahMonthlyCount({required int year, required int month}) async {
+  Future<int> getLangkahMonthlyCount({
+    required int year,
+    required int month,
+  }) async {
     final userId = await getCurrentUserId();
     final start = '$year-${month.toString().padLeft(2, '0')}-01';
     final endMonth = month == 12 ? 1 : month + 1;
@@ -462,7 +521,8 @@ class LocalDatabaseService {
 
     final rows = await query(
       'langkah',
-      where: 'user_id = ? AND tanggal >= ? AND tanggal < ? AND total_steps >= 10000',
+      where:
+          'user_id = ? AND tanggal >= ? AND tanggal < ? AND total_steps >= 10000',
       whereArgs: [userId, start, end],
     );
     return rows.length;
@@ -507,5 +567,12 @@ class LocalDatabaseService {
     await db.execute('DELETE FROM stress_checkin');
     await db.execute('DELETE FROM aktivitas_poin');
     await db.execute('DELETE FROM cache');
+  }
+
+  /// Clear potentially user-specific snapshots while retaining activity history
+  /// and any unsynchronized rows when an account signs out.
+  Future<void> clearCache() async {
+    final db = await database;
+    await db.delete('cache');
   }
 }

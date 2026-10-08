@@ -10,7 +10,48 @@ class LangkahService {
   static const String _lastSyncDateKey = 'last_sync_date';
   static const String _todayStepsKey = 'today_steps';
   static const String _initialStepsKey = 'initial_steps';
-  static const String _pendingQueueKey = 'pending_langkah_queue'; // Queue untuk data yang belum terkirim
+  static const String _pendingQueueKey =
+      'pending_langkah_queue'; // Queue untuk data yang belum terkirim
+  static const List<String> _legacyPreferenceKeys = [
+    _lastSyncDateKey,
+    _todayStepsKey,
+    _initialStepsKey,
+    _pendingQueueKey,
+  ];
+
+  /// Scope SharedPreferences fallback/queue by the same JWT user ID as SQLite.
+  static Future<String> _userScopedKey(
+    SharedPreferences prefs,
+    String key,
+  ) async {
+    final userId = await LocalDatabaseService.getCurrentUserId();
+    final scopedKey = '${key}_$userId';
+    if (!prefs.containsKey(scopedKey) && prefs.containsKey(key)) {
+      final legacyValue = prefs.get(key);
+      if (legacyValue is String) {
+        await prefs.setString(scopedKey, legacyValue);
+      } else if (legacyValue is int) {
+        await prefs.setInt(scopedKey, legacyValue);
+      } else if (legacyValue is double) {
+        await prefs.setDouble(scopedKey, legacyValue);
+      } else if (legacyValue is bool) {
+        await prefs.setBool(scopedKey, legacyValue);
+      } else if (legacyValue is List<String>) {
+        await prefs.setStringList(scopedKey, legacyValue);
+      }
+      await prefs.remove(key);
+    }
+    return scopedKey;
+  }
+
+  /// Migrate unscoped step counters/queues before signing out, so a later
+  /// account cannot inherit another user's SharedPreferences queue.
+  static Future<void> migrateLegacyStorageForCurrentUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    for (final key in _legacyPreferenceKeys) {
+      await _userScopedKey(prefs, key);
+    }
+  }
 
   /// GET - Ambil data langkah hari ini dari API (offline-first)
   static Future<Map<String, dynamic>> getStatusLangkah() async {
@@ -53,23 +94,19 @@ class LangkahService {
         };
       } else {
         debugPrint(" HTTP Error ${response.statusCode}");
-        return {
-          "success": false,
-        };
+        return {"success": false};
       }
     } catch (e) {
       debugPrint(" Get Status Langkah Error: $e");
-      return {
-        "success": false,
-      };
+      return {"success": false};
     }
   }
-
 
   /// Check apakah hari sudah berganti (untuk auto-reset)
   static Future<bool> shouldResetToday() async {
     final prefs = await SharedPreferences.getInstance();
-    final lastSyncDate = prefs.getString(_lastSyncDateKey);
+    final key = await _userScopedKey(prefs, _lastSyncDateKey);
+    final lastSyncDate = prefs.getString(key);
     final today = DateTime.now().toIso8601String().split('T')[0]; // YYYY-MM-DD
 
     debugPrint(" Last sync date: $lastSyncDate");
@@ -88,39 +125,46 @@ class LangkahService {
   static Future<void> saveLastSyncDate() async {
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now().toIso8601String().split('T')[0];
-    await prefs.setString(_lastSyncDateKey, today);
+    final key = await _userScopedKey(prefs, _lastSyncDateKey);
+    await prefs.setString(key, today);
     debugPrint(" Saved last sync date: $today");
   }
 
   /// Simpan langkah hari ini ke local storage
   static Future<void> saveTodaySteps(int steps) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_todayStepsKey, steps);
+    final key = await _userScopedKey(prefs, _todayStepsKey);
+    await prefs.setInt(key, steps);
   }
 
   /// Ambil langkah hari ini dari local storage
   static Future<int> getTodaySteps() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_todayStepsKey) ?? 0;
+    final key = await _userScopedKey(prefs, _todayStepsKey);
+    return prefs.getInt(key) ?? 0;
   }
 
   /// Simpan initial steps (dari sensor saat app pertama buka)
   static Future<void> saveInitialSteps(int steps) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_initialStepsKey, steps);
+    final key = await _userScopedKey(prefs, _initialStepsKey);
+    await prefs.setInt(key, steps);
   }
 
   /// Ambil initial steps
   static Future<int> getInitialSteps() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_initialStepsKey) ?? 0;
+    final key = await _userScopedKey(prefs, _initialStepsKey);
+    return prefs.getInt(key) ?? 0;
   }
 
   /// Reset all local data (untuk hari baru)
   static Future<void> resetLocalData() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_todayStepsKey);
-    await prefs.remove(_initialStepsKey);
+    final todayStepsKey = await _userScopedKey(prefs, _todayStepsKey);
+    final initialStepsKey = await _userScopedKey(prefs, _initialStepsKey);
+    await prefs.remove(todayStepsKey);
+    await prefs.remove(initialStepsKey);
     debugPrint(" Local data reset untuk hari baru");
   }
 
@@ -130,13 +174,16 @@ class LangkahService {
     required int jumlahLangkah,
   }) async {
     final prefs = await SharedPreferences.getInstance();
+    final queueKey = await _userScopedKey(prefs, _pendingQueueKey);
 
     // Ambil queue yang ada
-    final queueJson = prefs.getString(_pendingQueueKey) ?? '[]';
+    final queueJson = prefs.getString(queueKey) ?? '[]';
     final List<dynamic> queue = jsonDecode(queueJson);
 
     // Cek apakah tanggal sudah ada di queue
-    final existingIndex = queue.indexWhere((item) => item['tanggal'] == tanggal);
+    final existingIndex = queue.indexWhere(
+      (item) => item['tanggal'] == tanggal,
+    );
 
     if (existingIndex != -1) {
       // Update data yang sudah ada
@@ -145,7 +192,9 @@ class LangkahService {
         'jumlah_langkah': jumlahLangkah,
         'created_at': DateTime.now().toIso8601String(),
       };
-      debugPrint(" Updated existing record in queue: $tanggal -> $jumlahLangkah langkah");
+      debugPrint(
+        " Updated existing record in queue: $tanggal -> $jumlahLangkah langkah",
+      );
     } else {
       // Tambah record baru
       queue.add({
@@ -153,18 +202,21 @@ class LangkahService {
         'jumlah_langkah': jumlahLangkah,
         'created_at': DateTime.now().toIso8601String(),
       });
-      debugPrint(" Added new record to queue: $tanggal -> $jumlahLangkah langkah");
+      debugPrint(
+        " Added new record to queue: $tanggal -> $jumlahLangkah langkah",
+      );
     }
 
     // Simpan kembali ke storage
-    await prefs.setString(_pendingQueueKey, jsonEncode(queue));
+    await prefs.setString(queueKey, jsonEncode(queue));
     debugPrint(" Queue size: ${queue.length} records");
   }
 
   /// Ambil semua pending records dari queue
   static Future<List<Map<String, dynamic>>> getPendingQueue() async {
     final prefs = await SharedPreferences.getInstance();
-    final queueJson = prefs.getString(_pendingQueueKey) ?? '[]';
+    final queueKey = await _userScopedKey(prefs, _pendingQueueKey);
+    final queueJson = prefs.getString(queueKey) ?? '[]';
     final List<dynamic> queue = jsonDecode(queueJson);
 
     return queue.map((item) => Map<String, dynamic>.from(item)).toList();
@@ -173,20 +225,22 @@ class LangkahService {
   /// Hapus record dari queue setelah berhasil di-sync
   static Future<void> removeFromQueue(String tanggal) async {
     final prefs = await SharedPreferences.getInstance();
-    final queueJson = prefs.getString(_pendingQueueKey) ?? '[]';
+    final queueKey = await _userScopedKey(prefs, _pendingQueueKey);
+    final queueJson = prefs.getString(queueKey) ?? '[]';
     final List<dynamic> queue = jsonDecode(queueJson);
 
     // Hapus record dengan tanggal tertentu
     queue.removeWhere((item) => item['tanggal'] == tanggal);
 
-    await prefs.setString(_pendingQueueKey, jsonEncode(queue));
+    await prefs.setString(queueKey, jsonEncode(queue));
     debugPrint(" Removed from queue: $tanggal");
   }
 
   /// Clear seluruh queue
   static Future<void> clearQueue() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_pendingQueueKey);
+    final queueKey = await _userScopedKey(prefs, _pendingQueueKey);
+    await prefs.remove(queueKey);
     debugPrint(" Queue cleared");
   }
 
@@ -198,11 +252,7 @@ class LangkahService {
 
     if (queue.isEmpty) {
       debugPrint(" No pending records to sync");
-      return {
-        "success": true,
-        "synced": 0,
-        "failed": 0,
-      };
+      return {"success": true, "synced": 0, "failed": 0};
     }
 
     int synced = 0;
@@ -217,10 +267,7 @@ class LangkahService {
       try {
         final response = await ApiService.post(
           "/user/langkah",
-          body: {
-            "jumlah_langkah": jumlahLangkah,
-            "tanggal": tanggal,
-          },
+          body: {"jumlah_langkah": jumlahLangkah, "tanggal": tanggal},
         );
 
         if (response.statusCode == 200 || response.statusCode == 201) {
@@ -245,11 +292,7 @@ class LangkahService {
       DataRefreshNotifier.instance.notifyDataChanged();
     }
 
-    return {
-      "success": true,
-      "synced": synced,
-      "failed": failed,
-    };
+    return {"success": true, "synced": synced, "failed": failed};
   }
 
   /// Update langkah hari ini (save ke queue + SQLite, tidak langsung POST)
@@ -266,10 +309,7 @@ class LangkahService {
     );
 
     // Simpan ke queue untuk di-sync nanti
-    await saveDailyRecordToQueue(
-      tanggal: date,
-      jumlahLangkah: jumlahLangkah,
-    );
+    await saveDailyRecordToQueue(tanggal: date, jumlahLangkah: jumlahLangkah);
 
     // Coba sync sekarang jika ada koneksi
     // (akan skip jika tidak ada koneksi, tidak throw error)
@@ -280,10 +320,7 @@ class LangkahService {
       // Tidak masalah, akan di-sync nanti
     }
 
-    return {
-      "success": true,
-      "message": "Data tersimpan lokal",
-    };
+    return {"success": true, "message": "Data tersimpan lokal"};
   }
 
   /// POST - Update langkah hari ini ke API (deprecated, gunakan updateLangkahLocal)
