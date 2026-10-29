@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'api_service.dart';
 
@@ -6,23 +7,23 @@ class FoodManageService {
   /// GET - Search food by name
   static Future<Map<String, dynamic>> searchFood(String namaMenu) async {
     try {
-      print("📤 Search Food Request:");
-      print("URL: /user/food-manage?nama=${Uri.encodeComponent(namaMenu)}");
-      print("🔐 Using Bearer token (auto-refresh if expired)");
+      debugPrint(" Search Food Request:");
+      debugPrint("URL: /user/food-manage?nama=${Uri.encodeComponent(namaMenu)}");
+      debugPrint(" Using Bearer token (auto-refresh if expired)");
 
       final response = await ApiService.get(
         "/user/food-manage?nama=${Uri.encodeComponent(namaMenu)}",
       );
 
-      print("📥 Search Food Response: ${response.statusCode}");
-      print("Body: ${response.body}");
+      debugPrint(" Search Food Response: ${response.statusCode}");
+      debugPrint("Body: ${response.body}");
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
 
         if (responseData['success'] == true) {
-          print("✅ Food data found!");
-          print("📊 Sumber: ${responseData['sumber']}");
+          debugPrint(" Food data found!");
+          debugPrint(" Sumber: ${responseData['sumber']}");
 
           return {
             "success": true,
@@ -42,14 +43,14 @@ class FoodManageService {
           "message": "Makanan tidak ditemukan",
         };
       } else {
-        print("❌ HTTP Error ${response.statusCode}");
+        debugPrint(" HTTP Error ${response.statusCode}");
         return {
           "success": false,
           "message": "Gagal mencari makanan",
         };
       }
     } catch (e) {
-      print("❌ Search Food Error: $e");
+      debugPrint(" Search Food Error: $e");
       return {
         "success": false,
         "message": "Error: $e",

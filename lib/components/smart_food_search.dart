@@ -22,6 +22,19 @@ class _SmartFoodSearchState extends State<SmartFoodSearch> {
   Map<String, dynamic>? _foodData;
   String? _sumber;
 
+  // Kalori dihitung dari makronutrien (rumus sama dengan backend hitungKalori)
+  // karena sumber (DB/Gemini) tidak menyediakan field kalori langsung.
+  double get _hitKalori {
+    final data = _foodData;
+    if (data == null) return 0;
+    if (data['kalori'] != null) return (data['kalori'] ?? 0).toDouble();
+    final protein = (data['protein_gram'] ?? data['protein'] ?? 0).toDouble();
+    final karbohidrat = (data['karbohidrat_gram'] ?? data['karbohidrat'] ?? 0).toDouble();
+    final serat = (data['serat_gram'] ?? data['serat'] ?? 0).toDouble();
+    final lemak = (data['lemak_gram'] ?? data['lemak'] ?? 0).toDouble();
+    return (protein * 4) + (karbohidrat * 4) + (lemak * 9) + (serat * 2);
+  }
+
   Future<void> _showAddFoodDialog(Map<String, dynamic> foodData) async {
     String jenisMakan = 'sarapan';
     double porsi = 1.0;
@@ -50,7 +63,7 @@ class _SmartFoodSearchState extends State<SmartFoodSearch> {
                   const Text('Jenis Makan:', style: TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    value: jenisMakan,
+                    initialValue: jenisMakan,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -114,7 +127,7 @@ class _SmartFoodSearchState extends State<SmartFoodSearch> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    // Save context reference before any async operations
+                    // Capture references before any async operations
                     final navigator = Navigator.of(context);
                     final messenger = ScaffoldMessenger.of(context);
 
@@ -148,11 +161,13 @@ class _SmartFoodSearchState extends State<SmartFoodSearch> {
                       idFoodNutrition: foodData['id'] ?? 0,
                       jenisMakan: jenisMakan,
                       porsi: porsi,
+                      foodDetail: foodData,
                     );
 
                     // Hide loading snackbar
                     messenger.hideCurrentSnackBar();
 
+                    // Show error if failed
                     if (!result["success"]) {
                       messenger.showSnackBar(
                         SnackBar(
@@ -374,6 +389,15 @@ class _SmartFoodSearchState extends State<SmartFoodSearch> {
                             ],
                           ),
                         ),
+
+                        // Kalori
+                        _buildNutritionRow(
+                          'Kalori',
+                          '${_hitKalori.toStringAsFixed(0)} kkal',
+                          Colors.deepOrange.shade50,
+                          Colors.deepOrange,
+                        ),
+                        const Divider(height: 1),
 
                         // Protein
                         _buildNutritionRow(

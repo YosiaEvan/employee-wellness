@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
@@ -6,7 +7,14 @@ import '../config/api_config.dart';
 import 'auth_storage.dart';
 import 'api_service.dart';
 import 'background_steps_tracker.dart';
-import 'offline_steps_service.dart';
+import 'step_foreground_service.dart';
+import 'local_database_service.dart';
+import 'langkah_service.dart';
+import 'offline_sync_service.dart';
+
+/// Global navigator key agar layanan non-widget (service) bisa
+/// memaksa navigasi kembali ke halaman Login saat session tidak valid.
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
 /// Service untuk Authentication dengan auto-refresh token
 class AuthService {
@@ -22,30 +30,32 @@ class AuthService {
       if (!hasInternet) {
         return {
           "success": false,
-          "message": "Tidak ada koneksi internet. Periksa koneksi Anda dan coba lagi.",
+          "message":
+              "Tidak ada koneksi internet. Periksa koneksi Anda dan coba lagi.",
         };
       }
 
-      print("📤 Login Request:");
-      print("URL: ${ApiConfig.baseUrl}/auth/login");
-      print("Email: $email");
+      debugPrint(" Login Request:");
+      debugPrint("URL: ${ApiConfig.baseUrl}/auth/login");
+      debugPrint("Email: $email");
 
-      final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
-      ).timeout(
-        Duration(seconds: 30),
-        onTimeout: () {
-          throw TimeoutException('Koneksi timeout. Periksa koneksi internet Anda.');
-        },
-      );
+      final response = await http
+          .post(
+            Uri.parse('${ApiConfig.baseUrl}/auth/login'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': email, 'password': password}),
+          )
+          .timeout(
+            Duration(seconds: 30),
+            onTimeout: () {
+              throw TimeoutException(
+                'Koneksi timeout. Periksa koneksi internet Anda.',
+              );
+            },
+          );
 
-      print("📥 Login Response: ${response.statusCode}");
-      print("Body: ${response.body}");
+      debugPrint(" Login Response: ${response.statusCode}");
+      debugPrint("Body: ${response.body}");
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -57,11 +67,17 @@ class AuthService {
           final user = data?['user'];
 
           if (token != null) {
-            print("✅ Login success! Token saved.");
-            print("👤 User: ${user?['nama_lengkap']} (${user?['email']})");
+            debugPrint(" Login success! Token saved.");
+            debugPrint(" User: ${user?['nama_lengkap']} (${user?['email']})");
 
             // Save token
             await AuthStorage.saveToken(token);
+
+            // Save session info untuk kebutuhan offline & KPI
+            await AuthStorage.saveUserSession(
+              userId: user?['id']?.toString(),
+              email: user?['email']?.toString() ?? email,
+            );
 
             // Save credentials for auto-refresh
             if (rememberMe) {
@@ -70,7 +86,7 @@ class AuthService {
                 password: password,
                 rememberMe: true,
               );
-              print("✅ Credentials saved for auto-refresh");
+              debugPrint(" Credentials saved for auto-refresh");
             }
 
             return {
@@ -80,14 +96,11 @@ class AuthService {
               "user": user,
             };
           } else {
-            print("❌ Login failed: No token in response");
-            return {
-              "success": false,
-              "message": "Token tidak ditemukan",
-            };
+            debugPrint(" Login failed: No token in response");
+            return {"success": false, "message": "Token tidak ditemukan"};
           }
         } else {
-          print("❌ Login failed: ${responseData['message']}");
+          debugPrint(" Login failed: ${responseData['message']}");
           return {
             "success": false,
             "message": responseData['message'] ?? "Login gagal",
@@ -98,15 +111,11 @@ class AuthService {
         final data = jsonDecode(response.body);
         final errorMessage = data['message'] ?? "Email atau password salah";
 
-        print("❌ Unauthorized (401): $errorMessage");
+        debugPrint(" Unauthorized (401): $errorMessage");
 
-        return {
-          "success": false,
-          "message": errorMessage,
-          "status": 401,
-        };
+        return {"success": false, "message": errorMessage, "status": 401};
       } else {
-        print("❌ HTTP Error: ${response.statusCode}");
+        debugPrint(" HTTP Error: ${response.statusCode}");
 
         try {
           final data = jsonDecode(response.body);
@@ -114,6 +123,13 @@ class AuthService {
             "success": false,
             "message": data['message'] ?? "Login gagal: ${response.statusCode}",
             "status": response.statusCode,
+            "error_code": data['error_code'],
+            "email": data['data']?['email'] ?? data['email'],
+            "requires_verification":
+                data['data']?['requires_verification'] ??
+                data['requires_verification'] ??
+                (data['error_code'] == 'EMAIL_NOT_VERIFIED'),
+            "data": data['data'],
           };
         } catch (e) {
           return {
@@ -124,29 +140,17 @@ class AuthService {
         }
       }
     } on SocketException catch (e) {
-      print("❌ Socket Exception: $e");
-      return {
-        "success": false,
-        "message": ApiService.getErrorMessage(e),
-      };
+      debugPrint(" Socket Exception: $e");
+      return {"success": false, "message": ApiService.getErrorMessage(e)};
     } on TimeoutException catch (e) {
-      print("❌ Timeout Exception: $e");
-      return {
-        "success": false,
-        "message": ApiService.getErrorMessage(e),
-      };
+      debugPrint(" Timeout Exception: $e");
+      return {"success": false, "message": ApiService.getErrorMessage(e)};
     } on http.ClientException catch (e) {
-      print("❌ Client Exception: $e");
-      return {
-        "success": false,
-        "message": ApiService.getErrorMessage(e),
-      };
+      debugPrint(" Client Exception: $e");
+      return {"success": false, "message": ApiService.getErrorMessage(e)};
     } catch (e) {
-      print("❌ Login Exception: $e");
-      return {
-        "success": false,
-        "message": ApiService.getErrorMessage(e),
-      };
+      debugPrint(" Login Exception: $e");
+      return {"success": false, "message": ApiService.getErrorMessage(e)};
     }
   }
 
@@ -177,43 +181,53 @@ class AuthService {
     }
   }
 
-  /// Logout - Clear all data
+  /// Logout without removing locally saved activity data.
   static Future<Map<String, dynamic>> logout() async {
     try {
-      print("🔓 Logging out...");
+      debugPrint(" Logging out...");
+      OfflineSyncService.stopAutomaticSync();
 
       // Stop background steps tracker
       try {
         await BackgroundStepsTracker.stop();
-        print("✅ Background tracker stopped");
+        debugPrint(" Background tracker stopped");
       } catch (e) {
-        print("⚠️ Could not stop background tracker: $e");
+        debugPrint(" Could not stop background tracker: $e");
       }
 
-      // Clear offline steps data
+      // Stop foreground service (pelacak langkah latar belakang)
       try {
-        await OfflineStepsService.clearAllStepsData();
-        print("✅ Offline steps data cleared");
+        await StepForegroundService.stop();
+        debugPrint(" Step foreground service stopped");
       } catch (e) {
-        print("⚠️ Could not clear offline steps: $e");
+        debugPrint(" Could not stop step foreground service: $e");
+      }
+
+      try {
+        await LangkahService.migrateLegacyStorageForCurrentUser();
+      } catch (e) {
+        debugPrint(' Could not scope legacy step data: $e');
+      }
+
+      // Clear cache saja; catatan aktivitas dan antrean offline tetap tersimpan
+      // terpisah berdasarkan user_id agar dapat disinkronkan setelah login ulang.
+      try {
+        await LocalDatabaseService.instance.clearCache();
+        debugPrint(" Local SQLite cache cleared; activity records retained");
+      } catch (e) {
+        debugPrint(" Could not clear local cache: $e");
       }
 
       // Clear all auth storage (token, credentials, etc)
       await AuthStorage.clearAll();
-      print("✅ Auth storage cleared");
+      debugPrint(" Auth storage cleared");
 
-      print("✅ Logout complete - all data cleared");
-      return {
-        "success": true,
-        "message": "Logout berhasil",
-      };
+      debugPrint(" Logout complete - local activity data retained");
+      return {"success": true, "message": "Logout berhasil"};
     } catch (e) {
-      print("❌ Logout error: $e");
+      debugPrint(" Logout error: $e");
       // Even if error, still return success to force logout
-      return {
-        "success": true,
-        "message": "Logout berhasil",
-      };
+      return {"success": true, "message": "Logout berhasil"};
     }
   }
 
@@ -222,5 +236,44 @@ class AuthService {
     final token = await AuthStorage.getToken();
     return token != null;
   }
-}
 
+  /// Force logout & redirect ke Login saat session tidak valid
+  /// (mis. 401 terjadi dan auto-refresh token gagal).
+  /// Menghentikan pelacak langkah, membersihkan cache sensitif, lalu navigasi ke /login.
+  static Future<void> forceLogoutAndGoToLogin() async {
+    debugPrint(' Session invalid - forcing logout...');
+    OfflineSyncService.stopAutomaticSync();
+    try {
+      await BackgroundStepsTracker.stop();
+    } catch (e) {
+      debugPrint(' Could not stop background tracker: $e');
+    }
+    try {
+      await StepForegroundService.stop();
+    } catch (e) {
+      debugPrint(' Could not stop step foreground service: $e');
+    }
+    try {
+      await LangkahService.migrateLegacyStorageForCurrentUser();
+    } catch (e) {
+      debugPrint(' Could not scope legacy step data: $e');
+    }
+    try {
+      await LocalDatabaseService.instance.clearCache();
+    } catch (e) {
+      debugPrint(' Could not clear local cache: $e');
+    }
+    await AuthStorage.clearAll();
+
+    debugPrint(' Auth storage cleared, redirecting to login...');
+
+    // Navigate ke Login. Aman jika dipanggil dari background isolate
+    // (navigatorKey.currentState bernilai null di sana).
+    final navigator = appNavigatorKey.currentState;
+    if (navigator == null) {
+      debugPrint(' Navigator key not attached yet - skipping redirect');
+      return;
+    }
+    navigator.pushNamedAndRemoveUntil('/login', (route) => false);
+  }
+}

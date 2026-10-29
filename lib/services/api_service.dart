@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
@@ -16,17 +17,17 @@ class ApiService {
 
       // Check if connected to any network
       if (connectivityResult.contains(ConnectivityResult.none)) {
-        print("⚠️ No network connection");
+        debugPrint(" No network connection");
         return false;
       }
 
-      print("✅ Network connection available");
+      debugPrint(" Network connection available");
       // Jika ada network connection, return true
       // Kita tidak bisa guarantee internet access tanpa actual request
       // Jadi lebih baik return true dan biarkan HTTP request yang handle error
       return true;
     } catch (e) {
-      print("⚠️ Error checking connectivity: $e");
+      debugPrint(" Error checking connectivity: $e");
       // Jika error, assume ada koneksi dan biarkan HTTP request yang handle
       return true;
     }
@@ -55,15 +56,13 @@ class ApiService {
     Map<String, String>? additionalHeaders,
   }) async {
     // First attempt
-    final response = await _makeRequest(
-      () async {
-        final headers = await _getHeaders(additionalHeaders);
-        return await http.get(
-          Uri.parse('${ApiConfig.baseUrl}$endpoint'),
-          headers: headers,
-        );
-      },
-    );
+    final response = await _makeRequest(() async {
+      final headers = await _getHeaders(additionalHeaders);
+      return await http.get(
+        Uri.parse('${ApiConfig.baseUrl}$endpoint'),
+        headers: headers,
+      );
+    });
 
     // If 401 (Unauthorized), refresh token and retry
     if (response.statusCode == 401) {
@@ -88,16 +87,14 @@ class ApiService {
     Map<String, String>? additionalHeaders,
   }) async {
     // First attempt
-    final response = await _makeRequest(
-      () async {
-        final headers = await _getHeaders(additionalHeaders);
-        return await http.post(
-          Uri.parse('${ApiConfig.baseUrl}$endpoint'),
-          headers: headers,
-          body: body != null ? jsonEncode(body) : null,
-        );
-      },
-    );
+    final response = await _makeRequest(() async {
+      final headers = await _getHeaders(additionalHeaders);
+      return await http.post(
+        Uri.parse('${ApiConfig.baseUrl}$endpoint'),
+        headers: headers,
+        body: body != null ? jsonEncode(body) : null,
+      );
+    });
 
     // If 401, refresh token and retry
     if (response.statusCode == 401) {
@@ -123,16 +120,14 @@ class ApiService {
     Map<String, String>? additionalHeaders,
   }) async {
     // First attempt
-    final response = await _makeRequest(
-      () async {
-        final headers = await _getHeaders(additionalHeaders);
-        return await http.put(
-          Uri.parse('${ApiConfig.baseUrl}$endpoint'),
-          headers: headers,
-          body: body != null ? jsonEncode(body) : null,
-        );
-      },
-    );
+    final response = await _makeRequest(() async {
+      final headers = await _getHeaders(additionalHeaders);
+      return await http.put(
+        Uri.parse('${ApiConfig.baseUrl}$endpoint'),
+        headers: headers,
+        body: body != null ? jsonEncode(body) : null,
+      );
+    });
 
     // If 401, refresh token and retry
     if (response.statusCode == 401) {
@@ -157,15 +152,13 @@ class ApiService {
     Map<String, String>? additionalHeaders,
   }) async {
     // First attempt
-    final response = await _makeRequest(
-      () async {
-        final headers = await _getHeaders(additionalHeaders);
-        return await http.delete(
-          Uri.parse('${ApiConfig.baseUrl}$endpoint'),
-          headers: headers,
-        );
-      },
-    );
+    final response = await _makeRequest(() async {
+      final headers = await _getHeaders(additionalHeaders);
+      return await http.delete(
+        Uri.parse('${ApiConfig.baseUrl}$endpoint'),
+        headers: headers,
+      );
+    });
 
     // If 401, refresh token and retry
     if (response.statusCode == 401) {
@@ -201,9 +194,11 @@ class ApiService {
 
     // Log headers for debugging (token truncated for security)
     if (token != null) {
-      print('🔐 Request headers include: Authorization: Bearer ${token.substring(0, 20)}...');
+      debugPrint(
+        ' Request headers include: Authorization: Bearer ${token.substring(0, 20)}...',
+      );
     } else {
-      print('⚠️ No token found - request will be unauthorized');
+      debugPrint(' No token found - request will be unauthorized');
     }
 
     return headers;
@@ -214,14 +209,11 @@ class ApiService {
     Future<http.Response> Function() requestFunc,
   ) async {
     try {
-      return await requestFunc();
+      return await requestFunc().timeout(const Duration(seconds: 15));
     } catch (e) {
       // Return error response
       return http.Response(
-        jsonEncode({
-          'success': false,
-          'message': 'Network error: $e',
-        }),
+        jsonEncode({'success': false, 'message': 'Network error: $e'}),
         500,
       );
     }
@@ -230,19 +222,22 @@ class ApiService {
   /// Refresh token dan retry
   static Future<bool> _refreshTokenAndRetry() async {
     try {
-      print('🔄 Token expired, refreshing...');
+      debugPrint(' Token expired, refreshing...');
 
       final newToken = await AuthService.refreshToken();
 
       if (newToken != null) {
-        print('✅ Token refreshed successfully');
+        debugPrint(' Token refreshed successfully');
         return true;
       } else {
-        print('❌ Failed to refresh token, credentials not found');
+        debugPrint(' Failed to refresh token, session invalid');
+        // Session tidak valid & tidak bisa auto-refresh -> redirect ke Login.
+        await AuthService.forceLogoutAndGoToLogin();
         return false;
       }
     } catch (e) {
-      print('❌ Error refreshing token: $e');
+      debugPrint(' Error refreshing token: $e');
+      await AuthService.forceLogoutAndGoToLogin();
       return false;
     }
   }

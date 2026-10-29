@@ -42,10 +42,10 @@ class BottomHeader extends StatelessWidget {
                     alignment: Alignment.center,
                     padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(40),
                     ),
-                    child: FaIcon( // 🔥 ganti Icon -> FaIcon
+                    child: FaIcon( //  ganti Icon -> FaIcon
                       FontAwesomeIcons.arrowLeft,
                       size: 20,
                       color: Colors.white,
@@ -99,10 +99,10 @@ class BottomHeader extends StatelessWidget {
                     alignment: Alignment.center,
                     padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(40),
                     ),
-                    child: FaIcon( // 🔥 ganti Icon -> FaIcon
+                    child: FaIcon( //  ganti Icon -> FaIcon
                       FontAwesomeIcons.house,
                       size: 20,
                       color: Colors.white,

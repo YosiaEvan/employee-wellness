@@ -63,7 +63,6 @@ class _HeaderState extends State<Header> with AutomaticKeepAliveClientMixin {
 
   Future<void> logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
-    final loc = AppLocalizations.of(context)!;
 
     try {
       // Clear local storage only (no API call)
@@ -75,7 +74,8 @@ class _HeaderState extends State<Header> with AutomaticKeepAliveClientMixin {
       // Clear user data cache using UserCacheService
       await _cacheService.clearCache();
 
-
+      if (!context.mounted) return;
+      final loc = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.translate('logout_success'))),
       );
@@ -95,6 +95,7 @@ class _HeaderState extends State<Header> with AutomaticKeepAliveClientMixin {
       await prefs.remove("rememberMe");
       await _cacheService.clearCache();
 
+      if (!context.mounted) return;
       // Still redirect to login
       Navigator.pushAndRemoveUntil(
           context,
@@ -121,7 +122,7 @@ class _HeaderState extends State<Header> with AutomaticKeepAliveClientMixin {
             radius: 20,
             backgroundColor: (fotoBase64 != null || fotoUrl != null)
                 ? Colors.transparent
-                : Colors.grey.withOpacity(0.80),
+                : Colors.grey.withValues(alpha: 0.80),
             backgroundImage: fotoUrl != null ? NetworkImage(fotoUrl!) : null,
             child: fotoBase64 != null
                 ? ClipOval(
@@ -304,11 +305,11 @@ class _RealtimeClockState extends State<RealtimeClock> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final datetime = DateTime.parse(data['datetime']);
-        print('📅 Online time fetched: $datetime');
+        debugPrint(' Online time fetched: $datetime');
         return datetime;
       }
     } catch (e) {
-      print('❌ Error fetching online time: $e');
+      debugPrint(' Error fetching online time: $e');
     }
 
     // Fallback to local time if API fails

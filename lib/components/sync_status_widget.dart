@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../services/background_steps_tracker.dart';
+import '../services/offline_sync_service.dart';
 
-/// Widget untuk menampilkan status sinkronisasi steps
+/// Widget untuk menampilkan status sinkronisasi langkah
 class SyncStatusWidget extends StatefulWidget {
   const SyncStatusWidget({super.key});
 
@@ -12,23 +13,20 @@ class SyncStatusWidget extends StatefulWidget {
 
 class _SyncStatusWidgetState extends State<SyncStatusWidget> {
   bool _isSyncing = false;
-  int _unsyncedCount = 0;
-  Map<String, dynamic> _statistics = {};
+  int _todaySteps = 0;
+  bool _isTracking = false;
 
   @override
   void initState() {
     super.initState();
-    _loadStatistics();
+    _loadStatus();
   }
 
-  Future<void> _loadStatistics() async {
-    final stats = await BackgroundStepsTracker.getStatistics();
-    final unsyncedCount = await BackgroundStepsTracker.getUnsyncedCount();
-
+  Future<void> _loadStatus() async {
     if (mounted) {
       setState(() {
-        _statistics = stats;
-        _unsyncedCount = unsyncedCount;
+        _todaySteps = BackgroundStepsTracker.todaySteps;
+        _isTracking = BackgroundStepsTracker.isListening;
       });
     }
   }
@@ -39,6 +37,9 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
     setState(() => _isSyncing = true);
 
     try {
+      // Sync SQLite  Server
+      await OfflineSyncService.syncAllPending();
+      // Sync langkah ke server
       final result = await BackgroundStepsTracker.syncNow();
 
       if (mounted) {
@@ -51,9 +52,7 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
             behavior: SnackBarBehavior.floating,
           ),
         );
-
-        // Reload statistics
-        await _loadStatistics();
+        await _loadStatus();
       }
     } catch (e) {
       if (mounted) {
@@ -77,15 +76,12 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
     return Card(
       margin: const EdgeInsets.all(16),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             Row(
               children: [
                 Container(
@@ -94,18 +90,18 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
                     color: const Color(0xFF00C97A).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: FaIcon(
+                  child: const FaIcon(
                     FontAwesomeIcons.arrowsRotate,
                     color: Color(0xFF00C97A),
                     size: 20,
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Status Sinkronisasi',
                         style: TextStyle(
                           fontSize: 16,
@@ -114,8 +110,10 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
                         ),
                       ),
                       Text(
-                        'Data langkah lokal & server',
-                        style: TextStyle(
+                        _isTracking
+                            ? 'Tracking aktif - $_todaySteps langkah hari ini'
+                            : 'Tracking tidak aktif',
+                        style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF718096),
                         ),
@@ -137,10 +135,7 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
                 else
                   IconButton(
                     onPressed: _syncNow,
-                    icon: FaIcon(
-                      FontAwesomeIcons.arrowsRotate,
-                      size: 16,
-                    ),
+                    icon: const FaIcon(FontAwesomeIcons.arrowsRotate, size: 16),
                     style: IconButton.styleFrom(
                       backgroundColor: const Color(0xFF00C97A),
                       foregroundColor: Colors.white,
@@ -150,101 +145,9 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
                   ),
               ],
             ),
-
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 8),
-
-            // Statistics
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem(
-                  icon: FontAwesomeIcons.database,
-                  label: 'Total Record',
-                  value: '${_statistics['total_records'] ?? 0}',
-                  color: Colors.blue,
-                ),
-                _buildStatItem(
-                  icon: FontAwesomeIcons.circleCheck,
-                  label: 'Tersinkron',
-                  value: '${_statistics['synced_records'] ?? 0}',
-                  color: Colors.green,
-                ),
-                _buildStatItem(
-                  icon: FontAwesomeIcons.clock,
-                  label: 'Belum Sync',
-                  value: '$_unsyncedCount',
-                  color: Colors.orange,
-                ),
-              ],
-            ),
-
-            if (_unsyncedCount > 0) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.orange.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    FaIcon(
-                      FontAwesomeIcons.circleExclamation,
-                      color: Colors.orange,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Ada $_unsyncedCount data yang belum tersinkronkan',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.orange.shade800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ],
         ),
       ),
     );
   }
-
-  Widget _buildStatItem({
-    required FaIconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Column(
-      children: [
-        FaIcon(icon, color: color, size: 24),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            color: Color(0xFF718096),
-          ),
-        ),
-      ],
-    );
-  }
 }
-

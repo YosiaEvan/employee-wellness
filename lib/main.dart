@@ -1,28 +1,25 @@
 import 'package:employee_wellness/home.dart';
 import 'package:employee_wellness/register.dart';
+import 'package:employee_wellness/forgot_password.dart';
+import 'package:employee_wellness/verify_email.dart';
 import 'package:employee_wellness/services/auth_service.dart';
 import 'package:employee_wellness/services/background_steps_tracker.dart';
-import 'package:employee_wellness/services/background_task_service.dart';
-import 'package:employee_wellness/services/offline_steps_service.dart';
-import 'package:employee_wellness/services/steps_sync_service.dart';
+import 'package:employee_wellness/services/battery_optimization_service.dart';
+import 'package:employee_wellness/services/offline_sync_service.dart';
+import 'package:employee_wellness/services/step_foreground_service.dart';
 import 'package:employee_wellness/services/language_provider.dart';
 import 'package:employee_wellness/services/app_localizations.dart';
+import 'package:employee_wellness/components/empwell_splash.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await BackgroundTaskService.instance.initialize();
-  final isLoggedIn = await AuthService.isLoggedIn();
-  if (isLoggedIn) {
-    print('🚀 User is logged in, initializing background services...');
-    await BackgroundStepsTracker.initialize();
-    await BackgroundTaskService.instance.registerPeriodicSync();
-    await BackgroundTaskService.instance.registerCleanupTask();
-    await StepsSyncService.instance.autoSync();
-  }
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => LanguageProvider(),
@@ -31,10 +28,63 @@ void main() async {
   );
 }
 
+Future<bool> _initializeStartup() async {
+  final stopwatch = Stopwatch()..start();
+  var isLoggedIn = false;
+
+  try {
+    // Konfigurasi foreground service (belum start, hanya setup).
+    if (!kIsWeb) {
+      await StepForegroundService.initialize();
+    }
+  } catch (e) {
+    debugPrint(' Error initializing foreground service: $e');
+  }
+
+  // Sync data offline jika login
+  try {
+    isLoggedIn = await AuthService.isLoggedIn();
+    if (isLoggedIn) {
+      debugPrint(' User is logged in, initializing background services...');
+      try {
+        await OfflineSyncService.autoSyncOnAppStart();
+      } catch (_) {}
+      if (!kIsWeb) {
+        try {
+          final granted =
+              await BackgroundStepsTracker.isStepPermissionGranted();
+          if (granted) {
+            await StepForegroundService.start();
+          } else {
+            debugPrint(
+              ' Physical Activity permission not granted on app start, skipping foreground service',
+            );
+          }
+        } catch (_) {}
+      }
+    }
+  } catch (e) {
+    debugPrint(' Error during app startup: $e');
+  }
+
+  const minimumSplashDuration = Duration(milliseconds: 1900);
+  final remaining = minimumSplashDuration - stopwatch.elapsed;
+  final reduceMotion = WidgetsBinding
+      .instance
+      .platformDispatcher
+      .accessibilityFeatures
+      .disableAnimations;
+  if (!reduceMotion && remaining > Duration.zero) {
+    await Future<void>.delayed(remaining);
+  }
+
+  return isLoggedIn;
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  Future<bool> checkLogin() async => await AuthService.isLoggedIn();
+  static final Future<bool> _startupFuture = _initializeStartup();
 
   @override
   Widget build(BuildContext context) {
@@ -42,30 +92,58 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Employee Wellness',
+      title: 'EmpWell 360',
+      navigatorKey: appNavigatorKey,
       locale: languageProvider.currentLocale,
-      supportedLocales: const [
-        Locale('en', 'US'),
-        Locale('id', 'ID'),
-      ],
+      supportedLocales: const [Locale('en', 'US'), Locale('id', 'ID')],
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: FutureBuilder(
-        future: checkLogin(),
+      routes: {
+        '/login': (context) => const LoginPage(),
+        '/home': (context) => const HomePage(),
+      },
+      home: FutureBuilder<bool>(
+        future: _startupFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            return const EmpWellSplash();
           } else {
-            return snapshot.data == true ? const HomePage() : const LoginPage();
+            return snapshot.data == true
+                ? const _BatteryCheckWrapper(child: HomePage())
+                : const LoginPage();
           }
         },
       ),
     );
   }
+}
+
+/// Wrapper yang mengecek battery optimization setelah frame pertama render.
+/// Hanya relevant untuk user yang sudah login (cold start).
+class _BatteryCheckWrapper extends StatefulWidget {
+  final Widget child;
+  const _BatteryCheckWrapper({required this.child});
+
+  @override
+  State<_BatteryCheckWrapper> createState() => _BatteryCheckWrapperState();
+}
+
+class _BatteryCheckWrapperState extends State<_BatteryCheckWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    // Jalankan check setelah frame pertama render
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      BatteryOptimizationService.checkAndGuideIfNeeded(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 class LoginPage extends StatefulWidget {
@@ -80,23 +158,38 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
   bool _obscurePassword = true;
-  bool _rememberMe = true;
+  final bool _rememberMe = true;
+  IconData? errorIcon;
 
-  // Declare errorIcon for snackbar
-  IconData? errorIcon; // ✅ added
+  /// Minta ijin notifikasi (wajib Android 13+ agar foreground service
+  /// dapat menampilkan notifikasi "Pelacak Langkah Aktif").
+  Future<void> _requestNotificationPermission() async {
+    try {
+      final status = await Permission.notification.request();
+      debugPrint(' Notification permission: $status');
+    } catch (e) {
+      debugPrint(' Error requesting notification permission: $e');
+    }
+  }
 
   Future<void> login() async {
-    print("🔵 Login button pressed");
+    debugPrint(" Login button pressed");
     final loc = AppLocalizations.of(context)!;
     if (emailController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.translate('email_required')), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(loc.translate('email_required')),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
     if (passwordController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.translate('password_required')), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(loc.translate('password_required')),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -109,8 +202,37 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => isLoading = false);
 
     if (result["success"]) {
-      await BackgroundStepsTracker.initialize();
-      await OfflineStepsService.autoSyncOnAppStart();
+      // Sync data offline
+      try {
+        await OfflineSyncService.autoSyncOnAppStart();
+      } catch (_) {}
+
+      if (!kIsWeb) {
+        // Jalankan semua inisialisasi background secara defensive
+        // App TIDAK boleh crash walau semua gagal
+        try {
+          await _requestNotificationPermission();
+        } catch (_) {}
+
+        try {
+          final stepGranted =
+              await BackgroundStepsTracker.isStepPermissionGranted();
+          if (!stepGranted) {
+            await BackgroundStepsTracker.requestStepPermission();
+          }
+        } catch (_) {}
+
+        try {
+          await StepForegroundService.start();
+        } catch (_) {}
+
+        try {
+          if (mounted) {
+            await BatteryOptimizationService.checkAndGuideIfNeeded(context);
+          }
+        } catch (_) {}
+      }
+
       if (!mounted) return;
       await Navigator.pushReplacement(
         context,
@@ -132,9 +254,61 @@ class _LoginPageState extends State<LoginPage> {
         );
       }
     } else {
-      print("❌ Login FAILED: ${result['message']}");
+      debugPrint(
+        " Login FAILED: ${result['message']} status=${result['status']} error_code=${result['error_code']} requires_verification=${result['requires_verification']}",
+      );
+      // Jika email belum diverifikasi -> langsung redirect ke halaman verifikasi (sesuai request)
+      final bool needsVerification =
+          result["requires_verification"] == true ||
+          result["error_code"] == "EMAIL_NOT_VERIFIED" ||
+          (result["message"]?.toString().toLowerCase().contains(
+                "belum diverifikasi",
+              ) ??
+              false) ||
+          (result["message"]?.toString().toLowerCase().contains("verifikasi") ??
+                  false) &&
+              (result["status"] == 403);
+      if (needsVerification) {
+        final String redirectEmail =
+            (result["email"]?.toString().isNotEmpty == true)
+            ? result["email"].toString()
+            : emailController.text.trim();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(
+                  Icons.mark_email_unread_outlined,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    "Email belum diverifikasi. Mengalihkan ke halaman verifikasi...",
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.orange.shade700,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        // Delay sedikit agar snackbar terlihat lalu redirect
+        await Future.delayed(const Duration(milliseconds: 800));
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VerifyEmail(email: redirectEmail),
+          ),
+        );
+        return;
+      }
+
       String errorMessage = result["message"] ?? loc.translate('login_failed');
-      errorIcon = Icons.error_outline; // ✅ now defined
+      errorIcon = Icons.error_outline;
       Color errorColor = Colors.red;
 
       if (errorMessage.toLowerCase().contains("email atau password salah") ||
@@ -147,12 +321,13 @@ class _LoginPageState extends State<LoginPage> {
         errorIcon = Icons.wifi_off;
       }
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(errorIcon, color: Colors.white), // ✅ now valid
+              Icon(errorIcon, color: Colors.white),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(errorMessage, style: const TextStyle(fontSize: 14)),
@@ -187,12 +362,28 @@ class _LoginPageState extends State<LoginPage> {
                 const CircleAvatar(
                   radius: 40,
                   backgroundColor: Color(0xFF00C97A),
-                  child: FaIcon(FontAwesomeIcons.building, size: 40, color: Colors.white), // ✅ already FaIcon
+                  child: FaIcon(
+                    FontAwesomeIcons.building,
+                    size: 40,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(height: 20),
-                Text(loc.translate('app_title'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                Text(
+                  loc.translate('app_title'),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 16),
-                Text(loc.translate('app_subtitle'), style: const TextStyle(fontSize: 16, color: Color(0xFF4A5565))),
+                Text(
+                  loc.translate('app_subtitle'),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF4A5565),
+                  ),
+                ),
                 const SizedBox(height: 20),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -203,7 +394,7 @@ class _LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 10,
                           offset: const Offset(0, 5),
                         ),
@@ -212,7 +403,14 @@ class _LoginPageState extends State<LoginPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(loc.translate('login_title'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+                        Text(
+                          loc.translate('login_title'),
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                         const SizedBox(height: 20),
                         TextField(
                           controller: emailController,
@@ -221,7 +419,9 @@ class _LoginPageState extends State<LoginPage> {
                             hintText: loc.translate('email_hint'),
                             labelText: loc.translate('email_label'),
                             isDense: true,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -231,20 +431,39 @@ class _LoginPageState extends State<LoginPage> {
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.lock_outline),
                             suffixIcon: IconButton(
-                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                              icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                              onPressed: () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                              ),
                             ),
                             hintText: loc.translate('password_hint'),
                             labelText: loc.translate('password_label'),
                             isDense: true,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         ),
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () {},
-                            child: Text(loc.translate('forgot_password'), style: const TextStyle(color: Color(0xFF30B762), fontSize: 16)),
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ForgotPassword(),
+                              ),
+                            ),
+                            child: Text(
+                              loc.translate('forgot_password'),
+                              style: const TextStyle(
+                                color: Color(0xFF30B762),
+                                fontSize: 16,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -255,22 +474,48 @@ class _LoginPageState extends State<LoginPage> {
                             onPressed: isLoading ? null : login,
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 15),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
                               backgroundColor: const Color(0xFF7EDFBB),
                             ),
                             child: isLoading
-                                ? const CircularProgressIndicator(color: Colors.white)
-                                : Text(loc.translate('login_button'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                : Text(
+                                    loc.translate('login_button'),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 24),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(loc.translate('no_account'), style: const TextStyle(fontSize: 16)),
+                            Text(
+                              loc.translate('no_account'),
+                              style: const TextStyle(fontSize: 16),
+                            ),
                             GestureDetector(
-                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const Register())),
-                              child: Text(loc.translate('register_now'), style: const TextStyle(fontSize: 16, color: Colors.green, fontWeight: FontWeight.w500)),
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const Register(),
+                                ),
+                              ),
+                              child: Text(
+                                loc.translate('register_now'),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.green,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                             ),
                           ],
                         ),

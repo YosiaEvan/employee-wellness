@@ -1,13 +1,13 @@
 plugins {
     id "com.android.application"
-    id "org.jetbrains.kotlin.android"
     id "dev.flutter.flutter-gradle-plugin"
 }
 
 android {
-    namespace "com.example.employee_wellness"
-    compileSdk flutter.compileSdkVersion
-    buildToolsVersion "34.0.0"
+    namespace "com.threesixzerozero.employeewellness"
+    compileSdk 37
+    buildToolsVersion "35.0.0"
+    ndkVersion "28.2.13676358"
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -19,9 +19,9 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.example.employee_wellness"
+        applicationId "com.threesixzerozero.employeewellness"
         minSdk flutter.minSdkVersion
-        targetSdk flutter.targetSdkVersion
+        targetSdk 34
         versionCode flutter.versionCode
         versionName flutter.versionName
         multiDexEnabled true
@@ -55,6 +55,6 @@ flutter {
 }
 
 dependencies {
-    implementation "com.google.android.material:material:1.14.0"
+    implementation "com.google.android.material:material:1.13.0"
     implementation "androidx.multidex:multidex:2.0.1"
 }

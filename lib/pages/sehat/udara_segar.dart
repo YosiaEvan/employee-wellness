@@ -154,7 +154,7 @@ class _UdaraSegarState extends State<UdaraSegar>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ ${result['message']}'),
+            content: Text(' ${result['message']}'),
             backgroundColor: Color(0xFF00C368),
             duration: Duration(seconds: 3),
           ),
@@ -230,14 +230,14 @@ class _UdaraSegarState extends State<UdaraSegar>
                             children: [
                               Text(
                                 isCountdown
-                                    ? "⏰"
+                                    ? ""
                                     : phase == "Tarik napas"
-                                        ? "🌬️"
+                                        ? ""
                                         : phase == "Tahan napas"
-                                            ? "⏸️"
+                                            ? ""
                                             : sudahTarikNapas
-                                                ? "✅"
-                                                : "🧘‍♂️",
+                                                ? ""
+                                                : "",
                                 style: TextStyle(fontSize: 52),
                               ),
                               SizedBox(height: 8),
@@ -321,7 +321,7 @@ class _UdaraSegarState extends State<UdaraSegar>
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                FaIcon( // ✅
+                                FaIcon( // 
                                   cycleCount >= requiredCycles
                                       ? FontAwesomeIcons.circleCheck
                                       : FontAwesomeIcons.arrowsSpin,
@@ -369,7 +369,7 @@ class _UdaraSegarState extends State<UdaraSegar>
                                           child: Row(
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
-                                              FaIcon(FontAwesomeIcons.pause, size: 16, color: Colors.white), // ✅
+                                              FaIcon(FontAwesomeIcons.pause, size: 16, color: Colors.white), // 
                                               SizedBox(width: 8),
                                               Text("Jeda", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500)),
                                             ],
@@ -402,7 +402,7 @@ class _UdaraSegarState extends State<UdaraSegar>
                                               child: Row(
                                                 mainAxisAlignment: MainAxisAlignment.center,
                                                 children: [
-                                                  FaIcon(FontAwesomeIcons.check, size: 18, color: Colors.white), // ✅
+                                                  FaIcon(FontAwesomeIcons.check, size: 18, color: Colors.white), // 
                                                   SizedBox(width: 10),
                                                   Text("Klaim Aktivitas", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                                                 ],
@@ -433,7 +433,7 @@ class _UdaraSegarState extends State<UdaraSegar>
                                               child: Row(
                                                 mainAxisAlignment: MainAxisAlignment.center,
                                                 children: [
-                                                  FaIcon( // ✅
+                                                  FaIcon( // 
                                                     sudahTarikNapas ? FontAwesomeIcons.check : FontAwesomeIcons.play,
                                                     size: 16,
                                                     color: Colors.white,
@@ -443,7 +443,7 @@ class _UdaraSegarState extends State<UdaraSegar>
                                                     sudahTarikNapas
                                                         ? "Selesai Hari Ini"
                                                         : cycleCount > 0
-                                                            ? "Lanjutkan (${cycleCount}/${requiredCycles})"
+                                                            ? "Lanjutkan ($cycleCount/$requiredCycles)"
                                                             : "Mulai Latihan",
                                                     style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
                                                   ),
@@ -488,7 +488,7 @@ class _UdaraSegarState extends State<UdaraSegar>
                                     color: hariTarikNapas >= 5 ? Color(0xFF4CAF50) : Color(0xff009bf4),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon( // ✅
+                                  child: FaIcon( // 
                                     hariTarikNapas >= 5 ? FontAwesomeIcons.trophy : FontAwesomeIcons.calendar,
                                     size: 36,
                                     color: Colors.white,
@@ -509,7 +509,7 @@ class _UdaraSegarState extends State<UdaraSegar>
                                       ),
                                     ),
                                     if (hariTarikNapas >= 5)
-                                      Text("Hebat! 🎉", style: TextStyle(fontSize: 14, color: Color(0xFF388E3C))),
+                                      Text("Hebat! ", style: TextStyle(fontSize: 14, color: Color(0xFF388E3C))),
                                   ],
                                 ),
                               ),
@@ -561,7 +561,7 @@ class _UdaraSegarState extends State<UdaraSegar>
                                         ),
                                       ),
                                       child: i < hariTarikNapas
-                                          ? FaIcon(FontAwesomeIcons.check, color: Color(0xFF4CAF50), size: 20) // ✅
+                                          ? FaIcon(FontAwesomeIcons.check, color: Color(0xFF4CAF50), size: 20) // 
                                           : Text("${i + 1}", style: TextStyle(fontSize: 16, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
                                     ),
                                   );
@@ -603,7 +603,7 @@ class _UdaraSegarState extends State<UdaraSegar>
                                     color: Color(0xff009bf4),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.wind, size: 36, color: Colors.white), // ✅
+                                  child: FaIcon(FontAwesomeIcons.wind, size: 36, color: Colors.white), // 
                                 ),
                               ),
                               SizedBox(width: 20),
@@ -700,7 +700,7 @@ class _UdaraSegarState extends State<UdaraSegar>
                                     color: Color(0xff1e89fe),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.lightbulb, size: 36, color: Colors.white), // ✅
+                                  child: FaIcon(FontAwesomeIcons.lightbulb, size: 36, color: Colors.white), // 
                                 ),
                               ),
                               SizedBox(width: 20),

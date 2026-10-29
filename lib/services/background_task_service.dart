@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'steps_sync_service.dart';
 
@@ -14,9 +15,9 @@ class BackgroundTaskService {
   /// Initialize background tasks using Timer
   Future<void> initialize() async {
     try {
-      print('✅ Background task service initialized (using Timer)');
+      debugPrint(' Background task service initialized (using Timer)');
     } catch (e) {
-      print('❌ Error initializing background tasks: $e');
+      debugPrint(' Error initializing background tasks: $e');
     }
   }
 
@@ -30,33 +31,33 @@ class BackgroundTaskService {
       _periodicSyncTimer = Timer.periodic(
         const Duration(hours: 6),
         (timer) async {
-          print('🔄 Periodic sync task triggered');
+          debugPrint(' Periodic sync task triggered');
           try {
             final syncService = StepsSyncService.instance;
             final result = await syncService.autoSync();
-            print("✅ Periodic sync completed: ${result['message']}");
-            print("📊 Synced: ${result['synced_count']}, Failed: ${result['failed_count']}");
+            debugPrint(" Periodic sync completed: ${result['message']}");
+            debugPrint(" Synced: ${result['synced_count']}, Failed: ${result['failed_count']}");
           } catch (e) {
-            print('❌ Periodic sync error: $e');
+            debugPrint(' Periodic sync error: $e');
           }
         },
       );
 
-      print('✅ Periodic sync task registered (every 6 hours)');
+      debugPrint(' Periodic sync task registered (every 6 hours)');
     } catch (e) {
-      print('❌ Error registering periodic sync: $e');
+      debugPrint(' Error registering periodic sync: $e');
     }
   }
 
   /// Register one-time sync task (immediate)
   Future<void> registerOneTimeSync() async {
     try {
-      print('🔄 One-time sync task triggered');
+      debugPrint(' One-time sync task triggered');
       final syncService = StepsSyncService.instance;
       final result = await syncService.autoSync();
-      print("✅ One-time sync completed: ${result['message']}");
+      debugPrint(" One-time sync completed: ${result['message']}");
     } catch (e) {
-      print('❌ Error in one-time sync: $e');
+      debugPrint(' Error in one-time sync: $e');
     }
   }
 
@@ -70,20 +71,20 @@ class BackgroundTaskService {
       _cleanupTimer = Timer.periodic(
         const Duration(days: 7),
         (timer) async {
-          print('🗑️ Cleanup task triggered');
+          debugPrint(' Cleanup task triggered');
           try {
             final syncService = StepsSyncService.instance;
             await syncService.cleanupOldData();
-            print("✅ Cleanup completed");
+            debugPrint(" Cleanup completed");
           } catch (e) {
-            print('❌ Cleanup error: $e');
+            debugPrint(' Cleanup error: $e');
           }
         },
       );
 
-      print('✅ Cleanup task registered (weekly)');
+      debugPrint(' Cleanup task registered (weekly)');
     } catch (e) {
-      print('❌ Error registering cleanup task: $e');
+      debugPrint(' Error registering cleanup task: $e');
     }
   }
 
@@ -94,9 +95,9 @@ class BackgroundTaskService {
       _cleanupTimer?.cancel();
       _periodicSyncTimer = null;
       _cleanupTimer = null;
-      print('✅ All background tasks cancelled');
+      debugPrint(' All background tasks cancelled');
     } catch (e) {
-      print('❌ Error cancelling tasks: $e');
+      debugPrint(' Error cancelling tasks: $e');
     }
   }
 
@@ -110,9 +111,9 @@ class BackgroundTaskService {
         _cleanupTimer?.cancel();
         _cleanupTimer = null;
       }
-      print('✅ Task $taskName cancelled');
+      debugPrint(' Task $taskName cancelled');
     } catch (e) {
-      print('❌ Error cancelling task: $e');
+      debugPrint(' Error cancelling task: $e');
     }
   }
 }

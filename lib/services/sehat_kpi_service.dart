@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'api_service.dart';
+import '../components/data_refresh_notifier.dart';
 
 class SehatKPIService {
   static Future<Map<String, dynamic>> updateStepsWithDate({
@@ -9,16 +10,18 @@ class SehatKPIService {
     try {
       final response = await ApiService.post(
         '/user/langkah',
-        body: {
-          'jumlah_langkah': totalSteps,
-          'tanggal': tanggal,
-        },
+        body: {'jumlah_langkah': totalSteps, 'tanggal': tanggal},
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        DataRefreshNotifier.instance.notifyDataChanged();
         return jsonDecode(response.body);
       }
-      return {"success": false, "message": "Failed to update steps"};
+      return {
+        "success": false,
+        "statusCode": response.statusCode,
+        "message": "Failed to update steps",
+      };
     } catch (e) {
       return {"success": false, "message": "Error: $e"};
     }
@@ -40,14 +43,19 @@ class SehatKPIService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       }
-      return {"success": false, "message": "Failed to get daily KPI (${response.statusCode})"};
+      return {
+        "success": false,
+        "message": "Failed to get daily KPI (${response.statusCode})",
+      };
     } catch (e) {
       return {"success": false, "message": "Error: $e"};
     }
   }
 
   static Future<Map<String, dynamic>> getWeeklyKPI({
-    int? mingguKe, int? bulan, int? tahun,
+    int? mingguKe,
+    int? bulan,
+    int? tahun,
   }) async {
     try {
       final queryParams = <String>[];
@@ -62,14 +70,18 @@ class SehatKPIService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       }
-      return {"success": false, "message": "Failed to get weekly KPI (${response.statusCode})"};
+      return {
+        "success": false,
+        "message": "Failed to get weekly KPI (${response.statusCode})",
+      };
     } catch (e) {
       return {"success": false, "message": "Error: $e"};
     }
   }
 
   static Future<Map<String, dynamic>> getMonthlyKPI({
-    int? bulan, int? tahun,
+    int? bulan,
+    int? tahun,
   }) async {
     try {
       final queryParams = <String>[];
@@ -83,7 +95,10 @@ class SehatKPIService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       }
-      return {"success": false, "message": "Failed to get monthly KPI (${response.statusCode})"};
+      return {
+        "success": false,
+        "message": "Failed to get monthly KPI (${response.statusCode})",
+      };
     } catch (e) {
       return {"success": false, "message": "Error: $e"};
     }

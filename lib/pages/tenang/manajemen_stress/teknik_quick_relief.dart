@@ -37,7 +37,7 @@ class _TeknikQuickReliefState extends State<TeknikQuickRelief> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withValues(alpha: 0.08),
                       blurRadius: 12,
                       spreadRadius: 2,
                       offset: Offset(0, 6),
@@ -59,7 +59,7 @@ class _TeknikQuickReliefState extends State<TeknikQuickRelief> {
                               alignment: Alignment.center,
                               padding: EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(40),
                               ),
                               child: FaIcon(
@@ -96,7 +96,7 @@ class _TeknikQuickReliefState extends State<TeknikQuickRelief> {
                             alignment: Alignment.center,
                             padding: EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(40),
                             ),
                             child: FaIcon(
@@ -127,7 +127,7 @@ class _TeknikQuickReliefState extends State<TeknikQuickRelief> {
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withValues(alpha: 0.08),
                                   blurRadius: 12,
                                   spreadRadius: 2,
                                   offset: Offset(0, 6),
@@ -180,17 +180,17 @@ class _TeknikQuickReliefState extends State<TeknikQuickRelief> {
                           SizedBox(height: 20,),
 
                           // Teknik 4-7-8
-                          QuickReliefTechniqueCard(destination: TeknikPernapasan(), sectionColor: Color(0xff008eed), icon: FontAwesomeIcons.wind, heading: "Teknik 4-7-8", targetText: "⏱️ 2 Menit"),
+                          QuickReliefTechniqueCard(destination: TeknikPernapasan(), sectionColor: Color(0xff008eed), icon: FontAwesomeIcons.wind, heading: "Teknik 4-7-8", targetText: " 2 Menit"),
 
                           SizedBox(height: 20,),
 
                           // Teknik 4-7-8
-                          QuickReliefTechniqueCard(destination: TeknikGrounding(), sectionColor: Color(0xff7c42fd), icon: FontAwesomeIcons.brain, heading: "Teknik Grounding 5-4-3-2-1", targetText: "⏱️ 3 Menit"),
+                          QuickReliefTechniqueCard(destination: TeknikGrounding(), sectionColor: Color(0xff7c42fd), icon: FontAwesomeIcons.brain, heading: "Teknik Grounding 5-4-3-2-1", targetText: " 3 Menit"),
 
                           SizedBox(height: 20,),
 
                           // Relaksasi Otot Progresif
-                          QuickReliefTechniqueCard(destination: RelaksasiOtotProgresif(), sectionColor: Color(0xff00a884), icon: FontAwesomeIcons.spa, heading: "Relaksasi Otot Progresif", targetText: "⏱️ 5 Menit"),
+                          QuickReliefTechniqueCard(destination: RelaksasiOtotProgresif(), sectionColor: Color(0xff00a884), icon: FontAwesomeIcons.spa, heading: "Relaksasi Otot Progresif", targetText: " 5 Menit"),
 
                           SizedBox(height: 20,),
 

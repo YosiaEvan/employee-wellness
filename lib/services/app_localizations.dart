@@ -26,7 +26,7 @@ class AppLocalizations {
 
       return true;
     } catch (e) {
-      print('❌ Error loading localization: $e');
+      debugPrint(' Error loading localization: $e');
       _localizedStrings = {};
       return false;
     }

@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import '../database/steps_database.dart';
+import 'local_database_service.dart';
 import 'sehat_kpi_service.dart';
 
 /// Service untuk mengelola sinkronisasi data langkah dari lokal ke server
@@ -23,7 +25,7 @@ class StepsSyncService {
       final userId = await StepsDatabase.getCurrentUserId();
 
       if (userId == null) {
-        print('❌ User ID not found, cannot save steps');
+        debugPrint(' User ID not found, cannot save steps');
         return false;
       }
 
@@ -33,10 +35,17 @@ class StepsSyncService {
         totalSteps: totalSteps,
       );
 
-      print('✅ Steps saved locally: $totalSteps steps on $tanggal');
+      // Juga simpan ke SQLite (LocalDatabaseService) agar data langkah
+      // tersedia offline di satu tempat.
+      await LocalDatabaseService.instance.upsertLangkah(
+        tanggal: tanggal,
+        totalSteps: totalSteps,
+      );
+
+      debugPrint(' Steps saved locally: $totalSteps steps on $tanggal');
       return true;
     } catch (e) {
-      print('❌ Error saving steps locally: $e');
+      debugPrint(' Error saving steps locally: $e');
       return false;
     }
   }
@@ -56,7 +65,7 @@ class StepsSyncService {
         tanggal: tanggal,
       );
     } catch (e) {
-      print('❌ Error getting local steps: $e');
+      debugPrint(' Error getting local steps: $e');
       return null;
     }
   }
@@ -76,7 +85,7 @@ class StepsSyncService {
         endDate: endDate,
       );
     } catch (e) {
-      print('❌ Error getting steps in range: $e');
+      debugPrint(' Error getting steps in range: $e');
       return [];
     }
   }
@@ -92,7 +101,7 @@ class StepsSyncService {
       return connectivityResult.contains(ConnectivityResult.mobile) ||
              connectivityResult.contains(ConnectivityResult.wifi);
     } catch (e) {
-      print('❌ Error checking connectivity: $e');
+      debugPrint(' Error checking connectivity: $e');
       return false;
     }
   }
@@ -103,7 +112,7 @@ class StepsSyncService {
     required int totalSteps,
   }) async {
     try {
-      print('🔄 Syncing $tanggal: $totalSteps steps to server...');
+      debugPrint(' Syncing $tanggal: $totalSteps steps to server...');
 
       // Call API to update steps
       final result = await SehatKPIService.updateStepsWithDate(
@@ -117,14 +126,16 @@ class StepsSyncService {
           // Mark as synced in local DB
           await _db.markAsSynced(userId: userId, tanggal: tanggal);
         }
-        print('✅ Synced successfully: $tanggal');
+        // Tandai juga di SQLite
+        await LocalDatabaseService.instance.markSyncedByDate('langkah', tanggal);
+        debugPrint(' Synced successfully: $tanggal');
         return true;
       } else {
-        print('❌ Failed to sync $tanggal: ${result['message']}');
+        debugPrint(' Failed to sync $tanggal: ${result['message']}');
         return false;
       }
     } catch (e) {
-      print('❌ Error syncing single record: $e');
+      debugPrint(' Error syncing single record: $e');
       return false;
     }
   }
@@ -132,7 +143,7 @@ class StepsSyncService {
   /// Sinkronkan semua data yang belum disinkronkan
   Future<Map<String, dynamic>> syncAllUnsynced() async {
     try {
-      print('📊 Starting sync all unsynced records...');
+      debugPrint(' Starting sync all unsynced records...');
 
       // Check internet connection
       if (!await hasInternet()) {
@@ -160,7 +171,7 @@ class StepsSyncService {
       final unsyncedRecords = await _db.getUnsyncedSteps(userId);
 
       if (unsyncedRecords.isEmpty) {
-        print('✅ No unsynced records found');
+        debugPrint(' No unsynced records found');
         return {
           'success': true,
           'message': 'Tidak ada data yang perlu disinkronkan',
@@ -170,7 +181,7 @@ class StepsSyncService {
         };
       }
 
-      print('📊 Found ${unsyncedRecords.length} unsynced records');
+      debugPrint(' Found ${unsyncedRecords.length} unsynced records');
 
       int syncedCount = 0;
       int failedCount = 0;
@@ -202,7 +213,7 @@ class StepsSyncService {
         await Future.delayed(const Duration(milliseconds: 500));
       }
 
-      print('✅ Sync completed: $syncedCount synced, $failedCount failed');
+      debugPrint(' Sync completed: $syncedCount synced, $failedCount failed');
 
       return {
         'success': syncedCount > 0,
@@ -216,7 +227,7 @@ class StepsSyncService {
         'synced_details': syncedDetails,
       };
     } catch (e) {
-      print('❌ Error in syncAllUnsynced: $e');
+      debugPrint(' Error in syncAllUnsynced: $e');
       return {
         'success': false,
         'message': 'Error: $e',
@@ -243,7 +254,7 @@ class StepsSyncService {
 
       return data;
     } catch (e) {
-      print('❌ Error getting yesterday steps: $e');
+      debugPrint(' Error getting yesterday steps: $e');
       return null;
     }
   }
@@ -251,11 +262,11 @@ class StepsSyncService {
   /// Auto sync - dipanggil saat app start atau periodic
   Future<Map<String, dynamic>> autoSync() async {
     try {
-      print('🔄 Auto sync triggered...');
+      debugPrint(' Auto sync triggered...');
 
       // Check if has internet
       if (!await hasInternet()) {
-        print('⚠️ No internet, skipping auto sync');
+        debugPrint(' No internet, skipping auto sync');
         return {
           'success': false,
           'message': 'Tidak ada koneksi internet',
@@ -268,7 +279,7 @@ class StepsSyncService {
       // Sync all unsynced
       return await syncAllUnsynced();
     } catch (e) {
-      print('❌ Error in auto sync: $e');
+      debugPrint(' Error in auto sync: $e');
       return {
         'success': false,
         'message': 'Error: $e',
@@ -297,7 +308,7 @@ class StepsSyncService {
 
       return await _db.getStatistics(userId);
     } catch (e) {
-      print('❌ Error getting statistics: $e');
+      debugPrint(' Error getting statistics: $e');
       return {
         'total_records': 0,
         'synced_records': 0,
@@ -314,7 +325,7 @@ class StepsSyncService {
 
       return await _db.getUnsyncedCount(userId);
     } catch (e) {
-      print('❌ Error getting unsynced count: $e');
+      debugPrint(' Error getting unsynced count: $e');
       return 0;
     }
   }
@@ -327,9 +338,9 @@ class StepsSyncService {
   Future<void> cleanupOldData() async {
     try {
       final deletedCount = await _db.deleteOldSyncedSteps();
-      print('🗑️ Cleaned up $deletedCount old synced records');
+      debugPrint(' Cleaned up $deletedCount old synced records');
     } catch (e) {
-      print('❌ Error cleaning up old data: $e');
+      debugPrint(' Error cleaning up old data: $e');
     }
   }
 
@@ -339,10 +350,10 @@ class StepsSyncService {
       final userId = await StepsDatabase.getCurrentUserId();
       if (userId != null) {
         await _db.deleteUserSteps(userId);
-        print('✅ All user steps data cleared');
+        debugPrint(' All user steps data cleared');
       }
     } catch (e) {
-      print('❌ Error clearing user data: $e');
+      debugPrint(' Error clearing user data: $e');
     }
   }
 }

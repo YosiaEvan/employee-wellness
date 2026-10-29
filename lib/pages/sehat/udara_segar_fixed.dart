@@ -111,19 +111,6 @@ class _TidurCukupState extends State<TidurCukup> {
     }
   }
 
-  Future<void> _pickTime(TextEditingController controller) async {
-    final current = DateFormat("HH:mm").parse(controller.text);
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(hour: current.hour, minute: current.minute),
-    );
-    if (picked != null) {
-      setState(() {
-        controller.text = picked.hour.toString().padLeft(2, '0') + ":" + picked.minute.toString().padLeft(2, '0');
-      });
-    }
-  }
-
   int get totalDays => sleepReports.length;
   int get targetReached => sleepReports.where((r) => (r['duration'] ?? 0) >= 7).length;
   double get averageHours => sleepReports.isEmpty ? 0 : sleepReports.fold(0.0, (sum, r) => sum + (r['duration'] ?? 0)) / sleepReports.length;
@@ -145,7 +132,7 @@ class _TidurCukupState extends State<TidurCukup> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ ${result['message']}'),
+            content: Text(' ${result['message']}'),
             backgroundColor: Color(0xFF715cff),
             duration: Duration(seconds: 3),
           ),
@@ -189,7 +176,7 @@ class _TidurCukupState extends State<TidurCukup> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -209,7 +196,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                     color: Color(0xff715cff),
                                     borderRadius: BorderRadius.circular(40),
                                   ),
-                                  child: FaIcon( // ✅ fixed
+                                  child: FaIcon( //  fixed
                                     hasTodayReport ? FontAwesomeIcons.circleCheck : FontAwesomeIcons.moon,
                                     size: 36,
                                     color: Colors.white,
@@ -246,7 +233,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                           children: [
                                             Row(
                                               children: [
-                                                FaIcon(FontAwesomeIcons.moon, size: 20, color: Color(0xff4f39f6)), // ✅
+                                                FaIcon(FontAwesomeIcons.moon, size: 20, color: Color(0xff4f39f6)), // 
                                                 SizedBox(width: 12),
                                                 Text("Tidur", style: TextStyle(fontSize: 20, color: Color(0xff5f6878))),
                                               ],
@@ -273,7 +260,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                           children: [
                                             Row(
                                               children: [
-                                                FaIcon(FontAwesomeIcons.sun, size: 20, color: Color(0xff4f39f6)), // ✅
+                                                FaIcon(FontAwesomeIcons.sun, size: 20, color: Color(0xff4f39f6)), // 
                                                 SizedBox(width: 12),
                                                 Text("Bangun", style: TextStyle(fontSize: 20, color: Color(0xff5f6878))),
                                               ],
@@ -316,7 +303,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                             ),
                                             Row(
                                               children: [
-                                                FaIcon( // ✅
+                                                FaIcon( // 
                                                   (todayData['durasi_jam'] ?? 0) > 8
                                                     ? FontAwesomeIcons.circleInfo
                                                     : (todayData['durasi_jam'] ?? 0) < 7
@@ -375,7 +362,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        FaIcon( // ✅
+                                        FaIcon( // 
                                           isInSleepTimeRange ? FontAwesomeIcons.moon : FontAwesomeIcons.clock,
                                           size: 16,
                                           color: Colors.white,
@@ -400,7 +387,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                     ),
                                     child: Row(
                                       children: [
-                                        FaIcon(FontAwesomeIcons.circleInfo, size: 16, color: Color(0xFFFF9800)), // ✅
+                                        FaIcon(FontAwesomeIcons.circleInfo, size: 16, color: Color(0xFFFF9800)), // 
                                         SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
@@ -436,7 +423,7 @@ class _TidurCukupState extends State<TidurCukup> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -456,7 +443,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                     color: Color(0xff715cff),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.arrowTrendUp, size: 36, color: Colors.white), // ✅
+                                  child: FaIcon(FontAwesomeIcons.arrowTrendUp, size: 36, color: Colors.white), // 
                                 ),
                               ),
                               SizedBox(width: 20),
@@ -526,7 +513,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                   child: Column(
                                     children: [
                                       Text(
-                                        "${rataRataDurasiJam.toStringAsFixed(1)}",
+                                        rataRataDurasiJam.toStringAsFixed(1),
                                         style: TextStyle(color: Color(0xff155dfc), fontWeight: FontWeight.bold, fontSize: 32),
                                       ),
                                       Text("Rata-rata Jam", style: TextStyle(fontSize: 16)),
@@ -618,7 +605,7 @@ class _TidurCukupState extends State<TidurCukup> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -639,7 +626,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                     color: Color(0xff715cff),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.lightbulb, size: 36, color: Colors.white), // ✅
+                                  child: FaIcon(FontAwesomeIcons.lightbulb, size: 36, color: Colors.white), // 
                                 ),
                               ),
                               SizedBox(width: 20),
@@ -696,7 +683,7 @@ class _TidurCukupState extends State<TidurCukup> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -717,7 +704,7 @@ class _TidurCukupState extends State<TidurCukup> {
                                     color: Color(0xff715cff),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.heart, size: 36, color: Colors.white), // ✅
+                                  child: FaIcon(FontAwesomeIcons.heart, size: 36, color: Colors.white), // 
                                 ),
                               ),
                               SizedBox(width: 20),

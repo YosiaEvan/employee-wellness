@@ -379,7 +379,7 @@ class _PancaIndraState extends State<PancaIndra> with TickerProviderStateMixin {
                                   ),
                                   const SizedBox(height: 40),
                                   const Text(
-                                    "Sesi Selesai 🎉",
+                                    "Sesi Selesai ",
                                     style: TextStyle(
                                       fontSize: 40,
                                       fontWeight: FontWeight.w500,

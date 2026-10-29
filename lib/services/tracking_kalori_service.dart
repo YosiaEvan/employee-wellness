@@ -1,22 +1,71 @@
+import 'package:flutter/foundation.dart';
+import 'dart:async';
 import 'dart:convert';
 import 'api_service.dart';
+import 'local_database_service.dart';
+import 'offline_sync_service.dart';
+import '../components/data_refresh_notifier.dart';
 
-/// Service untuk Tracking Kalori
+/// Service untuk Tracking Kalori (offline-first)
+/// Data makanan disimpan ke SQLite lokal terlebih dahulu, lalu disinkronkan.
 class TrackingKaloriService {
+  static final LocalDatabaseService _db = LocalDatabaseService.instance;
+
+  static const Map<String, dynamic> _defaultTarget = {
+    'kalori': 2000,
+    'protein': 60,
+    'karbohidrat': 300,
+    'lemak': 65,
+    'serat': 25,
+  };
+
   /// POST - Tambah makanan ke tracking kalori
   static Future<Map<String, dynamic>> tambahMakanan({
     required int idFoodNutrition,
     required String jenisMakan,
     required double porsi,
+    Map<String, dynamic>? foodDetail,
   }) async {
-    try {
-      print("📤 Tambah Makanan ke Tracking Request:");
-      print("URL: /user/tracking-kalori");
-      print("🔐 Using Bearer token (auto-refresh if expired)");
-      print("🍽️ ID Food: $idFoodNutrition");
-      print("🍽️ Jenis Makan: $jenisMakan");
-      print("🍽️ Porsi: $porsi");
+    final tanggal = LocalDatabaseService.todayStr();
 
+    final nama =
+        foodDetail?['nama_makanan']?.toString() ?? 'Makanan #$idFoodNutrition';
+    final protein = (foodDetail?['protein_gram'] ?? foodDetail?['protein'] ?? 0)
+        .toDouble();
+    final karbohidrat =
+        (foodDetail?['karbohidrat_gram'] ?? foodDetail?['karbohidrat'] ?? 0)
+            .toDouble();
+    final serat = (foodDetail?['serat_gram'] ?? foodDetail?['serat'] ?? 0)
+        .toDouble();
+    final lemak = (foodDetail?['lemak_gram'] ?? foodDetail?['lemak'] ?? 0)
+        .toDouble();
+    // Kalori tidak selalu disediakan oleh sumber (DB/Gemini), jadi hitung sendiri
+    // dari makronutrien dengan rumus yang sama dengan backend hitungKalori.
+    final kalori = foodDetail?['kalori'] != null
+        ? (foodDetail?['kalori'] ?? 0).toDouble()
+        : (protein * 4) + (karbohidrat * 4) + (lemak * 9) + (serat * 2);
+    final berminyak = foodDetail?['mengandung_minyak'] == true ? 1 : 0;
+    final bergula = foodDetail?['mengandung_gula'] == true ? 1 : 0;
+
+    // 1. Simpan ke SQLite lokal dulu
+    final rowId = await _db.insert('makanan', {
+      'tanggal': tanggal,
+      'id_food_nutrition': idFoodNutrition,
+      'jenis_makan': jenisMakan,
+      'porsi': porsi,
+      'nama_makanan': nama,
+      'kalori': kalori,
+      'protein': protein,
+      'karbohidrat': karbohidrat,
+      'lemak': lemak,
+      'serat': serat,
+      'berminyak': berminyak,
+      'bergula': bergula,
+      'synced': 0,
+    });
+
+    // 2. Coba push ke server
+    try {
       final response = await ApiService.post(
         "/user/tracking-kalori",
         body: {
@@ -26,16 +75,11 @@ class TrackingKaloriService {
         },
       );
 
-      print("📥 Tracking Kalori Response: ${response.statusCode}");
-      print("Body: ${response.body}");
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
-
         if (responseData['success'] == true) {
-          print("✅ Makanan berhasil ditambahkan!");
-          print("📊 Total kalori hari ini: ${responseData['data']['total_kalori_hari_ini']}");
-
+          await _db.markSynced('makanan', rowId);
+          DataRefreshNotifier.instance.notifyDataChanged();
           return {
             "success": true,
             "message": responseData['message'],
@@ -43,64 +87,338 @@ class TrackingKaloriService {
             "data": responseData['data'],
           };
         } else {
+          // Server reject  keep local row for retry during sync
+          debugPrint(" Server rejected food: ${responseData['message']}");
+          DataRefreshNotifier.instance.notifyDataChanged();
           return {
-            "success": false,
+            "success": true,
+            "offline": true,
+            "pending": true,
             "message": responseData['message'] ?? "Gagal menambahkan makanan",
           };
         }
       } else {
-        final errorData = jsonDecode(response.body);
-        return {
-          "success": false,
-          "message": errorData['message'] ?? "Gagal menambahkan makanan",
-        };
+        // Keep the row locally. Retry transient server errors and retain
+        // permanent validation failures with their reason for review.
+        debugPrint(" Server error ${response.statusCode}, keeping local row");
+        DataRefreshNotifier.instance.notifyDataChanged();
+        if (!const [400, 409, 422].contains(response.statusCode)) {
+          return {
+            'success': true,
+            'offline': true,
+            'pending': true,
+            'message':
+                'Tersimpan di perangkat, sinkronisasi akan dicoba kembali',
+          };
+        }
+        try {
+          final errorData = jsonDecode(response.body);
+          final message = errorData['message'] ?? "Gagal menambahkan makanan";
+          if (const [400, 409, 422].contains(response.statusCode)) {
+            await _db.markRejected('makanan', rowId, message.toString());
+          }
+          return {"success": false, "message": message};
+        } catch (_) {
+          if (const [400, 409, 422].contains(response.statusCode)) {
+            await _db.markRejected(
+              'makanan',
+              rowId,
+              'HTTP ${response.statusCode}',
+            );
+          }
+          return {"success": false, "message": "Gagal menambahkan makanan"};
+        }
       }
     } catch (e) {
-      print("❌ Tracking Kalori Error: $e");
+      // Offline -> tetap dianggap berhasil (tersimpan di SQLite)
+      debugPrint(" Tracking Kalori Error (offline): $e");
+      DataRefreshNotifier.instance.notifyDataChanged();
       return {
-        "success": false,
-        "message": "Error: $e",
+        "success": true,
+        "message": "Tersimpan offline, akan disinkronkan saat online",
+        "offline": true,
       };
     }
   }
 
-  /// GET - Get tracking kalori hari ini
+  /// GET - Get tracking kalori hari ini (offline-first)
   static Future<Map<String, dynamic>> getTrackingHariIni() async {
     try {
-      print("📤 Get Tracking Kalori Hari Ini Request:");
-      print("URL: /user/tracking-kalori");
-      print("🔐 Using Bearer token (auto-refresh if expired)");
+      final tanggal = LocalDatabaseService.todayStr();
+      final userId = await LocalDatabaseService.getCurrentUserId();
+      final todayRows = await _db.query(
+        'makanan',
+        where: 'tanggal = ? AND user_id = ? AND synced != 2',
+        whereArgs: [tanggal, userId],
+      );
 
-      final response = await ApiService.get("/user/tracking-kalori");
-
-      print("📥 Get Tracking Response: ${response.statusCode}");
-      print("Body: ${response.body}");
-
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-
-        if (responseData['success'] == true) {
-          print("✅ Tracking data retrieved!");
-          print("📊 Total kalori: ${responseData['data']['konsumsi']['kalori']}");
-          print("📊 Total item: ${responseData['data']['total_item']}");
-
-          return {
-            "success": true,
-            "data": responseData['data'],
-          };
-        } else {
-          return {
-            "success": false,
-            "message": responseData['message'] ?? "Gagal mengambil data",
-          };
+      if (todayRows.isEmpty) {
+        // Tidak ada data lokal -> coba ambil dari server
+        final server = await _getFromServer();
+        if (server != null) {
+          await _cacheServerData(server);
+          return {"success": true, "data": server['data']};
         }
-      } else {
-        return {"success": false, "message": "Gagal mengambil data"};
+        // Offline -> pakai cache snapshot terakhir jika ada
+        final cached = await _getCachedData();
+        if (cached != null) {
+          return {"success": true, "data": cached};
+        }
+        return _buildEmpty();
       }
+
+      // Data lokal ada -> bangun dari SQLite (offline-first)
+      return {"success": true, "data": await _buildFromLocal(todayRows)};
     } catch (e) {
-      print("❌ Get Tracking Error: $e");
+      debugPrint(" Get Tracking Error: $e");
       return {"success": false, "message": "Error: $e"};
     }
   }
-}
 
+  // =====================================================
+  // LOCAL BUILDER
+  // =====================================================
+
+  static Future<Map<String, dynamic>> _buildFromLocal(
+    List<Map<String, dynamic>> rows,
+  ) async {
+    const jenisList = ['sarapan', 'makan_siang', 'makan_malam', 'snack'];
+
+    final daftarMakanan = <String, List<Map<String, dynamic>>>{
+      for (final jenis in jenisList) jenis: [],
+    };
+
+    var totalKalori = 0.0;
+    var totalProtein = 0.0;
+    var totalKarbo = 0.0;
+    var totalLemak = 0.0;
+    var totalSerat = 0.0;
+
+    for (final row in rows) {
+      final porsi = (row['porsi'] ?? 1).toDouble();
+      final kalori = (row['kalori'] ?? 0).toDouble() * porsi;
+      final protein = (row['protein'] ?? 0).toDouble() * porsi;
+      final karbohidrat = (row['karbohidrat'] ?? 0).toDouble() * porsi;
+      final lemak = (row['lemak'] ?? 0).toDouble() * porsi;
+      final serat = (row['serat'] ?? 0).toDouble() * porsi;
+
+      totalKalori += kalori;
+      totalProtein += protein;
+      totalKarbo += karbohidrat;
+      totalLemak += lemak;
+      totalSerat += serat;
+
+      final jenis = row['jenis_makan']?.toString() ?? 'snack';
+      final daftar = daftarMakanan[jenis] ?? [];
+      daftar.add({
+        'nama_makanan': row['nama_makanan'],
+        'porsi': porsi,
+        'total_kalori': kalori,
+        'total_protein': protein,
+        'total_karbohidrat': karbohidrat,
+        'total_lemak': lemak,
+        'total_serat': serat,
+      });
+    }
+
+    final target = await _getTarget();
+
+    final konsumsi = {
+      'kalori': totalKalori,
+      'protein': totalProtein,
+      'karbohidrat': totalKarbo,
+      'lemak': totalLemak,
+      'serat': totalSerat,
+    };
+
+    final sisa = <String, dynamic>{};
+    final progress = <String, dynamic>{};
+    target.forEach((key, value) {
+      final konsumsiVal = (konsumsi[key] ?? 0).toDouble();
+      final targetVal = (value ?? 0).toDouble();
+      sisa[key] = targetVal > 0
+          ? (targetVal - konsumsiVal).clamp(0.0, double.infinity)
+          : 0.0;
+      progress[key] = targetVal > 0
+          ? (konsumsiVal / targetVal * 100).clamp(0.0, 100.0)
+          : 0.0;
+    });
+
+    return {
+      'target': target,
+      'konsumsi': konsumsi,
+      'progress': progress,
+      'sisa': sisa,
+      'daftar_makanan': daftarMakanan,
+      'total_item': rows.length,
+      'riwayat_seminggu': await _buildRiwayatSeminggu(),
+      'source': 'local',
+    };
+  }
+
+  static Future<Map<String, dynamic>> _buildRiwayatSeminggu() async {
+    final start = LocalDatabaseService.weekStart();
+    final userId = await LocalDatabaseService.getCurrentUserId();
+    final rows = await _db.query(
+      'makanan',
+      where: 'tanggal >= ? AND user_id = ? AND synced != 2',
+      whereArgs: [start, userId],
+    );
+
+    final perTanggal = <String, Map<String, bool>>{};
+    for (final row in rows) {
+      final tgl = row['tanggal']?.toString() ?? '';
+      final flag = perTanggal[tgl] ?? {'berminyak': false, 'bergula': false};
+      if ((row['berminyak'] ?? 0) == 1) flag['berminyak'] = true;
+      if ((row['bergula'] ?? 0) == 1) flag['bergula'] = true;
+      perTanggal[tgl] = flag;
+    }
+
+    var hariBerminyak = 0;
+    var hariBergula = 0;
+    perTanggal.forEach((tgl, flag) {
+      if (flag['berminyak'] == true) hariBerminyak++;
+      if (flag['bergula'] == true) hariBergula++;
+    });
+
+    return {
+      'hari_makan_berminyak': hariBerminyak,
+      'hari_makan_bergula': hariBergula,
+    };
+  }
+
+  static Future<Map<String, dynamic>> _buildEmpty() async {
+    final target = await _getTarget();
+    final sisa = <String, dynamic>{};
+    target.forEach((key, value) {
+      sisa[key] = value;
+    });
+    return {
+      'target': target,
+      'konsumsi': {
+        'kalori': 0,
+        'protein': 0,
+        'karbohidrat': 0,
+        'lemak': 0,
+        'serat': 0,
+      },
+      'progress': {
+        'kalori': 0,
+        'protein': 0,
+        'karbohidrat': 0,
+        'lemak': 0,
+        'serat': 0,
+      },
+      'sisa': sisa,
+      'daftar_makanan': {
+        'sarapan': [],
+        'makan_siang': [],
+        'makan_malam': [],
+        'snack': [],
+      },
+      'total_item': 0,
+      'riwayat_seminggu': {},
+      'source': 'local',
+    };
+  }
+
+  static Future<Map<String, dynamic>> _getTarget() async {
+    // Target dari cache server jika tersedia
+    try {
+      final raw = await _db.cacheGet('tracking_target');
+      if (raw != null) {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map<String, dynamic>) {
+          final target = Map<String, dynamic>.from(_defaultTarget);
+          decoded.forEach((key, value) {
+            target[key] = value;
+          });
+          return target;
+        }
+      }
+    } catch (e) {
+      debugPrint(" Error reading tracking target: $e");
+    }
+    return Map<String, dynamic>.from(_defaultTarget);
+  }
+
+  // =====================================================
+  // SERVER
+  // =====================================================
+
+  static Future<Map<String, dynamic>?> _getFromServer() async {
+    try {
+      if (!await OfflineSyncService.hasInternet()) return null;
+      final response = await ApiService.get("/user/tracking-kalori");
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['success'] == true) {
+          return {"success": true, "data": responseData['data']};
+        }
+      }
+    } catch (e) {
+      debugPrint(" Get Tracking (server) Error: $e");
+    }
+    return null;
+  }
+
+  static Future<void> _cacheServerData(Map<String, dynamic> server) async {
+    try {
+      final data = server['data'] ?? {};
+      final tanggal = LocalDatabaseService.todayStr();
+
+      // Cache target agar offline tetap punya target
+      if (data['target'] != null) {
+        await _db.cachePut('tracking_target', jsonEncode(data['target']));
+      }
+      // Cache snapshot penuh (fallback bila offline & tidak ada data lokal)
+      await _db.cachePut('tracking_data_$tanggal', jsonEncode(data));
+
+      // Simpan daftar makanan dari server ke SQLite agar offline bisa dibaca
+      final daftar = data['daftar_makanan'] ?? {};
+      daftar.forEach((jenis, items) {
+        for (final item in (items as List? ?? [])) {
+          final porsi = (item['porsi'] ?? 1).toDouble();
+          _db.insert('makanan', {
+            'tanggal': tanggal,
+            'id_food_nutrition': item['id'] ?? 0,
+            'jenis_makan': jenis,
+            'porsi': porsi,
+            'nama_makanan': item['nama_makanan']?.toString(),
+            'kalori':
+                (item['total_kalori'] ?? 0).toDouble() /
+                (porsi > 0 ? porsi : 1),
+            'protein':
+                (item['total_protein'] ?? 0).toDouble() /
+                (porsi > 0 ? porsi : 1),
+            'karbohidrat':
+                (item['total_karbohidrat'] ?? 0).toDouble() /
+                (porsi > 0 ? porsi : 1),
+            'lemak':
+                (item['total_lemak'] ?? 0).toDouble() / (porsi > 0 ? porsi : 1),
+            'serat':
+                (item['total_serat'] ?? 0).toDouble() / (porsi > 0 ? porsi : 1),
+            'berminyak': item['mengandung_minyak'] == true ? 1 : 0,
+            'bergula': item['mengandung_gula'] == true ? 1 : 0,
+            'synced': 1,
+          });
+        }
+      });
+    } catch (e) {
+      debugPrint(" Error caching server tracking data: $e");
+    }
+  }
+
+  static Future<Map<String, dynamic>?> _getCachedData() async {
+    try {
+      final tanggal = LocalDatabaseService.todayStr();
+      final raw = await _db.cacheGet('tracking_data_$tanggal');
+      if (raw != null) {
+        return jsonDecode(raw) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint(" Error reading cached tracking data: $e");
+    }
+    return null;
+  }
+}

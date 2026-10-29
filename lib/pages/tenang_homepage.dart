@@ -1,6 +1,9 @@
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/module_kpi_progress_card.dart';
 import 'package:employee_wellness/components/module_section_card.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
+import 'package:employee_wellness/config/penilaian_points.dart';
+import 'package:employee_wellness/pages/penilaian/aktivitas_klik_page.dart';
 import 'package:employee_wellness/pages/tenang/manajemen_stress.dart';
 import 'package:employee_wellness/pages/tenang/meditasi_terpadu.dart';
 import 'package:employee_wellness/pages/tenang/mindfulness_kesadaran.dart';
@@ -45,7 +48,7 @@ class TenangHomepage extends StatelessWidget {
                           alignment: Alignment.center,
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(40),
                           ),
                           child: const FaIcon(FontAwesomeIcons.arrowLeft, size: 20, color: Colors.white),
@@ -74,7 +77,7 @@ class TenangHomepage extends StatelessWidget {
                           alignment: Alignment.center,
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(40),
                           ),
                           child: const FaIcon(FontAwesomeIcons.chartLine, size: 20, color: Colors.white),
@@ -91,6 +94,17 @@ class TenangHomepage extends StatelessWidget {
                 child: ResponsiveContainer(
                   child: Column(
                     children: [
+                      ModuleKpiProgressCard(
+                        module: 'tenang',
+                        primaryColor: const Color(0xff7141fc),
+                        gradientEnd: const Color(0xff5129c8),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const TenangKPIDashboard()),
+                          );
+                        },
+                      ),
                       ModuleSectionCard(
                         destination: const MeditasiTerpadu(),
                         backgroundColor: Colors.white,
@@ -124,6 +138,8 @@ class TenangHomepage extends StatelessWidget {
                         targetText: loc.translate('stress_target'),
                       ),
                       const SizedBox(height: 20),
+                      ..._buildPenilaianCards(context),
+                      const SizedBox(height: 20),
                       _buildTipsCard(context),
                     ],
                   ),
@@ -136,6 +152,40 @@ class TenangHomepage extends StatelessWidget {
     );
   }
 
+  List<Widget> _buildPenilaianCards(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final map = <String, (Color, FaIconData, Color)>{
+      'tahan_emosi': (const Color(0xff7141fc), FontAwesomeIcons.handHoldingHeart, const Color(0xfff0ecff)),
+      'ekspresi_sehat': (const Color(0xfff20868), FontAwesomeIcons.music, const Color(0xffffecf5)),
+      'harmoni_keluarga': (const Color(0xfff59e0b), FontAwesomeIcons.houseUser, const Color(0xfffff8e1)),
+      'akui_emosi': (const Color(0xff00a896), FontAwesomeIcons.comments, const Color(0xffe6faf7)),
+      'kendali_diri': (const Color(0xff2c7eff), FontAwesomeIcons.shieldHalved, const Color(0xffe8f0ff)),
+      'koneksi_sosial': (const Color(0xff00c368), FontAwesomeIcons.users, const Color(0xffeefdf5)),
+    };
+
+    return TenangPenilaianPoints.semua.map((point) {
+      final (color, icon, soft) = map[point.kode] ?? (const Color(0xff2c7eff), FontAwesomeIcons.heartPulse, const Color(0xffe8f0ff));
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 20),
+        child: ModuleSectionCard(
+          destination: AktivitasKlikPage(
+            point: point,
+            heading: loc.translate('tenang_title'),
+            subHeading: 'Penilaian 360',
+            destination: const TenangHomepage(),
+          ),
+          backgroundColor: Colors.white,
+          sectionColor: color,
+          icon: icon,
+          heading: point.title,
+          subHeading: 'Self-report klik',
+          description: point.description,
+          targetText: '${point.targetPerWeek}x/minggu',
+        ),
+      );
+    }).toList();
+  }
+
   Widget _buildTipsCard(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     return Container(
@@ -145,7 +195,7 @@ class TenangHomepage extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 12,
             spreadRadius: 2,
             offset: const Offset(0, 6),

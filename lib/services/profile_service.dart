@@ -1,15 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
+import 'auth_storage.dart';
 
 /// Service untuk User Profile
 class ProfileService {
   // Helper untuk get token
-  static Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString("token");
-  }
+  static Future<String?> _getToken() => AuthStorage.getToken();
 
   // GET - Get user profile
   static Future<Map<String, dynamic>> getProfile() async {
@@ -39,8 +36,7 @@ class ProfileService {
           "data": data,
         };
       } else if (response.statusCode == 401) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.remove("token");
+        await AuthStorage.clearToken();
 
         return {
           "success": false,
@@ -137,10 +133,10 @@ class ProfileService {
         body: jsonEncode({
           "name": name,
           "phone": phone,
-          if (address != null) "address": address,
-          if (birthDate != null) "birth_date": birthDate,
-          if (gender != null) "gender": gender,
-          if (avatar != null) "avatar": avatar,
+          "address": ?address,
+          "birth_date": ?birthDate,
+          "gender": ?gender,
+          "avatar": ?avatar,
         }),
       );
 
@@ -200,13 +196,13 @@ class ProfileService {
           "Authorization": "Bearer $token",
         },
         body: jsonEncode({
-          if (name != null) "name": name,
-          if (phone != null) "phone": phone,
-          if (address != null) "address": address,
-          if (birthDate != null) "birth_date": birthDate,
-          if (gender != null) "gender": gender,
-          if (avatar != null) "avatar": avatar,
-          if (bio != null) "bio": bio,
+          "name": ?name,
+          "phone": ?phone,
+          "address": ?address,
+          "birth_date": ?birthDate,
+          "gender": ?gender,
+          "avatar": ?avatar,
+          "bio": ?bio,
         }),
       );
 

@@ -159,7 +159,7 @@ class _KesadaranTubuhState extends State<KesadaranTubuh> with TickerProviderStat
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             const Text(
-                              "🧘",
+                              "",
                               style: TextStyle(
                                 fontSize: 60,
                               ),
@@ -315,7 +315,7 @@ class _KesadaranTubuhState extends State<KesadaranTubuh> with TickerProviderStat
                               ),
                               const SizedBox(height: 40),
                               const Text(
-                                "Latihan Selesai 🎉",
+                                "Latihan Selesai ",
                                 style: TextStyle(
                                   fontSize: 40,
                                   fontWeight: FontWeight.w500,

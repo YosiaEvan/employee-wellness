@@ -39,7 +39,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
       isLoading = false;
     });
 
-    print("📊 Status berjemur: ${sudahBerjemur ? 'SUDAH' : 'BELUM'}");
+    debugPrint(" Status berjemur: ${sudahBerjemur ? 'SUDAH' : 'BELUM'}");
   }
 
   Future<void> _catatBerjemur() async {
@@ -63,7 +63,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
         sudahBerjemur = true;
         isSunbathe = true;
       });
-      _showSnackBar("✅ Aktivitas berjemur berhasil dicatat!", const Color(0xFF00C368));
+      _showSnackBar(" Aktivitas berjemur berhasil dicatat!", const Color(0xFF00C368));
     } else {
       _showSnackBar(result['message'] ?? "Gagal mencatat aktivitas", Colors.red);
     }
@@ -113,7 +113,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -133,7 +133,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                     color: Color(0xfffb8f00),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.cloudSun, size: 36, color: Colors.white), // ✅ fixed
+                                  child: FaIcon(FontAwesomeIcons.cloudSun, size: 36, color: Colors.white), //  fixed
                                 ),
                               ),
                               SizedBox(width: 20,),
@@ -210,7 +210,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -235,7 +235,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                     color: Color(0xff00aa61),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.check, size: 36, color: Colors.white), // ✅ fixed
+                                  child: FaIcon(FontAwesomeIcons.check, size: 36, color: Colors.white), //  fixed
                                 ),
                               ),
                               SizedBox(width: 20,),
@@ -328,7 +328,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.grey.withOpacity(0.4),
+                              color: Colors.grey.withValues(alpha: 0.4),
                               spreadRadius: 2,
                               blurRadius: 8,
                               offset: Offset(2, 4),
@@ -353,7 +353,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                     color: Color(0xff008dd4),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.clock, size: 36, color: Colors.white), // ✅ fixed
+                                  child: FaIcon(FontAwesomeIcons.clock, size: 36, color: Colors.white), //  fixed
                                 ),
                               ),
                               SizedBox(width: 20,),
@@ -467,7 +467,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -487,7 +487,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                     color: Color(0xffbd4aef),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.shirt, size: 36, color: Colors.white), // ✅ fixed
+                                  child: FaIcon(FontAwesomeIcons.shirt, size: 36, color: Colors.white), //  fixed
                                 ),
                               ),
                               SizedBox(width: 20,),
@@ -526,7 +526,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                       child: Column(
                                         children: [
                                           Text(
-                                            "🧴",
+                                            "",
                                             style: TextStyle(
                                               fontSize: 20,
                                             ),
@@ -558,7 +558,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                       child: Column(
                                         children: [
                                           Text(
-                                            "🧢",
+                                            "",
                                             style: TextStyle(
                                               fontSize: 20,
                                             ),
@@ -595,7 +595,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                       child: Column(
                                         children: [
                                           Text(
-                                            "🕶️",
+                                            "",
                                             style: TextStyle(
                                               fontSize: 20,
                                             ),
@@ -627,7 +627,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                       child: Column(
                                         children: [
                                           Text(
-                                            "👚",
+                                            "",
                                             style: TextStyle(
                                               fontSize: 20,
                                             ),
@@ -689,7 +689,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -714,7 +714,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                     color: Color(0xffec0865),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.shield, size: 36, color: Colors.white), // ✅ fixed
+                                  child: FaIcon(FontAwesomeIcons.shield, size: 36, color: Colors.white), //  fixed
                                 ),
                               ),
                               SizedBox(width: 20,),
@@ -879,7 +879,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.grey.withOpacity(0.4),
+                              color: Colors.grey.withValues(alpha: 0.4),
                               spreadRadius: 2,
                               blurRadius: 8,
                               offset: Offset(2, 4),
@@ -903,7 +903,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                 borderRadius: BorderRadius.circular(40),
                               ),
                               child: Text(
-                                "🙋‍♂️",
+                                "",
                                 style: TextStyle(
                                   fontSize: 40,
                                 ),
@@ -940,7 +940,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                               ),
                               SizedBox(height: 12,),
                               Text(
-                                "⭐⭐⭐⭐⭐",
+                                "",
                                 style: TextStyle(
                                   fontSize: 16,
                                 ),
@@ -962,7 +962,7 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        FaIcon(FontAwesomeIcons.circleCheck, size: 20, color: Color(0xff00a63e)), // ✅ fixed
+                                        FaIcon(FontAwesomeIcons.circleCheck, size: 20, color: Color(0xff00a63e)), //  fixed
                                         SizedBox(width: 8,),
                                         Text(
                                           "Selamat!",
@@ -1044,8 +1044,8 @@ class _SinarMatahariState extends State<SinarMatahari> with AutoRefreshMixin<Sin
                                 ? const CircularProgressIndicator(color: Colors.white)
                                 : Text(
                                     sudahBerjemur
-                                      ? "✅ Kamu Sudah Berjemur Hari Ini"  // Done text
-                                      : "☀️ Saya Sudah Berjemur",          // Active text
+                                      ? " Kamu Sudah Berjemur Hari Ini"  // Done text
+                                      : " Saya Sudah Berjemur",          // Active text
                                     style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,

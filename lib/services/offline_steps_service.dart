@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -30,9 +31,9 @@ class OfflineStepsService {
       };
 
       await _storage.write(key: key, value: jsonEncode(data));
-      print('✅ Steps saved offline for $tanggal: $totalSteps steps');
+      debugPrint(' Steps saved offline for $tanggal: $totalSteps steps');
     } catch (e) {
-      print('❌ Error saving steps offline: $e');
+      debugPrint(' Error saving steps offline: $e');
     }
   }
 
@@ -47,7 +48,7 @@ class OfflineStepsService {
       }
       return null;
     } catch (e) {
-      print('❌ Error getting steps: $e');
+      debugPrint(' Error getting steps: $e');
       return null;
     }
   }
@@ -69,7 +70,7 @@ class OfflineStepsService {
 
       return unsyncedSteps;
     } catch (e) {
-      print('❌ Error getting unsynced steps: $e');
+      debugPrint(' Error getting unsynced steps: $e');
       return [];
     }
   }
@@ -81,10 +82,10 @@ class OfflineStepsService {
   /// Cek apakah ada koneksi internet
   static Future<bool> hasInternetConnection() async {
     try {
-      var connectivityResult = await Connectivity().checkConnectivity();
-      return connectivityResult != ConnectivityResult.none;
+      var connectivityResults = await Connectivity().checkConnectivity();
+      return !connectivityResults.contains(ConnectivityResult.none);
     } catch (e) {
-      print('❌ Error checking connectivity: $e');
+      debugPrint(' Error checking connectivity: $e');
       return false;
     }
   }
@@ -95,21 +96,24 @@ class OfflineStepsService {
       final tanggal = stepData['tanggal'];
       final totalSteps = stepData['total_steps'];
 
-      print('🔄 Syncing steps for $tanggal: $totalSteps steps');
+      debugPrint(' Syncing steps for $tanggal: $totalSteps steps');
 
-      final result = await SehatKPIService.updateSteps(totalSteps);
+      final result = await SehatKPIService.updateStepsWithDate(
+        tanggal: tanggal,
+        totalSteps: totalSteps,
+      );
 
       if (result['success'] == true) {
         // Mark as synced
         await _markAsSynced(tanggal);
-        print('✅ Steps synced successfully for $tanggal');
+        debugPrint(' Steps synced successfully for $tanggal');
         return true;
       } else {
-        print('❌ Failed to sync steps for $tanggal: ${result['message']}');
+        debugPrint(' Failed to sync steps for $tanggal: ${result['message']}');
         return false;
       }
     } catch (e) {
-      print('❌ Error syncing steps: $e');
+      debugPrint(' Error syncing steps: $e');
       return false;
     }
   }
@@ -141,7 +145,7 @@ class OfflineStepsService {
       int syncedCount = 0;
       int failedCount = 0;
 
-      print('📊 Found ${unsyncedSteps.length} unsynced steps records');
+      debugPrint(' Found ${unsyncedSteps.length} unsynced steps records');
 
       for (var stepData in unsyncedSteps) {
         final success = await syncStepsToServer(stepData);
@@ -166,7 +170,7 @@ class OfflineStepsService {
         'total': unsyncedSteps.length,
       };
     } catch (e) {
-      print('❌ Error syncing all steps: $e');
+      debugPrint(' Error syncing all steps: $e');
       return {
         'success': false,
         'message': 'Error: $e',
@@ -190,7 +194,7 @@ class OfflineStepsService {
         await _storage.write(key: key, value: jsonEncode(stepData));
       }
     } catch (e) {
-      print('❌ Error marking as synced: $e');
+      debugPrint(' Error marking as synced: $e');
     }
   }
 
@@ -218,9 +222,9 @@ class OfflineStepsService {
         }
       }
 
-      print('✅ All offline steps data cleared');
+      debugPrint(' All offline steps data cleared');
     } catch (e) {
-      print('❌ Error clearing steps data: $e');
+      debugPrint(' Error clearing steps data: $e');
     }
   }
 
@@ -231,17 +235,17 @@ class OfflineStepsService {
   /// Jalankan sinkronisasi otomatis saat aplikasi dibuka
   static Future<void> autoSyncOnAppStart() async {
     try {
-      print('🔄 Running auto sync on app start...');
+      debugPrint(' Running auto sync on app start...');
 
       if (await hasInternetConnection()) {
         final result = await syncAllUnsyncedSteps();
-        print('📊 Auto sync result: ${result['message']}');
-        print('📊 Synced: ${result['synced_count']}, Failed: ${result['failed_count']}');
+        debugPrint(' Auto sync result: ${result['message']}');
+        debugPrint(' Synced: ${result['synced_count']}, Failed: ${result['failed_count']}');
       } else {
-        print('⚠️ No internet connection, skipping auto sync');
+        debugPrint(' No internet connection, skipping auto sync');
       }
     } catch (e) {
-      print('❌ Error in auto sync: $e');
+      debugPrint(' Error in auto sync: $e');
     }
   }
 }

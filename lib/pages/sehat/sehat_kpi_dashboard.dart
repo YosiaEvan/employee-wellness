@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../services/sehat_kpi_service.dart';
 import '../../components/header.dart';
+import '../../components/data_refresh_notifier.dart';
 import 'sehat_kpi_detail.dart';
 
 /// Halaman KPI Dashboard Sehat
@@ -24,16 +25,29 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> with AutoRefreshM
   @override
   void initState() {
     super.initState();
+    DataRefreshNotifier.instance.addListener(_onDataChanged);
     loadKPIData();
     startAutoRefresh(refresh: loadKPIData);
   }
 
+  void _onDataChanged() {
+    if (mounted) loadKPIData();
+  }
+
+  @override
+  void dispose() {
+    DataRefreshNotifier.instance.removeListener(_onDataChanged);
+    super.dispose();
+  }
+
   Future<void> loadKPIData() async {
-    setState(() => isLoading = true);
+    if (mounted) setState(() => isLoading = true);
 
     final dailyResult = await SehatKPIService.getDailyKPI();
     final weeklyResult = await SehatKPIService.getWeeklyKPI();
     final monthlyResult = await SehatKPIService.getMonthlyKPI();
+
+    if (!mounted) return;
 
     setState(() {
       if (dailyResult['success'] == true) {
@@ -279,25 +293,6 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> with AutoRefreshM
     final progressPersen = ringkasan['progress_persen'] ?? 0;
     final mingguKe = periode['minggu_ke'];
 
-    // Extract individual activity data
-    Map<String, dynamic> getAktivitas(String nama) {
-      try {
-        return aktivitas.firstWhere(
-          (a) => a['nama'].toString().toLowerCase().contains(nama.toLowerCase()),
-          orElse: () => {'tercapai': 0, 'target_per_minggu': 0},
-        );
-      } catch (e) {
-        return {'tercapai': 0, 'target_per_minggu': 0};
-      }
-    }
-
-    final berjemur = getAktivitas('Berjemur');
-    final olahraga = getAktivitas('Olahraga');
-    final udara = getAktivitas('udara');
-    final minum = getAktivitas('Minum');
-    final tidur = getAktivitas('Tidur');
-    final makan = getAktivitas('makan');
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -319,58 +314,20 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> with AutoRefreshM
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildWeeklyPoinItem(
-                'Berjemur',
-                berjemur['tercapai'] ?? 0,
-                berjemur['target_per_minggu'] ?? 1,
-                FontAwesomeIcons.sun,
-                Colors.orange,
-              ),
-              _buildWeeklyPoinItem(
-                'Olahraga',
-                olahraga['tercapai'] ?? 0,
-                olahraga['target_per_minggu'] ?? 5,
-                FontAwesomeIcons.personRunning,
-                Colors.blue,
-              ),
-              _buildWeeklyPoinItem(
-                'Udara',
-                udara['tercapai'] ?? 0,
-                udara['target_per_minggu'] ?? 5,
-                FontAwesomeIcons.wind,
-                Colors.cyan,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildWeeklyPoinItem(
-                'Minum',
-                minum['tercapai'] ?? 0,
-                minum['target_per_minggu'] ?? 7,
-                FontAwesomeIcons.glassWater,
-                Colors.lightBlue,
-              ),
-              _buildWeeklyPoinItem(
-                'Tidur',
-                tidur['tercapai'] ?? 0,
-                tidur['target_per_minggu'] ?? 7,
-                FontAwesomeIcons.bed,
-                Colors.indigo,
-              ),
-              _buildWeeklyPoinItem(
-                'Makan',
-                makan['tercapai'] ?? 0,
-                makan['target_per_minggu'] ?? 9,
-                FontAwesomeIcons.utensils,
-                Colors.red,
-              ),
-            ],
+          Wrap(
+            spacing: 10,
+            runSpacing: 12,
+            children: aktivitas.map((item) {
+              final kode = item['aktivitas']?.toString() ?? '';
+              final style = _sehatPointStyle(kode);
+              return _buildWeeklyPoinItem(
+                item['nama']?.toString() ?? kode,
+                (item['tercapai'] as num?)?.toInt() ?? 0,
+                (item['target_per_minggu'] as num?)?.toInt() ?? 0,
+                style.icon,
+                style.color,
+              );
+            }).toList(),
           ),
           const SizedBox(height: 16),
           Container(
@@ -401,11 +358,34 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> with AutoRefreshM
     );
   }
 
+  ({FaIconData icon, Color color}) _sehatPointStyle(String kode) {
+    switch (kode) {
+      case 'berjemur':
+        return (icon: FontAwesomeIcons.sun, color: Colors.orange);
+      case 'langkah_10000':
+        return (icon: FontAwesomeIcons.shoePrints, color: Colors.blue);
+      case 'tanpa_minyak':
+        return (icon: FontAwesomeIcons.bowlRice, color: const Color(0xff00c368));
+      case 'tanpa_gula':
+        return (icon: FontAwesomeIcons.cookie, color: const Color(0xff00a896));
+      case 'porsi_kalori':
+        return (icon: FontAwesomeIcons.scaleBalanced, color: Colors.amber);
+      case 'napas_448':
+        return (icon: FontAwesomeIcons.wind, color: Colors.cyan);
+      case 'minum_8_gelas':
+        return (icon: FontAwesomeIcons.glassWater, color: Colors.lightBlue);
+      case 'tidur_78':
+        return (icon: FontAwesomeIcons.moon, color: Colors.indigo);
+      default:
+        return (icon: FontAwesomeIcons.heartPulse, color: const Color(0xFFC90028));
+    }
+  }
+
   Widget _buildWeeklyPoinItem(
     String label,
     int poin,
     int maxPoin,
-    FaIconData icon, // ✅ corrected type and name
+    FaIconData icon, //  corrected type and name
     Color color,
   ) {
     return Column(
@@ -416,7 +396,7 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> with AutoRefreshM
             color: color.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
-          child: FaIcon(icon, color: color, size: 20), // ✅ changed to FaIcon
+          child: FaIcon(icon, color: color, size: 20), //  changed to FaIcon
         ),
         const SizedBox(height: 4),
         Text(
@@ -441,29 +421,6 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> with AutoRefreshM
 
     final aktivitas = dailyKPI!['aktivitas'] as List<dynamic>? ?? [];
 
-    // Helper function to get activity data
-    Map<String, dynamic> getAktivitas(String nama) {
-      try {
-        return aktivitas.firstWhere(
-          (a) => a['nama'].toString().toLowerCase().contains(nama.toLowerCase()),
-          orElse: () => {'selesai': false, 'data': {}},
-        );
-      } catch (e) {
-        return {'selesai': false, 'data': {}};
-      }
-    }
-
-    final berjemur = getAktivitas('Berjemur');
-    final olahraga = getAktivitas('Olahraga');
-    final udara = getAktivitas('udara');
-    final minum = getAktivitas('Minum');
-    final tidur = getAktivitas('Tidur');
-
-    // Extract detailed data
-    final olahragaData = olahraga['data'] ?? {};
-    final udaraData = udara['data'] ?? {};
-    final minumData = minum['data'] ?? {};
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -485,92 +442,42 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> with AutoRefreshM
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          _buildTodayItem(
-            'Berjemur',
-            berjemur['selesai'] ?? false,
-            FontAwesomeIcons.sun,
-            Colors.orange,
-          ),
-          _buildTodayItem(
-            'Jalan 10.000 Langkah',
-            olahraga['selesai'] ?? false,
-            FontAwesomeIcons.personRunning,
-            Colors.blue,
-            subtitle: '${olahragaData['total_langkah'] ?? 0} langkah',
-          ),
-          _buildTodayItem(
-            'Hirup Udara Segar',
-            udara['selesai'] ?? false,
-            FontAwesomeIcons.wind,
-            Colors.cyan,
-            subtitle: '${udaraData['count'] ?? 0}/5 kali',
-          ),
-          _buildTodayItem(
-            'Minum Air 8 Gelas',
-            minum['selesai'] ?? false,
-            FontAwesomeIcons.glassWater,
-            Colors.lightBlue,
-            subtitle: '${minumData['count'] ?? 0}/8 gelas',
-          ),
-          _buildTodayItem(
-            'Tidur Cukup',
-            tidur['selesai'] ?? false,
-            FontAwesomeIcons.bed,
-            Colors.indigo,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTodayItem(
-    String label,
-    bool done,
-    FaIconData icon, // ✅ corrected type and name
-    Color color, {
-    String? subtitle,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: done ? color.withValues(alpha: 0.2) : Colors.grey.shade200,
-              shape: BoxShape.circle,
-            ),
-            child: FaIcon(icon, color: done ? color : Colors.grey, size: 16), // ✅ changed to FaIcon
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: done ? Colors.black87 : Colors.grey,
+          ...aktivitas.map((item) {
+            final kode = item['aktivitas']?.toString() ?? item['kode']?.toString() ?? '';
+            final selesai = item['selesai'] == true || (item['tercapai'] as num?)?.toInt() == 1;
+            final style = _sehatPointStyle(kode);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: selesai ? style.color.withValues(alpha: 0.2) : Colors.grey.shade200,
+                      shape: BoxShape.circle,
+                    ),
+                    child: FaIcon(style.icon, color: selesai ? style.color : Colors.grey, size: 16),
                   ),
-                ),
-                if (subtitle != null)
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      item['nama']?.toString() ?? kode,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: selesai ? Colors.black87 : Colors.grey,
+                      ),
                     ),
                   ),
-              ],
-            ),
-          ),
-          FaIcon( // ✅ changed to FaIcon
-            done ? FontAwesomeIcons.circleCheck : FontAwesomeIcons.circle,
-            color: done ? const Color(0xFFC90028) : Colors.grey.shade300,
-            size: 20,
-          ),
+                  FaIcon(
+                    selesai ? FontAwesomeIcons.circleCheck : FontAwesomeIcons.circle,
+                    color: selesai ? const Color(0xFFC90028) : Colors.grey.shade300,
+                    size: 20,
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -605,7 +512,7 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> with AutoRefreshM
                 FaIcon(FontAwesomeIcons.table, color: Color(0xFFC90028), size: 20), // removed const
                 const SizedBox(width: 8),
                 const Text(
-                  'Tabel KPI Sehat 360°',
+                  'Tabel KPI Sehat 360',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -641,7 +548,7 @@ class _SehatKPIDashboardState extends State<SehatKPIDashboard> with AutoRefreshM
                     '${progress.toStringAsFixed(0)}%',
                     bobot,
                   );
-                }).toList(),
+                }),
                 // Total row
                 DataRow(
                   cells: [

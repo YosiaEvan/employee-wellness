@@ -1,4 +1,5 @@
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/module_kpi_progress_card.dart';
 import 'package:employee_wellness/components/module_section_card.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/hijau/hemat_energi.dart';
@@ -48,7 +49,7 @@ class HijauHomepage extends StatelessWidget {
                         alignment: Alignment.center,
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(40),
                         ),
                         child: const FaIcon(FontAwesomeIcons.arrowLeft, size: 20, color: Colors.white),
@@ -77,7 +78,7 @@ class HijauHomepage extends StatelessWidget {
                         alignment: Alignment.center,
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(40),
                         ),
                         child: const FaIcon(FontAwesomeIcons.chartLine, size: 20, color: Colors.white),
@@ -93,6 +94,17 @@ class HijauHomepage extends StatelessWidget {
                 child: ResponsiveContainer(
                   child: Column(
                     children: [
+                      ModuleKpiProgressCard(
+                        module: 'hijau',
+                        primaryColor: const Color(0xff16a34a),
+                        gradientEnd: const Color(0xff15803d),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const HijauKPIDashboard()),
+                          );
+                        },
+                      ),
                       ModuleSectionCard(
                         destination: const HematEnergi(),
                         backgroundColor: const Color(0xffecfdf5),
@@ -181,7 +193,7 @@ class HijauHomepage extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             spreadRadius: 0,
             offset: const Offset(0, 4),
@@ -190,7 +202,7 @@ class HijauHomepage extends StatelessWidget {
       ),
       child: Column(
         children: [
-          FaIcon(FontAwesomeIcons.leaf, size: 40, color: Colors.green.withOpacity(0.2)),
+          FaIcon(FontAwesomeIcons.leaf, size: 40, color: Colors.green.withValues(alpha: 0.2)),
           const SizedBox(height: 12),
           Text(
             loc.translate('coming_soon'),

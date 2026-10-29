@@ -1,4 +1,5 @@
 import 'package:employee_wellness/components/header.dart';
+import 'package:employee_wellness/components/module_kpi_progress_card.dart';
 import 'package:employee_wellness/components/module_section_card.dart';
 import 'package:employee_wellness/components/responsive_container.dart';
 import 'package:employee_wellness/pages/sehat/jalan_10000_langkah.dart';
@@ -48,7 +49,7 @@ class SehatHomepage extends StatelessWidget {
                           alignment: Alignment.center,
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(40),
                           ),
                           child: const FaIcon(FontAwesomeIcons.arrowLeft, size: 20, color: Colors.white),
@@ -77,7 +78,7 @@ class SehatHomepage extends StatelessWidget {
                           alignment: Alignment.center,
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(40),
                           ),
                           child: const FaIcon(FontAwesomeIcons.chartLine, size: 20, color: Colors.white),
@@ -94,6 +95,17 @@ class SehatHomepage extends StatelessWidget {
                 child: ResponsiveContainer(
                   child: Column(
                     children: [
+                      ModuleKpiProgressCard(
+                        module: 'sehat',
+                        primaryColor: const Color(0xfff44336),
+                        gradientEnd: const Color(0xffd32f2f),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const SehatKPIDashboard()),
+                          );
+                        },
+                      ),
                       ModuleSectionCard(
                         destination: const SinarMatahari(),
                         backgroundColor: const Color(0xfffff7ed),
@@ -160,6 +172,40 @@ class SehatHomepage extends StatelessWidget {
                         targetText: loc.translate('sleep_target'),
                       ),
                       const SizedBox(height: 20),
+                      // INFO: Tanpa Minyak & Tanpa Gula kini OTOMATIS dari log makanan (2 poin/minggu, maks 8/bulan)
+                      // Tidak perlu input manual — deduksi otomatis jika mengandung minyak/gula
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xffeefdf5),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xff00c368).withValues(alpha: 0.3), width: 1.5),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xff00c368).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const FaIcon(FontAwesomeIcons.bowlRice, size: 22, color: Color(0xff00c368)),
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Makan Tanpa Minyak & Tanpa Gula', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xff065f46))),
+                                  SizedBox(height: 2),
+                                  Text('Otomatis dari makanan harian — 2 poin/minggu (maks 8/bulan) per indikator. Poin berkurang jika ada makanan mengandung minyak/gula. Tidak perlu input manual.', style: TextStyle(fontSize: 11, color: Color(0xff047857))),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                       _buildAboutCard(context),
                     ],
                   ),
@@ -181,7 +227,7 @@ class SehatHomepage extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 12,
             spreadRadius: 2,
             offset: const Offset(0, 6),

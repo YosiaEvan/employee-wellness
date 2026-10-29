@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -22,7 +23,7 @@ class StepsDatabase {
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final key = '${_keyPrefix}${userId}_$tanggal';
+      final key = '$_keyPrefix${userId}_$tanggal';
 
       final data = {
         'id': DateTime.now().millisecondsSinceEpoch,
@@ -34,11 +35,11 @@ class StepsDatabase {
       };
 
       await prefs.setString(key, jsonEncode(data));
-      print('💾 Saved steps: $key -> $totalSteps steps');
+      debugPrint(' Saved steps: $key -> $totalSteps steps');
 
       return data['id'] as int;
     } catch (e) {
-      print('❌ Error inserting steps: $e');
+      debugPrint(' Error inserting steps: $e');
       rethrow;
     }
   }
@@ -54,7 +55,7 @@ class StepsDatabase {
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final key = '${_keyPrefix}${userId}_$tanggal';
+      final key = '$_keyPrefix${userId}_$tanggal';
       final dataStr = prefs.getString(key);
 
       if (dataStr != null) {
@@ -62,7 +63,7 @@ class StepsDatabase {
       }
       return null;
     } catch (e) {
-      print('❌ Error getting steps: $e');
+      debugPrint(' Error getting steps: $e');
       return null;
     }
   }
@@ -75,7 +76,7 @@ class StepsDatabase {
       final unsyncedSteps = <Map<String, dynamic>>[];
 
       for (var key in keys) {
-        if (key.startsWith('${_keyPrefix}$userId')) {
+        if (key.startsWith('$_keyPrefix$userId')) {
           final dataStr = prefs.getString(key);
           if (dataStr != null) {
             final data = jsonDecode(dataStr);
@@ -93,7 +94,7 @@ class StepsDatabase {
 
       return unsyncedSteps;
     } catch (e) {
-      print('❌ Error getting unsynced steps: $e');
+      debugPrint(' Error getting unsynced steps: $e');
       return [];
     }
   }
@@ -110,7 +111,7 @@ class StepsDatabase {
       final stepsInRange = <Map<String, dynamic>>[];
 
       for (var key in keys) {
-        if (key.startsWith('${_keyPrefix}$userId')) {
+        if (key.startsWith('$_keyPrefix$userId')) {
           final dataStr = prefs.getString(key);
           if (dataStr != null) {
             final data = jsonDecode(dataStr);
@@ -131,7 +132,7 @@ class StepsDatabase {
 
       return stepsInRange;
     } catch (e) {
-      print('❌ Error getting steps in range: $e');
+      debugPrint(' Error getting steps in range: $e');
       return [];
     }
   }
@@ -144,7 +145,7 @@ class StepsDatabase {
       final allSteps = <Map<String, dynamic>>[];
 
       for (var key in keys) {
-        if (key.startsWith('${_keyPrefix}$userId')) {
+        if (key.startsWith('$_keyPrefix$userId')) {
           final dataStr = prefs.getString(key);
           if (dataStr != null) {
             allSteps.add(jsonDecode(dataStr));
@@ -159,7 +160,7 @@ class StepsDatabase {
 
       return allSteps;
     } catch (e) {
-      print('❌ Error getting all steps: $e');
+      debugPrint(' Error getting all steps: $e');
       return [];
     }
   }
@@ -175,7 +176,7 @@ class StepsDatabase {
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final key = '${_keyPrefix}${userId}_$tanggal';
+      final key = '$_keyPrefix${userId}_$tanggal';
       final dataStr = prefs.getString(key);
 
       if (dataStr != null) {
@@ -184,12 +185,12 @@ class StepsDatabase {
         data['synced_at'] = DateTime.now().toIso8601String();
 
         await prefs.setString(key, jsonEncode(data));
-        print('✅ Marked as synced: $key');
+        debugPrint(' Marked as synced: $key');
         return 1;
       }
       return 0;
     } catch (e) {
-      print('❌ Error marking as synced: $e');
+      debugPrint(' Error marking as synced: $e');
       return 0;
     }
   }
@@ -216,16 +217,16 @@ class StepsDatabase {
       int deleteCount = 0;
 
       for (var key in keys) {
-        if (key.startsWith('${_keyPrefix}$userId')) {
+        if (key.startsWith('$_keyPrefix$userId')) {
           await prefs.remove(key);
           deleteCount++;
         }
       }
 
-      print('🗑️ Deleted $deleteCount records for user $userId');
+      debugPrint(' Deleted $deleteCount records for user $userId');
       return deleteCount;
     } catch (e) {
-      print('❌ Error deleting user steps: $e');
+      debugPrint(' Error deleting user steps: $e');
       return 0;
     }
   }
@@ -255,10 +256,10 @@ class StepsDatabase {
         }
       }
 
-      print('🗑️ Deleted $deleteCount old synced records');
+      debugPrint(' Deleted $deleteCount old synced records');
       return deleteCount;
     } catch (e) {
-      print('❌ Error deleting old steps: $e');
+      debugPrint(' Error deleting old steps: $e');
       return 0;
     }
   }
@@ -273,7 +274,7 @@ class StepsDatabase {
       final unsyncedSteps = await getUnsyncedSteps(userId);
       return unsyncedSteps.length;
     } catch (e) {
-      print('❌ Error getting unsynced count: $e');
+      debugPrint(' Error getting unsynced count: $e');
       return 0;
     }
   }
@@ -292,7 +293,7 @@ class StepsDatabase {
         'unsynced_records': unsyncedSteps.length,
       };
     } catch (e) {
-      print('❌ Error getting statistics: $e');
+      debugPrint(' Error getting statistics: $e');
       return {
         'total_records': 0,
         'synced_records': 0,
@@ -311,7 +312,7 @@ class StepsDatabase {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString('user_id') ?? prefs.getString('email');
     } catch (e) {
-      print('❌ Error getting user ID: $e');
+      debugPrint(' Error getting user ID: $e');
       return null;
     }
   }

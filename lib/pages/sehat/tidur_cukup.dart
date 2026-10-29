@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:employee_wellness/components/auto_refresh_mixin.dart';
 import 'package:employee_wellness/components/bottom_header.dart';
 import 'package:employee_wellness/components/header.dart';
@@ -16,7 +17,7 @@ class TidurCukup extends StatefulWidget {
   State<TidurCukup> createState() => _TidurCukupState();
 }
 
-class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCukup> {
+class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCukup>, WidgetsBindingObserver {
   final TextEditingController sleepController = TextEditingController(text: "21:00");
   final TextEditingController wakeController = TextEditingController(text: "05:00");
   final List<Map<String, dynamic>> sleepReports = [];
@@ -31,6 +32,13 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
   int jumlahHariDicatat = 0;
   double rataRataDurasiJam = 0.0;
   List<Map<String, dynamic>> kalenderMinggu = [];
+
+  // Sesi tidur 2-fase (auto-detect bangun)
+  DateTime? pendingStart;
+  bool get sedangTidur => pendingStart != null && !sudahLapor;
+  Timer? _liveTimer;
+  String liveDuration = '';
+  bool _autoWakePromptShown = false;
 
   // Helper method to check if current time is in sleep time range (20:00 - 05:00)
   bool get isInSleepTimeRange {
@@ -52,9 +60,93 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     initializeDateFormatting('id_ID', null);
     _cekStatusTidur();
-    startAutoRefresh(refresh: _cekStatusTidur);
+    _loadPendingSession();
+    startAutoRefresh(refresh: () async {
+      await _cekStatusTidur();
+      await _loadPendingSession();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _liveTimer?.cancel();
+    sleepController.dispose();
+    wakeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _handleAutoWake();
+    }
+  }
+
+  Future<void> _loadPendingSession() async {
+    final pending = await TidurService.getPendingStart();
+    if (!mounted) return;
+    setState(() => pendingStart = pending);
+    if (pending != null) {
+      _startLiveTimer();
+      // Jika sudah >3 jam dan sekarang pagi, tawarkan auto-bangun
+      _handleAutoWake();
+    } else {
+      _liveTimer?.cancel();
+    }
+  }
+
+  void _startLiveTimer() {
+    _liveTimer?.cancel();
+    _updateLiveDuration();
+    _liveTimer = Timer.periodic(const Duration(minutes: 1), (_) => _updateLiveDuration());
+  }
+
+  void _updateLiveDuration() {
+    if (pendingStart == null) return;
+    final diff = DateTime.now().difference(pendingStart!);
+    final h = diff.inHours;
+    final m = diff.inMinutes % 60;
+    if (!mounted) return;
+    setState(() => liveDuration = '${h}j ${m}m');
+  }
+
+  Future<void> _handleAutoWake() async {
+    if (_autoWakePromptShown) return;
+    final auto = await TidurService.detectAutoBangun();
+    if (auto == null || !mounted) return;
+    if (sudahLapor || pendingStart == null) return;
+    _autoWakePromptShown = true;
+    final jam = '${auto.hour.toString().padLeft(2, '0')}:${auto.minute.toString().padLeft(2, '0')}';
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Sepertinya kamu sudah bangun jam $jam. Tap "Saya Sudah Bangun" untuk mencatat.'),
+        backgroundColor: const Color(0xFF715cff),
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(label: 'Bangun', textColor: Colors.white, onPressed: () => _bangunTidur()),
+      ),
+    );
+  }
+
+  Future<void> _pickTime({required bool isSleep}) async {
+    final init = isSleep ? sleepController.text : wakeController.text;
+    final parts = init.split(':');
+    final initial = TimeOfDay(hour: int.tryParse(parts[0]) ?? 21, minute: int.tryParse(parts[1]) ?? 0);
+    final picked = await showTimePicker(context: context, initialTime: initial, helpText: isSleep ? 'Pilih jam tidur' : 'Pilih jam bangun');
+    if (picked != null) {
+      final str = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+      setState(() {
+        if (isSleep) {
+          sleepController.text = str;
+        } else {
+          wakeController.text = str;
+        }
+      });
+    }
   }
 
   Future<void> _cekStatusTidur() async {
@@ -128,19 +220,6 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
     }
   }
 
-  Future<void> _pickTime(TextEditingController controller) async {
-    final current = DateFormat("HH:mm").parse(controller.text);
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(hour: current.hour, minute: current.minute),
-    );
-    if (picked != null) {
-      setState(() {
-        controller.text = picked.hour.toString().padLeft(2, '0') + ":" + picked.minute.toString().padLeft(2, '0');
-      });
-    }
-  }
-
   int get totalDays => sleepReports.length;
   int get targetReached => sleepReports.where((r) => (r['duration'] ?? 0) >= 7).length;
   double get averageHours => sleepReports.isEmpty
@@ -154,37 +233,58 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
     return fullDayName.substring(0, 3);
   }
 
+  // Legacy single-tap (tetap ada untuk manual)
   Future<void> addSleepReport() async {
-    final now = DateTime.now();
-    final jamTidur = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-    final jamBangun = '05:00';
-
-    final result = await TidurService.laporTidur(
-      jamTidur: jamTidur,
-      jamBangun: jamBangun,
-    );
-
-    if (result['success']) {
+    final jamTidur = sleepController.text;
+    final jamBangun = wakeController.text;
+    final result = await TidurService.laporTidur(jamTidur: jamTidur, jamBangun: jamBangun);
+    if (result['success'] == true) {
       await _cekStatusTidur();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ ${result['message']}'),
-            backgroundColor: Color(0xFF715cff),
-            duration: Duration(seconds: 3),
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(' ${result['message']}'), backgroundColor: const Color(0xFF715cff), duration: const Duration(seconds: 3)));
       }
     } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message'] ?? 'Gagal menyimpan data'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'] ?? 'Gagal menyimpan data'), backgroundColor: Colors.red));
     }
+  }
+
+  // 2-fase: Mulai Tidur → simpan pending
+  Future<void> _mulaiTidur() async {
+    final now = await TidurService.mulaiTidur();
+    setState(() => pendingStart = now);
+    _startLiveTimer();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Selamat tidur! Mulai ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} — tap "Saya Sudah Bangun" saat bangun'), backgroundColor: const Color(0xFF715cff), duration: const Duration(seconds: 4)),
+      );
+    }
+  }
+
+  // 2-fase: Bangun → hitung durasi otomatis (deteksi bangun)
+  Future<void> _bangunTidur() async {
+    // Tawarkan picker untuk koreksi jam bangun (default now)
+    final now = DateTime.now();
+    final preselected = TimeOfDay(hour: now.hour, minute: now.minute);
+    final picked = await showTimePicker(context: context, initialTime: preselected, helpText: 'Jam bangun (deteksi otomatis)');
+    final bangun = picked != null ? DateTime(now.year, now.month, now.day, picked.hour, picked.minute) : now;
+    // Jika picked hour < start hour, tetap hari yang sama (bangun pagi setelah tidur malam) — sudah benar karena start kemarin
+    final result = await TidurService.selesaikanTidur(bangunOverride: bangun);
+    if (result['success'] == true) {
+      setState(() { pendingStart = null; liveDuration = ''; });
+      _liveTimer?.cancel();
+      await _cekStatusTidur();
+      await _loadPendingSession();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(' ${result['message']}'), backgroundColor: const Color(0xFF715cff), duration: const Duration(seconds: 3)));
+    } else {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'] ?? 'Gagal'), backgroundColor: Colors.red, duration: const Duration(seconds: 3)));
+    }
+  }
+
+  Future<void> _batalkanTidur() async {
+    await TidurService.batalkanSesi();
+    setState(() { pendingStart = null; liveDuration = ''; });
+    _liveTimer?.cancel();
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sesi tidur dibatalkan'), backgroundColor: Colors.orange));
   }
 
   @override
@@ -201,7 +301,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
             const Header(),
             BottomHeader(
               color: Color(0xff715cff),
-              heading: "Tidur Cukup", // ✅ fixed heading
+              heading: "Tidur Cukup", //  fixed heading
               subHeading: "Istirahat Berkualitas",
               destination: SehatHomepage(),
             ),
@@ -225,7 +325,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -245,7 +345,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                     color: Color(0xff715cff),
                                     borderRadius: BorderRadius.circular(40),
                                   ),
-                                  child: FaIcon( // ✅ fixed
+                                  child: FaIcon( //  fixed
                                     hasTodayReport ? FontAwesomeIcons.circleCheck : FontAwesomeIcons.moon,
                                     size: 36,
                                     color: Colors.white,
@@ -282,7 +382,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                           children: [
                                             Row(
                                               children: [
-                                                FaIcon(FontAwesomeIcons.moon, size: 20, color: Color(0xff4f39f6)), // ✅ fixed
+                                                FaIcon(FontAwesomeIcons.moon, size: 20, color: Color(0xff4f39f6)), //  fixed
                                                 SizedBox(width: 12),
                                                 Text("Tidur", style: TextStyle(fontSize: 20, color: Color(0xff5f6878))),
                                               ],
@@ -309,7 +409,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                           children: [
                                             Row(
                                               children: [
-                                                FaIcon(FontAwesomeIcons.sun, size: 20, color: Color(0xff4f39f6)), // ✅ fixed
+                                                FaIcon(FontAwesomeIcons.sun, size: 20, color: Color(0xff4f39f6)), //  fixed
                                                 SizedBox(width: 12),
                                                 Text("Bangun", style: TextStyle(fontSize: 20, color: Color(0xff5f6878))),
                                               ],
@@ -353,7 +453,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                             ),
                                             Row(
                                               children: [
-                                                FaIcon( // ✅ fixed
+                                                FaIcon( //  fixed
                                                   (todayData['durasi_jam'] ?? 0) > 8
                                                     ? FontAwesomeIcons.circleInfo
                                                     : (todayData['durasi_jam'] ?? 0) < 7
@@ -393,75 +493,80 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                 ),
                             ],
                           ),
-                          if (hasTodayReport) SizedBox(height: 20),
-                          if (!hasTodayReport)
+                          if (hasTodayReport) ...[
+                            const SizedBox(height: 20),
+                            const Text("Data sudah tercatat untuk hari ini", style: TextStyle(fontSize: 16, color: Color(0xff6a7282))),
+                          ] else if (sedangTidur) ...[
+                            const SizedBox(height: 20),
                             Container(
-                              padding: EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: isInSleepTimeRange
-                                    ? [Color(0xff5039f6), Color(0xff9811fb)]
-                                    : [Color(0xFFBDBDBD), Color(0xFF9E9E9E)],
-                                  begin: Alignment.centerLeft,
-                                  end: Alignment.centerRight,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(color: const Color(0xffede9ff), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xffc6d2ff))),
+                              child: Column(children: [
+                                Row(children: [
+                                  const FaIcon(FontAwesomeIcons.bed, size: 20, color: Color(0xff715cff)),
+                                  const SizedBox(width: 8),
+                                  Expanded(child: Text('Sedang Tidur sejak ${pendingStart!.hour.toString().padLeft(2, '0')}:${pendingStart!.minute.toString().padLeft(2, '0')} • $liveDuration', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xff4f39f6)))),
+                                ]),
+                                const SizedBox(height: 8),
+                                const Text('Bangun dan tap di bawah — jam bangun terdeteksi otomatis (bisa dikoreksi)', style: TextStyle(fontSize: 12, color: Color(0xff6a7282))),
+                              ]),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: _bangunTidur,
+                                icon: const FaIcon(FontAwesomeIcons.sun, size: 16, color: Colors.white),
+                                label: const Text('Saya Sudah Bangun', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xff715cff), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                               ),
-                              child: ElevatedButton(
-                                onPressed: isInSleepTimeRange ? addSleepReport : null,
+                            ),
+                            const SizedBox(height: 8),
+                            TextButton.icon(onPressed: _batalkanTidur, icon: const FaIcon(FontAwesomeIcons.xmark, size: 14, color: Colors.grey), label: const Text('Batalkan sesi', style: TextStyle(color: Colors.grey))),
+                          ] else ...[
+                            const SizedBox(height: 20),
+                            // Koreksi manual dengan time picker
+                            Row(children: [
+                              Expanded(child: InkWell(onTap: () => _pickTime(isSleep: true), child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), decoration: BoxDecoration(color: const Color(0xfff7f4ff), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xffc6d2ff))), child: Row(children: [const FaIcon(FontAwesomeIcons.moon, size: 14, color: Color(0xff715cff)), const SizedBox(width: 6), Text(sleepController.text, style: const TextStyle(fontWeight: FontWeight.bold)), const Spacer(), const Icon(Icons.edit, size: 14, color: Colors.grey)])))),
+                              const SizedBox(width: 8),
+                              Expanded(child: InkWell(onTap: () => _pickTime(isSleep: false), child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), decoration: BoxDecoration(color: const Color(0xfffefbe9), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xfffdef87))), child: Row(children: [const FaIcon(FontAwesomeIcons.sun, size: 14, color: Color(0xffeab308)), const SizedBox(width: 6), Text(wakeController.text, style: const TextStyle(fontWeight: FontWeight.bold)), const Spacer(), const Icon(Icons.edit, size: 14, color: Colors.grey)])))),
+                            ]),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: _mulaiTidur,
+                                icon: const FaIcon(FontAwesomeIcons.moon, size: 16, color: Colors.white),
+                                label: const Text('Mulai Tidur Sekarang', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
-                                  shadowColor: Colors.transparent,
-                                  disabledBackgroundColor: Colors.transparent,
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    FaIcon( // ✅ fixed
-                                      isInSleepTimeRange ? FontAwesomeIcons.moon : FontAwesomeIcons.clock,
-                                      size: 16,
-                                      color: Colors.white,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      isInSleepTimeRange
-                                        ? "Laporkan Tidur Hari Ini"
-                                        : "Belum Waktu Tidur",
-                                      style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w500),
-                                    ),
-                                  ],
+                                  backgroundColor: const Color(0xff5039f6),
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 ),
                               ),
-                            )
-                          else
-                            Text(
-                              "Data sudah tercatat untuk hari ini",
-                              style: TextStyle(fontSize: 16, color: Color(0xff6a7282)),
                             ),
-
-                          if (!hasTodayReport && !isInSleepTimeRange) ...[
-                            SizedBox(height: 12),
-                            Container(
-                              padding: EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Color(0xFFFFF3E0),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Color(0xFFFFB74D), width: 1),
-                              ),
-                              child: Row(
-                                children: [
-                                  FaIcon(FontAwesomeIcons.circleInfo, size: 16, color: Color(0xFFFF9800)), // ✅ fixed
-                                  SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      sleepTimeMessage,
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(fontSize: 14, color: Color(0xFFE65100), fontWeight: FontWeight.w500),
-                                    ),
-                                  ),
-                                ],
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: addSleepReport,
+                                icon: const FaIcon(FontAwesomeIcons.clock, size: 14),
+                                label: const Text('Lapor Manual (koreksi jam)', style: TextStyle(fontSize: 13)),
+                                style: OutlinedButton.styleFrom(foregroundColor: const Color(0xff715cff), side: const BorderSide(color: Color(0xffc6d2ff)), padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                               ),
                             ),
+                            if (!isInSleepTimeRange) ...[
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(color: const Color(0xFFFFF3E0), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFFFB74D), width: 1)),
+                                child: Row(children: [
+                                  const FaIcon(FontAwesomeIcons.circleInfo, size: 16, color: Color(0xFFFF9800)),
+                                  const SizedBox(width: 8),
+                                  Expanded(child: Text(sleepTimeMessage, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: Color(0xFFE65100), fontWeight: FontWeight.w500))),
+                                ]),
+                              ),
+                            ],
                           ],
                         ],
                       ),
@@ -477,7 +582,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -497,7 +602,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                     color: Color(0xff715cff),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.arrowTrendUp, size: 36, color: Colors.white), // ✅ fixed
+                                  child: FaIcon(FontAwesomeIcons.arrowTrendUp, size: 36, color: Colors.white), //  fixed
                                 ),
                               ),
                               SizedBox(width: 20),
@@ -567,7 +672,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                   child: Column(
                                     children: [
                                       Text(
-                                        "${rataRataDurasiJam.toStringAsFixed(1)}",
+                                        rataRataDurasiJam.toStringAsFixed(1),
                                         style: TextStyle(color: Color(0xff155dfc), fontWeight: FontWeight.bold, fontSize: 32),
                                       ),
                                       Text("Rata-rata Jam", style: TextStyle(fontSize: 16)),
@@ -660,7 +765,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -681,7 +786,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                     color: Color(0xff715cff),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.lightbulb, size: 36, color: Colors.white), // ✅ fixed
+                                  child: FaIcon(FontAwesomeIcons.lightbulb, size: 36, color: Colors.white), //  fixed
                                 ),
                               ),
                               SizedBox(width: 20),
@@ -696,7 +801,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                           SizedBox(height: 20),
                           Column(
                             children: [
-                              // (Skipped for brevity – same as original but with FaIcon)
+                              // (Skipped for brevity  same as original but with FaIcon)
                               // We'll keep the original rows, they don't use FontAwesome icons.
                             ],
                           ),
@@ -714,7 +819,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -733,7 +838,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                     color: Color(0xff615fff),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.moon, size: 36, color: Colors.white), // ✅ fixed
+                                  child: FaIcon(FontAwesomeIcons.moon, size: 36, color: Colors.white), //  fixed
                                 ),
                               ),
                               SizedBox(width: 20),
@@ -765,7 +870,7 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.4),
+                            color: Colors.grey.withValues(alpha: 0.4),
                             spreadRadius: 2,
                             blurRadius: 8,
                             offset: Offset(2, 4),
@@ -786,14 +891,14 @@ class _TidurCukupState extends State<TidurCukup> with AutoRefreshMixin<TidurCuku
                                     color: Color(0xff715cff),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.heart, size: 36, color: Colors.white), // ✅ fixed
+                                  child: FaIcon(FontAwesomeIcons.heart, size: 36, color: Colors.white), //  fixed
                                 ),
                               ),
                               SizedBox(width: 20),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text( // ✅ fixed heading
+                                  Text( //  fixed heading
                                     "Manfaat Tidur Cukup",
                                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
                                   ),

@@ -328,7 +328,9 @@ class _HealthProfileState extends State<HealthProfile> {
     try {
       final date = DateFormat('dd/MM/yyyy').parse(_dateController.text);
       tanggalLahir = DateFormat('yyyy-MM-dd').format(date);
-    } catch (e) {}
+    } catch (e) {
+      // Format tanggal sudah sesuai, abaikan error parsing
+    }
 
     final result = await ProfileHealthService.saveProfile(
       namaLengkap: _namaController.text.trim(),
@@ -398,7 +400,7 @@ class _HealthProfileState extends State<HealthProfile> {
     final loadingProfile = loc.translate('loading_profile');
 
     return Scaffold(
-      backgroundColor: Colors.white.withOpacity(0.98),
+      backgroundColor: Colors.white.withValues(alpha: 0.98),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -603,33 +605,33 @@ class _HealthProfileState extends State<HealthProfile> {
                                 children: [
                                   Text(loc.translate('gender'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                                   const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Row(
-                                          children: [
-                                            Radio<String>(
-                                              value: "L",
-                                              groupValue: selectedOption,
-                                              onChanged: (value) => setState(() => selectedOption = value),
-                                            ),
-                                            Flexible(child: Text(loc.translate('male'))),
-                                          ],
+                                  RadioGroup<String>(
+                                    groupValue: selectedOption,
+                                    onChanged: (value) => setState(() => selectedOption = value),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Row(
+                                            children: [
+                                              Radio<String>(
+                                                value: "L",
+                                              ),
+                                              Flexible(child: Text(loc.translate('male'))),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                      Expanded(
-                                        child: Row(
-                                          children: [
-                                            Radio<String>(
-                                              value: "P",
-                                              groupValue: selectedOption,
-                                              onChanged: (value) => setState(() => selectedOption = value),
-                                            ),
-                                            Flexible(child: Text(loc.translate('female'))),
-                                          ],
+                                        Expanded(
+                                          child: Row(
+                                            children: [
+                                              Radio<String>(
+                                                value: "P",
+                                              ),
+                                              Flexible(child: Text(loc.translate('female'))),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
@@ -852,7 +854,7 @@ class _HealthProfileState extends State<HealthProfile> {
                                         Text(loc.translate('diet_type'), style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
                                         const SizedBox(height: 4),
                                         DropdownButtonFormField<String>(
-                                          value: selectedDietType,
+                                          initialValue: selectedDietType,
                                           hint: const Text("Pilih"),
                                           isExpanded: true,
                                           decoration: InputDecoration(
@@ -879,7 +881,7 @@ class _HealthProfileState extends State<HealthProfile> {
                                         Text(loc.translate('activity_level'), style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
                                         const SizedBox(height: 4),
                                         DropdownButtonFormField<String>(
-                                          value: selectedActivityLevel,
+                                          initialValue: selectedActivityLevel,
                                           hint: const Text("Pilih"),
                                           isExpanded: true,
                                           decoration: InputDecoration(

@@ -99,7 +99,7 @@ class RelaksasiOtotProgresif extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text("💪", style: TextStyle(fontSize: 100)),
+                          Text("", style: TextStyle(fontSize: 100)),
                           SizedBox(height: 8),
                           Text("Relaksasi Otot Progresif", style: TextStyle(fontSize: 32, fontWeight: FontWeight.w500)),
                         ],
